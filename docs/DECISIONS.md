@@ -387,3 +387,47 @@ decision rule uses that. The classifier stays, because PR-AUC, calibration and
 the reliability diagram are all reported at the cluster level and it is the right
 model for those. The two answer different questions and the cost model needs the
 second one.
+
+## D-023: Plain CSS in the dashboard, not Tailwind
+Date: 2026-08-26
+Phase: 9
+
+The plan lists React, Vite and Tailwind. React and Vite are in. Tailwind is not,
+because the dashboard is five tabs of tables and two charts, and 70 lines of
+plain CSS does that without a build-time dependency, a config file and one more
+thing to fail on a judge's machine. The cut order in CLAUDE.md puts this whole
+phase first on the chopping block, so its dependencies should be the cheapest
+that work.
+
+## D-024: The baseline was re-run on the holdout
+Date: 2026-08-26
+Phase: 7
+
+`results/baseline.json` is measured on validation seeds 700 to 799, which is
+where Phase 1 froze it. Comparing the model's holdout numbers against a baseline
+measured on different worlds is not a comparison, so the baseline was re-run on
+seeds 900 to 999 into `results/baseline_holdout.json` and that is what the README
+table uses.
+
+This does not compromise the seal. The rules baseline has no fitted parameters
+and nothing was tuned in response to what it produced. Both files are committed
+so the two runs can be compared.
+
+## D-025: The holdout is not worse than validation, and why
+Date: 2026-08-26
+Phase: 7
+
+The plan's check list says holdout numbers should be worse than validation and
+that better numbers suggest a bug. Net per world is Rs.5,633 on the holdout
+against Rs.5,491 on validation, 3% in the wrong direction.
+
+Checked rather than assumed. There is no bug and there is also nothing to
+celebrate. Train, validation and holdout are all independent draws from the same
+generator with the same parameters, so there is no distribution shift for the
+model to fail to generalise across. The seed split does the job it was built for,
+which is preventing world-level artefacts leaking between train and test, and
+that is all it can do. A synthetic holdout tests the split, not the world.
+
+Stated in `docs/phases/phase-07-holdout.md` rather than left for a reader to
+notice, because a suspiciously clean generalisation result deserves an
+explanation more than a good one deserves a mention.

@@ -171,18 +171,25 @@ def numbers_in(text: str) -> set[str]:
     return set(re.findall(r"\d[\d,]*\.?\d*", text.replace("Rs.", "")))
 
 
-def audit_note(note: str, facts: dict, p: float) -> list[str]:
-    """Numbers in the note that do not trace back to the feature dict.
+def audit_note(note: str, facts: dict, p: float,
+               signals: list[tuple[str, float]] | None = None) -> list[str]:
+    """Numbers in the note that do not trace back to the pipeline.
 
-    Read ten of these by hand as well. This catches the obvious inventions, not
-    a model that rephrases a real figure into a wrong one.
+    Every figure a note may contain comes from either the feature dict or the
+    evidence bullets, so both go into the allowed set. Anything else was
+    invented, and an invented number in a fraud review note is worse than no
+    note at all.
+
+    This catches obvious inventions. It does not catch a model that rephrases a
+    real figure into a wrong claim, so ten notes still get read by hand.
     """
-    allowed = set()
-    for v in list(facts.values()) + [p]:
+    allowed = {"0", "1", "2", "3"}
+    values = list(facts.values()) + [p]
+    values += [bits for _, bits in (signals or [])]
+    for v in values:
         for form in (f"{v:.0f}", f"{v:.1f}", f"{v:.2f}",
-                     f"{v * 100:.0f}", f"{v:,.0f}"):
+                     f"{abs(v):.1f}", f"{v * 100:.0f}", f"{v:,.0f}"):
             allowed.add(form.replace(",", ""))
-    allowed |= {"1", "2", "3", "0"}
     return sorted(n for n in numbers_in(note)
                   if n.replace(",", "") not in allowed)
 
@@ -227,7 +234,7 @@ def main() -> None:
         rec = explain(facts, float(row["p"]), str(row["action"]), signals,
                       live=args.live)
         sources[rec["source"]] += 1
-        stray = audit_note(rec["note"], facts, float(row["p"]))
+        stray = audit_note(rec["note"], facts, float(row["p"]), signals)
         flagged_numbers += bool(stray)
         notes.append({"seed": int(row["seed"]), "tier": row["tier"],
                       "cluster_id": int(row["cluster_id"]),

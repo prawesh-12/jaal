@@ -1,0 +1,114 @@
+{
+ "threshold": 0.5,
+ "link_fields": [
+  "device_id",
+  "address_id"
+ ],
+ "min_group_size": 3,
+ "n_seeds": 100,
+ "seed_range": [
+  900,
+  999
+ ],
+ "n_accounts_per_world": 12000,
+ "breakeven_precision": 0.9868,
+ "tiers": {
+  "obvious": {
+   "n_worlds": 100,
+   "n_accounts": 1200000,
+   "n_ring_accounts": 9600,
+   "prevalence": 0.008,
+   "groups_found": 5941,
+   "groups_flagged": 677,
+   "skipped_buckets": 0,
+   "accounts_flagged": 10531,
+   "tp": 9600,
+   "fp": 931,
+   "missed": 0,
+   "precision": 0.9116,
+   "recall": 1.0,
+   "fp_by_kind": {
+    "family": 10,
+    "flatmates": 15,
+    "normal": 906
+   },
+   "cost_rupees": 13965000,
+   "do_nothing_rupees": 1920000,
+   "block_everyone_rupees": 17856000000,
+   "net_vs_nothing_rupees": -12045000
+  },
+  "moderate": {
+   "n_worlds": 100,
+   "n_accounts": 1200000,
+   "n_ring_accounts": 9600,
+   "prevalence": 0.008,
+   "groups_found": 5937,
+   "groups_flagged": 672,
+   "skipped_buckets": 0,
+   "accounts_flagged": 10463,
+   "tp": 9597,
+   "fp": 866,
+   "missed": 3,
+   "precision": 0.9172,
+   "recall": 0.9997,
+   "fp_by_kind": {
+    "family": 3,
+    "flatmates": 24,
+    "normal": 839
+   },
+   "cost_rupees": 12990600,
+   "do_nothing_rupees": 1920000,
+   "block_everyone_rupees": 17856000000,
+   "net_vs_nothing_rupees": -11070600
+  },
+  "sophisticated": {
+   "n_worlds": 100,
+   "n_accounts": 1200000,
+   "n_ring_accounts": 9600,
+   "prevalence": 0.008,
+   "groups_found": 7075,
+   "groups_flagged": 1822,
+   "skipped_buckets": 0,
+   "accounts_flagged": 8807,
+   "tp": 7959,
+   "fp": 848,
+   "missed": 1641,
+   "precision": 0.9037,
+   "recall": 0.8291,
+   "fp_by_kind": {
+    "family": 12,
+    "flatmates": 18,
+    "normal": 788,
+    "office": 30
+   },
+   "cost_rupees": 13048200,
+   "do_nothing_rupees": 1920000,
+   "block_everyone_rupees": 17856000000,
+   "net_vs_nothing_rupees": -11128200
+  },
+  "adaptive": {
+   "n_worlds": 100,
+   "n_accounts": 1200000,
+   "n_ring_accounts": 9600,
+   "prevalence": 0.008,
+   "groups_found": 5581,
+   "groups_flagged": 290,
+   "skipped_buckets": 0,
+   "accounts_flagged": 919,
+   "tp": 0,
+   "fp": 919,
+   "missed": 9600,
+   "precision": 0.0,
+   "recall": 0.0,
+   "fp_by_kind": {
+    "family": 3,
+    "flatmates": 37,
+    "normal": 879
+   },
+   "cost_rupees": 15705000,
+   "do_nothing_rupees": 1920000,
+   "block_everyone_rupees": 17856000000,
+   "net_vs_nothing_rupees": -13785000
+  }
+ }
+}

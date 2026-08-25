@@ -1,82 +1,57 @@
 # Status
 
 Last updated: 2026-08-26
-Current phase: 2 (probabilistic linking), complete. Phase 3 next.
+All 11 phases complete. Holdout opened once and reported.
 
 ## Done
-- **Phase 0**, foundation. Generator with four adversary tiers, four lookalike
-  kinds, 0.8% prevalence, Olist-calibrated distributions, sealed holdout
-  protocol published before any results existed. All 8 check list items pass.
-- **Phase 1**, honest baseline. Cost model first, exact-match union-find, five
-  hand-written rules, frozen in `results/baseline.json` and locked by a test.
-- **Phase 2**, probabilistic linking. Blocking, Fellegi-Sunter scoring with
-  comparison levels and term frequency, m and u learned without labels, EM
-  implemented and measured, threshold sweep and ablation. All 7 check list
-  items pass.
-- 67 tests pass.
 
-## In progress
-- nothing, between phases
+| phase | what it produced |
+| ----- | ---------------- |
+| 0 foundation | Generator, 4 adversary tiers, 4 lookalike kinds, 0.8% prevalence, Olist-calibrated distributions, sealed holdout protocol published before any result |
+| 1 baseline | Cost model first, exact-match union-find, five rules, frozen and locked by a test |
+| 2 linking | Blocking, Fellegi-Sunter with comparison levels and term frequency, m and u without labels, EM measured and rejected, sweep and ablation |
+| 3 clustering | Leiden, resolution sweep, Louvain comparison, edge threshold corrected from 6 to 14 bits |
+| 4 features | 25 features per cluster, leakage audit, redundancy report |
+| 5 model | Calibrated forest plus a purity regressor, PR-AUC per tier, reliability diagram, MLP comparison |
+| 6 decisions | Three actions, cost curve, sensitivity across 7 cost ratios |
+| 7 holdout | Opened once, results matrix, detection curve, rings-free stress test, 5 failure modes |
+| 8 explanations | 40 cached review notes, template fallback, automatic invented-number audit |
+| 9 interface | README, run.sh, Flask API, React dashboard |
+| 10 submission | Clean-checkout check, secret scan, final checklist |
 
-## Next
-- Phase 3, community detection.
-  - 3.1 build the weighted graph, 3.2 Leiden, 3.3 resolution sweep,
-    3.4 Louvain comparison and its disconnected-community count, 3.5 size filter
-- Phase 3 also decides whether the 6 bit edge threshold survives. It was chosen
-  on an edge budget, and cluster quality is the real test.
+107 tests pass. 25 decisions recorded, including the wrong turns.
 
 ## Blocked or uncertain
-- nothing blocking.
-- Open question carried into Phase 3: at 6 bits, 96% of edges are wrong. The
-  bet is that a ring of 30 forms a near-clique while false edges scatter, so
-  Leiden separates them. If it does not, the threshold moves. See D-017.
 
-## Numbers so far (all real, from committed runs)
+- **No live LLM output.** `OLLAMA_API_KEY` is not set on this machine and no
+  Ollama server is running, so all 40 committed explanations are template notes,
+  labelled as such. The live path is implemented and one command fills the cache
+  if a key is provided. This is the third item on the cut list in CLAUDE.md and
+  the template fallback is what that item says to keep.
 
-### Generator, `check_phase0 --accounts 12000 --seeds 0-9`
+## Headline numbers, sealed holdout, seeds 900-999
 
-| tier | prevalence | rings | lookalike groups | device reuse in rings | address reuse in rings |
-| ---- | ---------- | ----- | ---------------- | --------------------- | ---------------------- |
-| obvious | 0.0080 | 3-5 | 40 | 919 | 907 |
-| moderate | 0.0080 | 3-5 | 40 | 528 | 843 |
-| sophisticated | 0.0080 | 3-5 | 40 | 65 | 655 |
-| adaptive | 0.0080 | 3-5 | 40 | 0 | 0 |
+100 worlds per tier, 12,000 accounts each, 0.80% account prevalence.
 
-- seed 5 twice: byte identical. 100 worlds of 12,000 accounts: 5.1 seconds.
-- Olist priors: 99,441 orders, 96,096 customers, repeat rate 0.0312,
-  busiest hour 16:00, BRL to INR scale 5.1784 giving a Rs.450 median order
+| tier | PR-AUC | precision | recall | + review | net vs nothing |
+| ---- | ------ | --------- | ------ | -------- | -------------- |
+| obvious | 0.9974 | 1.0000 | 0.5016 | 0.9931 | +Rs.1,148,700 |
+| moderate | 0.9971 | 1.0000 | 0.1425 | 0.9609 | +Rs.569,400 |
+| sophisticated | 0.9763 | 0.9961 | 0.0266 | 0.9129 | +Rs.343,100 |
+| adaptive | 0.8046 | 0.0000 | 0.0000 | 0.5669 | +Rs.191,850 |
 
-### Rules baseline, seeds 700-799, 100 worlds per tier, prevalence 0.80%
+Pooled: precision 0.9998, net **+Rs.2,253,050** against Rs.7,680,000 for
+deploying nothing.
 
-| tier | precision | recall | FP accounts | net vs nothing |
-| ---- | --------- | ------ | ----------- | -------------- |
-| obvious | 0.9129 | 1.0000 | 916 | -Rs.11,820,000 |
-| moderate | 0.9115 | 0.9995 | 932 | -Rs.12,061,000 |
-| sophisticated | 0.9037 | 0.8373 | 857 | -Rs.11,247,400 |
-| adaptive | 0.0000 | 0.0000 | 964 | -Rs.14,460,000 |
+Rules baseline on the same worlds: **-Rs.48,028,800**. Difference Rs.50.3M.
 
-- **every tier loses money.** Blocking pays only above 98.7% precision.
+## Things a reader should not miss
 
-### Blocking, seeds 0-9
-
-| tier | recall | worst world | reduction | candidate pairs |
-| ---- | ------ | ----------- | --------- | --------------- |
-| obvious | 1.0000 | 1.0000 | 0.99234 | 551,801 |
-| moderate | 1.0000 | 1.0000 | 0.99247 | 542,431 |
-| sophisticated | 0.9949 | 0.9810 | 0.99245 | 543,506 |
-| adaptive | 0.9528 | 0.8778 | 0.99234 | 551,733 |
-
-### Pair scoring at 6 bits, seeds 700-709
-
-| tier | pair precision | pair recall | edges per world |
-| ---- | -------------- | ----------- | --------------- |
-| obvious | 0.0468 | 1.0000 | 32,254 |
-| moderate | 0.0404 | 0.9911 | 31,866 |
-| sophisticated | 0.0336 | 0.7904 | 32,967 |
-| adaptive | 0.0193 | 0.4905 | 31,719 |
-
-- Phase 1 exact matching found 0.8373 of ring accounts on `sophisticated` and
-  nothing at all on `adaptive`. Linking recovers 0.79 and 0.49 of true pairs.
-- m seed purity 0.9932 over 37,124 pairs. EM implemented, measured, lost.
-- blocking plus scoring one 12,000 account world: 0.49 seconds
-- holdout seeds 900-999 remain sealed and unopened
+- **The adaptive tier blocks nothing.** Zero accounts, zero recall. It only saves
+  money by routing 57% of those ring accounts to a human.
+- **Every two-action threshold loses money.** All 101 of them. The review queue
+  is what changes the sign.
+- **Zero false positives on 3,849 clusters containing no rings.** The `office`
+  trap never fired.
+- **Recall is 0.1677 pooled and that is deliberate.** Blocking pays only above
+  98.7% precision.

@@ -6,7 +6,7 @@
 hidden connections between accounts, and the net that catches what moves inside
 it.
 
-Razorpay Buildathon 2026, Track 02 (AI Risk Manager). Work in progress.
+Razorpay Buildathon 2026, Track 02 (AI Risk Manager).
 
 ## Defence only, synthetic data only
 
@@ -16,21 +16,155 @@ guidance, touches no payment rails real or test, and contains no real personal
 data. Every account record in this repository is synthetic, produced by
 `detector/generate_accounts.py`, which is a **test fixture**. It exists because
 real promo abuse is unlabelled, so there is no other way to measure a detector
-against a known answer. The generator parameterises how careful an operator is,
-so the project can report where detection fails. Naming a blind spot is
-defensive disclosure, not instruction.
+against a known answer. The fixture parameterises how careful an operator is
+precisely so the project can report where detection fails, and naming a blind
+spot is defensive disclosure rather than instruction.
 
 ## The problem in one paragraph
 
-Fifty accounts each place one perfectly ordinary order and each claim the
-Rs.200 first-order coupon once. No single transaction looks wrong, because no
-single transaction is wrong. The fraud lives in the relationships between the
-accounts, not inside any one of them. So the unit of detection here is never the
-transaction. It is the cluster.
+A merchant offers Rs.200 off your first order. One person creates fifty
+accounts and claims it fifty times. Each of those accounts places one perfectly
+ordinary order: the payment succeeds, the goods are delivered, nothing is stolen
+and no card is fraudulent. Look at any single transaction and you see a normal
+first-time customer, because in isolation that is exactly what it is. The fraud
+is not inside any transaction. It is in the fact that fifty of them belong to
+the same person. So the unit of detection here is never the transaction. It is
+the cluster.
+
+## Results, sealed holdout, seeds 900 to 999
+
+100 worlds per tier, 12,000 accounts each, 0.80% of accounts in a ring. Opened
+once. Never averaged across tiers, because the variation is the finding.
+
+| tier | PR-AUC | precision | recall, blocked | recall, blocked or reviewed | Brier | accounts blocked | sent to review | net against deploying nothing |
+| ---- | ------ | --------- | --------------- | --------------------------- | ----- | ---------------- | -------------- | ----------------------------- |
+| obvious | 0.9974 | 1.0000 | 0.5016 | 0.9931 | 0.00067 | 4,815 | 5,054 | **+Rs.1,148,700** |
+| moderate | 0.9971 | 1.0000 | 0.1425 | 0.9609 | 0.00055 | 1,368 | 8,504 | **+Rs.569,400** |
+| sophisticated | 0.9763 | 0.9961 | 0.0266 | 0.9129 | 0.00162 | 256 | 9,298 | **+Rs.343,100** |
+| **adaptive** | 0.8046 | **0.0000** | **0.0000** | 0.5669 | 0.01035 | **0** | 5,977 | +Rs.191,850 |
+
+Pooled: precision **0.9998**, recall 0.1677, recall including review 0.8585,
+total loss Rs.5,426,950 against Rs.7,680,000 for deploying nothing, so
+**+Rs.2,253,050 saved**.
+
+Read the `adaptive` row before anything else. Against an operator who rotates
+every device, uses a different delivery address for every account, spreads
+signups over six weeks and has 15% of accounts behave like real customers, this
+system **blocks nothing at all**. It still saves money, because it routes 57% of
+those ring accounts to a human instead of throwing customers away, but as an
+automatic detector it does not work there and the table says so.
+
+Read the recall column second. It is low on purpose, and the next section is why.
+
+## Why recall is low and that is correct
+
+Missing a promo abuser costs Rs.200, one coupon.
+Wrongly blocking a real customer costs Rs.15,000, their lifetime value.
+
+That is 75 to 1, and it means blocking a group only pays while you are right
+about it **98.7%** of the time. On the same holdout worlds:
+
+| policy | precision | recall | net against deploying nothing |
+| ------ | --------- | ------ | ----------------------------- |
+| block above the F1-optimal threshold | 0.9162 | 0.9119 | **-Rs.24,642,800** |
+| block above 0.50 | 0.9084 | 0.9169 | -Rs.27,740,000 |
+| best two-action threshold of 101 swept | 0.0000 | 0.0000 | Rs.0, it blocks nobody |
+| **three actions, expected cost rule** | **0.9997** | 0.1681 | **+Rs.1,317,750** |
+
+*(policy comparison measured on validation seeds 700 to 799)*
+
+Of 101 blocking thresholds swept from 0.00 to 1.00, **not one turns a profit**.
+With block and allow alone, the correct deployment of this detector is not to
+deploy it. The third action changes the sign.
+
+That result holds if you disagree with the Rs.15,000 figure. At every cost ratio
+from 10:1 to 200:1 the three-action rule saves money, and from 25:1 upward no
+two-action threshold does.
+
+## Baseline comparison
+
+A rules-only detector, published before the model existed: exact matching on
+device and address with union-find, five hand-written rules, two actions. Run on
+**the same holdout worlds**.
+
+| tier | rules precision | rules recall | rules net | Jaal net | difference |
+| ---- | --------------- | ------------ | --------- | -------- | ---------- |
+| obvious | 0.9116 | 1.0000 | -Rs.12,045,000 | +Rs.1,148,700 | Rs.13.2M |
+| moderate | 0.9172 | 0.9997 | -Rs.11,070,600 | +Rs.569,400 | Rs.11.6M |
+| sophisticated | 0.9037 | 0.8291 | -Rs.11,128,200 | +Rs.343,100 | Rs.11.5M |
+| adaptive | 0.0000 | 0.0000 | -Rs.13,785,000 | +Rs.191,850 | Rs.14.0M |
+| **total** | | | **-Rs.48,028,800** | **+Rs.2,253,050** | **Rs.50.3M** |
+
+Look at the recall columns. The rules baseline catches **every** ring account on
+the obvious tier and loses twelve million rupees doing it. Jaal catches half as
+many and turns a profit. That comparison is the entire argument of this project,
+and without a published baseline nobody, the author included, could have made it.
+
+## What this does not detect
+
+The detector was swept across operator sophistication continuously rather than
+at four fixed points. `results/detection_curve.png`.
+
+> Jaal blocks rings reliably while the operator reuses a delivery address across
+> roughly nine or more accounts. Below that, recall falls under 0.05, and an
+> operator using a different address for every account is not blocked at all.
+> Rotating devices does not defeat it. Sweeping device reuse from 1.00 to 0.00
+> with everything else fixed, recall drops once at the top and then shows no
+> trend at all, wandering between 0.0156 and 0.0920 with the lowest reuse
+> settings scoring higher than the middle ones. **Rotating delivery addresses
+> is what defeats it.** Those rings are still routed to human review 57% of the
+> time, which is worth something and is not detection.
+
+On 20 worlds containing **zero rings**, built entirely of families, flatmates,
+hostels and office lunch groups, the system blocked **0 accounts** and sent 1
+cluster of 3,849 to review. The `office` trap, twenty colleagues signing up in
+one week from one address, did not fire once.
+
+Five more failure modes with worked examples are in `results/holdout.json` and
+`docs/phases/phase-07-holdout.md`.
+
+## How to run
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+./run.sh              # full reproduction, about 30 minutes, no network needed
+./run.sh quick        # smaller worlds, about 4 minutes
+.venv/bin/python -m pytest    # 107 tests
+```
+
+`run.sh` will not re-open the holdout if `results/holdout.json` exists. A
+holdout opened twice is not a holdout.
+
+Optional, and not needed for any number above:
+
+```bash
+.venv/bin/python -m api.app          # Flask, two endpoints, 127.0.0.1:5001
+cd ui && npm install && npm run dev  # React dashboard, 127.0.0.1:5173
+```
+
+## Method
+
+```
+BLOCK       72 million pairs down to ~32,000 worth scoring, recall measured
+LINK        Fellegi-Sunter, evidence in bits, weighted by how rare the shared value is
+CLUSTER     Leiden community detection, connected communities by construction
+FEATURE     25 numbers per cluster, audited for leakage
+SCORE       calibrated probability, plus a second model for cluster purity
+DECIDE      block, allow or review, whichever loses fewest rupees
+EXPLAIN     a written reason, every number traceable to the pipeline
+```
+
+The linkage stage is where the work is. Exact matching finds **nothing** on the
+adaptive tier, because every account has its own device and its own address.
+Accumulating weak evidence recovers 49% of its true pairs.
+
+Ten dependencies. Every omission is deliberate and argued in
+`extras/plan.md` section 2.5.
 
 ## Evaluation protocol
 
-Published before any results existed, which is what makes it worth anything.
+Published in this file before any result existed, which is what makes it worth
+anything.
 
 ```
 Seeds 0-699    train
@@ -38,58 +172,20 @@ Seeds 700-899  validation and tuning
 Seeds 900-999  SEALED. Opened once, at Phase 7. No tuning against them, ever.
 ```
 
-Further rules that hold for every number in this repository:
-
-1. **Metrics are reported per adversary tier, never averaged.** Blending hides
-   the sophistication threshold at which detection fails, which is the most
-   interesting result the project produces.
-2. **Prevalence is stated alongside every metric.** PR-AUC has a floor equal to
-   the class prior, so a PR-AUC of 0.30 is terrible at 25% prevalence and
-   excellent at 0.8%. Without the base rate the number means nothing.
-3. **Train and test split on generator seed, never on row.** Clusters from one
-   world share generator artefacts, so a random row split leaks them.
-4. **No reported number needs the internet.** Everything reproduces offline from
-   `./run.sh`. The LLM explanation layer is cached and optional.
-5. **A rules-only baseline is published and every model result is a delta
-   against it.**
-
-## Results
-
-The sealed holdout has not been opened. Phases 0 and 1 of 10 are complete, so
-the only numbers that exist are the rules-only baseline, measured on validation
-seeds 700 to 799 at 0.8% prevalence, 100 worlds of 12,000 accounts per tier.
-
-| tier | precision | recall | innocents blocked | net against deploying nothing |
-| ---- | --------- | ------ | ----------------- | ----------------------------- |
-| obvious | 0.9129 | 1.0000 | 916 | -Rs.11,820,000 |
-| moderate | 0.9115 | 0.9995 | 932 | -Rs.12,061,000 |
-| sophisticated | 0.9037 | 0.8373 | 857 | -Rs.11,247,400 |
-| adaptive | 0.0000 | 0.0000 | 964 | -Rs.14,460,000 |
-
-**Every row loses money.** The `obvious` row caught every ring account in 100
-worlds at 91% precision and still destroyed Rs.11.8 million of value, because
-blocking one real customer costs Rs.15,000 and a farmed coupon costs Rs.200.
-Blocking pays only above **98.7%** precision. That is the number the rest of
-this project is aimed at, and it is why there is a review queue rather than two
-actions.
-
-Model results, calibration and the cost curve arrive in Phases 5 to 7.
-
-## How to run
-
-```bash
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m detector.check_phase0 --accounts 12000 --seeds 0-9
-.venv/bin/python -m pytest
-```
-
-`./run.sh` arrives in Phase 9 and will run the whole pipeline offline in one
-command.
+1. **Metrics are per tier, never averaged.** Blending hides the sophistication
+   threshold where detection fails.
+2. **Prevalence is stated beside every metric.** PR-AUC has a floor equal to the
+   class prior. Accounts are 0.80% ring; clusters are 2.3%, because clustering
+   concentrates them. Both are reported.
+3. **Train and test split on generator seed, never on row.**
+4. **No reported number needs the internet.** The LLM layer is cached and
+   optional.
+5. **A rules-only baseline is published and every result is a delta against it.**
 
 ## Data
 
 Order values, customer repeat rate and signup hour-of-day are calibrated against
-the **Brazilian E-Commerce Public Dataset by Olist** (99,441 orders, 2016 to
+the **Brazilian E-Commerce Public Dataset by Olist** (99,441 real orders, 2016 to
 2018), licensed CC BY-NC-SA 4.0.
 https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
 
@@ -98,15 +194,26 @@ Only derived distribution parameters are committed, in
 run anything.
 
 Two honest caveats. Olist is Brazilian marketplace data, not Indian food
-delivery, so prices are rescaled by a factor of 5.1784 chosen to put the median
-order at Rs.450. The shape of the distributions transfers, the absolute values
-do not. And the 3.1% repeat rate Olist shows is a marketplace baseline; it sets
-the contrast for ring behaviour rather than describing a delivery merchant.
+delivery, so prices are rescaled by 5.1784 to put the median order at Rs.450.
+The shape transfers, the absolute values do not. And Olist's 3.1% repeat rate is
+a marketplace baseline, which makes `repeat_rate` a much weaker feature here than
+it would be at a merchant with real repeat business. It ranks fifteenth of
+twenty-four by permutation importance, and that is documented rather than hidden.
 
 ## Documentation
 
-- `docs/STATUS.md`, current state
-- `docs/DECISIONS.md`, why things are the way they are
-- `docs/phases/`, one document per phase as it completes
-- `docs/diagrams/`, context, containers, pipeline and per-stage diagrams
-- `extras/plan.md`, the full implementation plan
+| Path | What is in it |
+| ---- | ------------- |
+| `docs/00-overview.md` | What this is, for someone who knows nothing |
+| `docs/01-architecture.md` | How the pieces fit, and the three boundaries |
+| `docs/02-data-model.md` | Record shapes, and why operator is not group |
+| `docs/03-glossary.md` | Every term in one line |
+| `docs/phases/` | One document per phase, with real numbers |
+| `docs/diagrams/` | Context, containers, pipeline, and one per stage |
+| `docs/DECISIONS.md` | 22 decisions, including the ones that were wrong |
+| `extras/plan.md` | The implementation plan this was built from |
+
+Ten places where measurement contradicted the plan are recorded in
+`docs/DECISIONS.md` rather than quietly fixed. The most consequential is D-022:
+pricing a block on the class probability rather than on predicted cluster purity
+turned a Rs.1.3 million gain into a Rs.16.4 million loss.
