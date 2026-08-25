@@ -5,8 +5,12 @@ __pycache__/
 
 # raw Olist data is not committed, only the derived priors in data/
 data/raw/
-*.csv
 *.zip
+
+# full feature tables are rebuilt by run.sh, a sample is committed instead
+results/features_train.csv
+results/features_val.csv
+results/features_holdout.csv
 
 # node
 ui/node_modules/

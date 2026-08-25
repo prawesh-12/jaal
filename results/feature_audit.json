@@ -1,0 +1,58 @@
+{
+ "n_clusters": 45324,
+ "n_features": 25,
+ "label_rate": 0.02356,
+ "forbidden_columns_referenced": [],
+ "correlation_with_label": {
+  "total_discount": 0.3923,
+  "mean_edge_bits": 0.38,
+  "weight_spread": 0.3766,
+  "distinct_bin_ratio": 0.2804,
+  "distinct_device_ratio": 0.2762,
+  "size": 0.2458,
+  "distinct_address_ratio": 0.181,
+  "hour_concentration": 0.1766,
+  "min_edge_bits": 0.166,
+  "diameter": 0.1231,
+  "top_signal_share": 0.0911,
+  "bin_concentration": 0.0667,
+  "coupon_rate": 0.0665,
+  "discount_per_account": 0.0665,
+  "median_gap_minutes": 0.0664,
+  "discount_to_revenue": 0.0634,
+  "value_cv": 0.0557,
+  "repeat_rate": 0.0519,
+  "degree_gini": 0.0491,
+  "signup_burstiness": 0.0465,
+  "signup_span_days": 0.0437,
+  "lifespan_days": 0.037,
+  "pincode_concentration": 0.0267,
+  "near_min_rate": 0.0178,
+  "edge_density": 0.0053
+ },
+ "leaks": [],
+ "redundant_pairs": [
+  [
+   "size",
+   "total_discount",
+   0.9605
+  ],
+  [
+   "edge_density",
+   "degree_gini",
+   -0.9008
+  ],
+  [
+   "lifespan_days",
+   "distinct_address_ratio",
+   -0.9019
+  ],
+  [
+   "coupon_rate",
+   "discount_per_account",
+   1.0
+  ]
+ ],
+ "leak_limit": 0.95,
+ "redundancy_limit": 0.9
+}
