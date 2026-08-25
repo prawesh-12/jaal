@@ -24,3 +24,48 @@ Phase 5 needs it, so Phase 0 to Phase 4 proceed unaffected. If the answer is no,
 the fallback is to write the curve data to JSON and render the charts in the
 React dashboard in Phase 9, which keeps the numbers reproducible offline but
 loses the static PNGs.
+
+## D-003: Olist CSVs pulled from a GitHub mirror, not Kaggle
+Date: 2026-08-26
+Phase: 0
+
+Kaggle needs an account and an API token, and neither exists on this machine.
+The three files needed (orders, order_items, customers) are mirrored verbatim in
+several public GitHub repos. Row counts were checked against the published
+figures before use: 99,441 orders, 112,650 order items, 99,441 customer rows
+over 96,096 unique people. That matches the Kaggle dataset exactly, so it is the
+same data. The raw files live in `data/raw/`, which is gitignored. Only the
+derived `data/olist_priors.json` is committed, as the plan requires.
+
+## D-004: Order value is the sum of items in an order, not one item's price
+Date: 2026-08-26
+Phase: 0
+
+The plan's sketch in step 0.2 takes deciles of `order_items.price`, which is the
+price of a single line item. An order can hold several. Since the generator
+needs order values, and the coupon floor of Rs.400 is checked against an order
+total, the total is the right quantity. Grouping by order_id first moves the
+median from Rs.388 to Rs.450 on the scaled figures. Both are in the output JSON
+so the difference is visible.
+
+## D-005: Extra tail percentiles beyond the ten deciles
+Date: 2026-08-26
+Phase: 0
+
+Olist's top decile runs from Rs.1,398 to Rs.69,597. A generator sampling
+uniformly inside that band would hand one order in ten a value near Rs.35,000,
+which is not a long tail, it is a broken one. The priors also carry the 95th and
+99th percentiles (Rs.2,071 and Rs.5,173) so the generator can subdivide the top
+band and keep the real shape.
+
+## D-006: Prices scaled to a target median, not by an FX rate
+Date: 2026-08-26
+Phase: 0
+
+Olist is in BRL. Converting at a market FX rate compares two consumer markets
+that are not comparable, and would put the median order at roughly Rs.1,100
+against a Rs.400 coupon floor, making the floor meaningless. Instead prices are
+multiplied by 5.1784, chosen so the median order lands at Rs.450. That puts the
+coupon floor just below the median, which is where a merchant sets it: most
+customers have to add one more item to qualify. The factor is written into the
+priors JSON so anyone can undo it.
