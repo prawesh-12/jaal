@@ -19,8 +19,8 @@ def params():
 
 
 @pytest.fixture(scope="module")
-def table():
-    return pd.read_csv("results/features_train.csv")
+def table(train_table_path):
+    return pd.read_csv(train_table_path)
 
 
 def test_no_feature_function_can_see_the_answer():
@@ -97,9 +97,10 @@ def test_labels_use_majority_not_presence():
     assert mostly_ring["label"] == 1
 
 
-def test_feature_table_split_by_seed_never_overlaps():
-    train = pd.read_csv("results/features_train.csv")["seed"].unique()
-    val = pd.read_csv("results/features_val.csv")["seed"].unique()
+def test_feature_table_split_by_seed_never_overlaps(train_table_path,
+                                                    val_table_path):
+    train = pd.read_csv(train_table_path)["seed"].unique()
+    val = pd.read_csv(val_table_path)["seed"].unique()
     assert not set(train) & set(val)
     assert max(train) < min(config.HOLDOUT_SEEDS)
     assert max(val) < min(config.HOLDOUT_SEEDS)

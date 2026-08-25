@@ -82,8 +82,8 @@ def test_the_dropped_feature_was_an_exact_duplicate(report):
     assert "discount_per_account" not in report["features"]
 
 
-def test_saved_model_produces_probabilities(fitted):
-    val = pd.read_csv("results/features_val.csv").head(500)
+def test_saved_model_produces_probabilities(fitted, val_table_path):
+    val = pd.read_csv(val_table_path).head(500)
     p = fitted["calibrator"].predict_proba(val[fitted["features"]])[:, 1]
     assert ((p >= 0) & (p <= 1)).all()
     assert len(fitted["calibrators"]) == 2
