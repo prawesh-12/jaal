@@ -4,7 +4,10 @@ Money is always int rupees. Never float. See CLAUDE.md rule 6.
 """
 
 # --- population ---
-N_NORMAL_ACCOUNTS = 12_000
+# Total accounts in one generated world, rings and lookalike groups included.
+# The plan calls this N_NORMAL_ACCOUNTS, but prevalence has to be measured
+# against the whole population, so this is the whole population. See D-007.
+N_ACCOUNTS = 12_000
 RING_PREVALENCE = 0.008      # 0.8%, realistic promo abuse rate
 LOOKALIKE_GROUPS = 40        # families, flatmates, hostels, offices
 

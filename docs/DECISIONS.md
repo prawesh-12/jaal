@@ -69,3 +69,29 @@ multiplied by 5.1784, chosen so the median order lands at Rs.450. That puts the
 coupon floor just below the median, which is where a merchant sets it: most
 customers have to add one more item to qualify. The factor is written into the
 priors JSON so anyone can undo it.
+
+## D-007: `N_ACCOUNTS` means the whole population, not the normal-only count
+Date: 2026-08-26
+Phase: 0
+
+The plan's config sketch calls it `N_NORMAL_ACCOUNTS = 12_000`. Prevalence has
+to be measured against the total population, so if 12,000 were the normal-only
+count the real prevalence would depend on how many lookalike accounts happened
+to be generated. Renamed to `N_ACCOUNTS` and treated as the total. Rings,
+lookalike groups and singletons all come out of that budget, so prevalence lands
+on exactly 0.0080 in every world at every tier rather than drifting.
+
+## D-008: Opaque ids are relabelled after the shuffle
+Date: 2026-08-26
+Phase: 0
+
+Rings are generated before lookalikes and singletons, so the first version
+handed every ring account one of the lowest account ids and device ids in the
+world. Shuffling the rows did not fix it, because the id was already baked into
+the row. That is a generator fingerprint correlating perfectly with the label,
+and a model would have found it and scored beautifully while learning nothing.
+Ids are now assigned after shuffling, and device and address ids are remapped
+through a random permutation.
+`tests/test_generator.py::test_opaque_ids_do_not_leak_group_membership` fails if
+it comes back. Worth recording because it is the exact failure the Phase 4
+leakage audit is meant to catch, found one phase early.
