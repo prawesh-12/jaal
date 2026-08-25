@@ -326,3 +326,64 @@ Leiden stays the default because the guarantee is free and the failure mode is
 real. But the honest sentence is "Louvain fails on a graph we rejected for other
 reasons, and matches Leiden on the one we ship", not "Louvain produced 7 broken
 rings". The first sentence is true and the second one would not have been.
+
+## D-020: matplotlib charts use log scales and uniform bins
+Date: 2026-08-26
+Phase: 5, 6
+
+Two charts were unreadable on their first draft and the fix is worth recording,
+because in both cases the default hid the finding.
+
+The reliability diagram with `strategy="quantile"` put nine bins of ten inside
+[0, 0.001], because cluster prevalence is 2.3%, and the whole chart collapsed
+into the bottom left corner. Uniform bins plus a log-scaled count panel
+underneath show both the calibration curve and how much data is behind each
+point.
+
+The cost curve on a linear axis was dominated by threshold 0.00, where blocking
+every cluster costs Rs.4.1 billion. That single point flattened the entire region
+between Rs.3 million and Rs.30 million, which is the only part anyone cares
+about. Log scale on the y-axis.
+
+## D-021: The calibration method is chosen on rupees, not on Brier
+Date: 2026-08-26
+Phase: 5
+
+Isotonic wins on Brier by a hair, 0.00313 against Platt's 0.00323, and loses on
+PR-AUC, 0.9298 against 0.9418. Its step function creates ties that damage the
+ranking, and the reliability diagram shows why: between 0.3 and 0.8 isotonic has
+one or two clusters per bin and swings from 1.00 to 0.33 to 0.43, while Platt
+stays smooth.
+
+The published finding is that Platt beats isotonic when the calibration set is
+under roughly 2,000 cases. This calibration set is 11,349 clusters, well above
+that, which is consistent with isotonic edging it on Brier.
+
+Rather than pick on either metric, both calibrators are saved and Phase 6 chooses
+on the objective that actually matters: total cost in rupees. They tie at
+Rs.3,290,250, so Platt ships on the tie-break of keeping the ranking intact.
+
+## D-022: The decision rule uses predicted purity, not the class probability
+Date: 2026-08-26
+Phase: 6
+
+The plan's step 6.1 prices blocking as `(1 - p) * n * COST_BLOCKED_INNOCENT`,
+where p is the probability the cluster is a ring. That is correct only if a
+cluster is atomic: either every member is an abuser or every member is innocent.
+
+Real clusters are mixed. A cluster that is 90% ring accounts is labelled a ring
+and blocking it still destroys 10% of its members, at Rs.15,000 each. Under the
+plan's formula that block is priced at almost nothing, and the realised cost is
+enormous.
+
+Measured, the difference is the whole result. With the class probability the
+rule blocked 20,081 accounts at 93.3% precision and **lost Rs.16,355,550**. With
+a purity model it blocks 3,875 accounts at 99.97% precision and **makes
+Rs.1,317,750**. The sensitivity table was also non-monotonic under the old rule,
+which is what first suggested something was wrong.
+
+So a `RandomForestRegressor` predicts the ring share of a cluster and the
+decision rule uses that. The classifier stays, because PR-AUC, calibration and
+the reliability diagram are all reported at the cluster level and it is the right
+model for those. The two answer different questions and the cost model needs the
+second one.

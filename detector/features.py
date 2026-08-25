@@ -221,6 +221,12 @@ def world_rows(world: World, params: dict) -> list[dict]:
     keep = np.asarray(graph.es["weight"]) >= 0  # all edges kept in the graph
     del keep
 
+    # Ring accounts that joined no cluster are invisible to everything
+    # downstream, and Phase 6 still has to pay for them. Carry the world totals
+    # so the cost model can find them.
+    world_ring_accounts = int(world.truth["is_ring"].sum())
+    world_accounts = len(world.accounts)
+
     rows = []
     for cid, members in enumerate(clusters):
         sub_contrib = None
@@ -231,6 +237,8 @@ def world_rows(world: World, params: dict) -> list[dict]:
         f = cluster_features(world.accounts, graph, members, sub_contrib)
         rows.append({
             "seed": world.seed, "tier": world.tier, "cluster_id": cid,
+            "world_accounts": world_accounts,
+            "world_ring_accounts": world_ring_accounts,
             **f,
             "dominant_signal": dominant_signal(graph, members),
             **label_cluster(world.truth, members),

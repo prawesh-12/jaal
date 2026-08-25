@@ -1,0 +1,292 @@
+{
+ "features": [
+  "size",
+  "edge_density",
+  "mean_edge_bits",
+  "min_edge_bits",
+  "weight_spread",
+  "diameter",
+  "degree_gini",
+  "top_signal_share",
+  "signup_span_days",
+  "signup_burstiness",
+  "hour_concentration",
+  "median_gap_minutes",
+  "lifespan_days",
+  "coupon_rate",
+  "repeat_rate",
+  "near_min_rate",
+  "value_cv",
+  "distinct_bin_ratio",
+  "bin_concentration",
+  "distinct_device_ratio",
+  "distinct_address_ratio",
+  "pincode_concentration",
+  "total_discount",
+  "discount_to_revenue"
+ ],
+ "dropped_features": [
+  "discount_per_account"
+ ],
+ "n_features": 24,
+ "n_train_clusters": 45324,
+ "n_val_clusters": 45159,
+ "fit_seeds": [
+  0,
+  44
+ ],
+ "cal_seeds": [
+  45,
+  59
+ ],
+ "val_seeds": [
+  700,
+  759
+ ],
+ "variants": {
+  "forest_raw": {
+   "all_tiers_pooled": {
+    "n": 45159,
+    "positives": 1047,
+    "prevalence": 0.02318,
+    "pr_auc": 0.94182,
+    "pr_auc_baseline": 0.02318,
+    "lift_over_baseline": 40.62,
+    "roc_auc": 0.99105,
+    "brier": 0.00527
+   },
+   "obvious": {
+    "n": 11258,
+    "positives": 214,
+    "prevalence": 0.01901,
+    "pr_auc": 1.0,
+    "pr_auc_baseline": 0.01901,
+    "lift_over_baseline": 52.61,
+    "roc_auc": 1.0,
+    "brier": 0.00338
+   },
+   "moderate": {
+    "n": 11206,
+    "positives": 237,
+    "prevalence": 0.02115,
+    "pr_auc": 1.0,
+    "pr_auc_baseline": 0.02115,
+    "lift_over_baseline": 47.28,
+    "roc_auc": 1.0,
+    "brier": 0.00363
+   },
+   "sophisticated": {
+    "n": 11278,
+    "positives": 243,
+    "prevalence": 0.02155,
+    "pr_auc": 0.97072,
+    "pr_auc_baseline": 0.02155,
+    "lift_over_baseline": 45.05,
+    "roc_auc": 0.99778,
+    "brier": 0.00432
+   },
+   "adaptive": {
+    "n": 11417,
+    "positives": 353,
+    "prevalence": 0.03092,
+    "pr_auc": 0.85829,
+    "pr_auc_baseline": 0.03092,
+    "lift_over_baseline": 27.76,
+    "roc_auc": 0.97511,
+    "brier": 0.00968
+   }
+  },
+  "forest_sigmoid": {
+   "all_tiers_pooled": {
+    "n": 45159,
+    "positives": 1047,
+    "prevalence": 0.02318,
+    "pr_auc": 0.94182,
+    "pr_auc_baseline": 0.02318,
+    "lift_over_baseline": 40.62,
+    "roc_auc": 0.99105,
+    "brier": 0.00323
+   },
+   "obvious": {
+    "n": 11258,
+    "positives": 214,
+    "prevalence": 0.01901,
+    "pr_auc": 1.0,
+    "pr_auc_baseline": 0.01901,
+    "lift_over_baseline": 52.61,
+    "roc_auc": 1.0,
+    "brier": 0.00067
+   },
+   "moderate": {
+    "n": 11206,
+    "positives": 237,
+    "prevalence": 0.02115,
+    "pr_auc": 1.0,
+    "pr_auc_baseline": 0.02115,
+    "lift_over_baseline": 47.28,
+    "roc_auc": 1.0,
+    "brier": 0.00099
+   },
+   "sophisticated": {
+    "n": 11278,
+    "positives": 243,
+    "prevalence": 0.02155,
+    "pr_auc": 0.97072,
+    "pr_auc_baseline": 0.02155,
+    "lift_over_baseline": 45.05,
+    "roc_auc": 0.99778,
+    "brier": 0.00191
+   },
+   "adaptive": {
+    "n": 11417,
+    "positives": 353,
+    "prevalence": 0.03092,
+    "pr_auc": 0.85829,
+    "pr_auc_baseline": 0.03092,
+    "lift_over_baseline": 27.76,
+    "roc_auc": 0.97511,
+    "brier": 0.00924
+   }
+  },
+  "forest_isotonic": {
+   "all_tiers_pooled": {
+    "n": 45159,
+    "positives": 1047,
+    "prevalence": 0.02318,
+    "pr_auc": 0.92976,
+    "pr_auc_baseline": 0.02318,
+    "lift_over_baseline": 40.1,
+    "roc_auc": 0.99036,
+    "brier": 0.00313
+   },
+   "obvious": {
+    "n": 11258,
+    "positives": 214,
+    "prevalence": 0.01901,
+    "pr_auc": 1.0,
+    "pr_auc_baseline": 0.01901,
+    "lift_over_baseline": 52.61,
+    "roc_auc": 1.0,
+    "brier": 0.00048
+   },
+   "moderate": {
+    "n": 11206,
+    "positives": 237,
+    "prevalence": 0.02115,
+    "pr_auc": 0.99979,
+    "pr_auc_baseline": 0.02115,
+    "lift_over_baseline": 47.27,
+    "roc_auc": 1.0,
+    "brier": 0.00069
+   },
+   "sophisticated": {
+    "n": 11278,
+    "positives": 243,
+    "prevalence": 0.02155,
+    "pr_auc": 0.95621,
+    "pr_auc_baseline": 0.02155,
+    "lift_over_baseline": 44.38,
+    "roc_auc": 0.99732,
+    "brier": 0.00185
+   },
+   "adaptive": {
+    "n": 11417,
+    "positives": 353,
+    "prevalence": 0.03092,
+    "pr_auc": 0.8335,
+    "pr_auc_baseline": 0.03092,
+    "lift_over_baseline": 26.96,
+    "roc_auc": 0.97341,
+    "brier": 0.00942
+   }
+  },
+  "mlp_raw": {
+   "all_tiers_pooled": {
+    "n": 45159,
+    "positives": 1047,
+    "prevalence": 0.02318,
+    "pr_auc": 0.94487,
+    "pr_auc_baseline": 0.02318,
+    "lift_over_baseline": 40.75,
+    "roc_auc": 0.99285,
+    "brier": 0.00291
+   },
+   "obvious": {
+    "n": 11258,
+    "positives": 214,
+    "prevalence": 0.01901,
+    "pr_auc": 0.99616,
+    "pr_auc_baseline": 0.01901,
+    "lift_over_baseline": 52.41,
+    "roc_auc": 0.99958,
+    "brier": 0.00032
+   },
+   "moderate": {
+    "n": 11206,
+    "positives": 237,
+    "prevalence": 0.02115,
+    "pr_auc": 1.0,
+    "pr_auc_baseline": 0.02115,
+    "lift_over_baseline": 47.28,
+    "roc_auc": 1.0,
+    "brier": 0.00039
+   },
+   "sophisticated": {
+    "n": 11278,
+    "positives": 243,
+    "prevalence": 0.02155,
+    "pr_auc": 0.98752,
+    "pr_auc_baseline": 0.02155,
+    "lift_over_baseline": 45.83,
+    "roc_auc": 0.99793,
+    "brier": 0.00079
+   },
+   "adaptive": {
+    "n": 11417,
+    "positives": 353,
+    "prevalence": 0.03092,
+    "pr_auc": 0.85686,
+    "pr_auc_baseline": 0.03092,
+    "lift_over_baseline": 27.71,
+    "roc_auc": 0.98056,
+    "brier": 0.01002
+   }
+  }
+ },
+ "calibration_method": "isotonic",
+ "brier_sigmoid": 0.00323,
+ "brier_isotonic": 0.00313,
+ "brier_raw": 0.00527,
+ "purity_model": {
+  "mae": 0.00756,
+  "mae_on_ring_clusters": 0.15623,
+  "mean_predicted": 0.02126,
+  "mean_actual": 0.02117
+ },
+ "permutation_importance": {
+  "distinct_bin_ratio": 0.02611,
+  "total_discount": 0.02485,
+  "value_cv": 0.01797,
+  "near_min_rate": 0.01688,
+  "discount_to_revenue": 0.01607,
+  "size": 0.0114,
+  "coupon_rate": 0.00805,
+  "bin_concentration": 0.00793,
+  "median_gap_minutes": 0.0061,
+  "signup_span_days": 0.00429,
+  "distinct_address_ratio": 0.00352,
+  "mean_edge_bits": 0.00326,
+  "weight_spread": 0.00288,
+  "hour_concentration": 0.00194,
+  "repeat_rate": 0.00092,
+  "signup_burstiness": 0.00051,
+  "pincode_concentration": 0.00032,
+  "lifespan_days": 0.00026,
+  "distinct_device_ratio": 0.00013,
+  "min_edge_bits": 8e-05,
+  "top_signal_share": -0.00014,
+  "degree_gini": -0.00034,
+  "edge_density": -0.00039,
+  "diameter": -0.00052
+ }
+}
