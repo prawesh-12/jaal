@@ -95,3 +95,59 @@ through a random permutation.
 `tests/test_generator.py::test_opaque_ids_do_not_leak_group_membership` fails if
 it comes back. Worth recording because it is the exact failure the Phase 4
 leakage audit is meant to catch, found one phase early.
+
+## D-009: Drop addresses thin out as the operator gets careful
+Date: 2026-08-26
+Phase: 1
+
+The plan's tier table varies device reuse, signup window, value jitter and
+camouflage. It does not vary addresses, so the generator gave every ring
+`size // 8` drop addresses whatever its tier. Measured on seed 700, an adaptive
+ring of 38 accounts rotated all 38 devices and still shared 4 addresses, so
+exact address matching recovered every ring at every tier. The baseline scored
+recall 1.0000 on `obvious` and 0.8373 on `sophisticated`.
+
+That contradicts the premise Phase 2 rests on, stated in plan section 2.6:
+"exact matching recovers zero rings under device rotation". If exact matching
+recovers everything, Fellegi-Sunter scoring has nothing left to earn.
+
+Added `accounts_per_drop` to each tier: 20, 8, 3, 1. An operator careful enough
+to buy a new phone per account is careful enough to use a different door. The
+pincode still holds at every tier, because goods have to arrive somewhere
+reachable, so at the adaptive tier the neighbourhood is the only static
+attribute a ring shares.
+
+Two things worth stating plainly. This makes the generator harder, not easier.
+And it was changed before any model existed, so it is not a result being tuned
+into shape. Address reuse inside rings now falls 907, 843, 655, 0 across the
+tiers, measured over 10 worlds in `results/phase0_check.json`.
+
+## D-010: The baseline does not link on IP prefix
+Date: 2026-08-26
+Phase: 1
+
+The first version linked on `device_id`, `address_id` and `ip_prefix`. An IP
+prefix is a /24 network. On seed 700 a single prefix covered 694 accounts, and
+union-find chained those buckets together through shared devices into one
+component of 5,754 accounts. That component held all 96 ring accounts in the
+world, scored 0.30 on the rules, and was never flagged. Recall was 0.000 on all
+four tiers, including `obvious`, where the whole ring shares one device.
+
+Dropped `ip_prefix`. Card BIN and pincode are excluded for the same reason: an
+issuer and an area identify a group of strangers, not a person.
+
+Recorded rather than quietly fixed, because it is the concrete failure that
+justifies Phase 2. Exact matching plus transitive closure cannot express a weak
+edge. It merges completely or not at all, and one coarse field is enough to
+merge half the population into a blob that says nothing.
+
+## D-011: The world window is 900 days, not 365
+Date: 2026-08-26
+Phase: 1
+
+Family lookalikes span 200 to 900 days by the plan's own table, but the world
+was 365 days long, so `_group_start` clamped their start to day zero and their
+signups ran off the end of the world. One group spanned 724 days inside a
+365-day window. The window is now 900 days, which is the longest span any group
+needs. A world is the merchant's operating history, so it has to be at least as
+long as the oldest customer relationship in it.

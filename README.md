@@ -55,8 +55,25 @@ Further rules that hold for every number in this repository:
 
 ## Results
 
-TODO: not yet measured. Phase 0 of 10 complete. The sealed holdout has not been
-opened.
+The sealed holdout has not been opened. Phases 0 and 1 of 10 are complete, so
+the only numbers that exist are the rules-only baseline, measured on validation
+seeds 700 to 799 at 0.8% prevalence, 100 worlds of 12,000 accounts per tier.
+
+| tier | precision | recall | innocents blocked | net against deploying nothing |
+| ---- | --------- | ------ | ----------------- | ----------------------------- |
+| obvious | 0.9129 | 1.0000 | 916 | -Rs.11,820,000 |
+| moderate | 0.9115 | 0.9995 | 932 | -Rs.12,061,000 |
+| sophisticated | 0.9037 | 0.8373 | 857 | -Rs.11,247,400 |
+| adaptive | 0.0000 | 0.0000 | 964 | -Rs.14,460,000 |
+
+**Every row loses money.** The `obvious` row caught every ring account in 100
+worlds at 91% precision and still destroyed Rs.11.8 million of value, because
+blocking one real customer costs Rs.15,000 and a farmed coupon costs Rs.200.
+Blocking pays only above **98.7%** precision. That is the number the rest of
+this project is aimed at, and it is why there is a review queue rather than two
+actions.
+
+Model results, calibration and the cost curve arrive in Phases 5 to 7.
 
 ## How to run
 

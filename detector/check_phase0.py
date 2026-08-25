@@ -29,7 +29,7 @@ def run(n_accounts: int, seeds: list[int]) -> dict:
 
     for tier in config.TIER_NAMES:
         prev, rings, looks, dev_shared, ring_span = [], [], [], [], []
-        office_span = []
+        addr_shared, office_span = [], []
         for seed in seeds:
             w = gen.generate(seed, tier, n_accounts, priors)
             s = w.summary()
@@ -40,6 +40,7 @@ def run(n_accounts: int, seeds: list[int]) -> dict:
             merged = w.truth.merge(w.accounts, on="account_id")
             for gid, block in merged[merged["is_ring"]].groupby("group_id"):
                 dev_shared.append(len(block) - block["device_id"].nunique())
+                addr_shared.append(len(block) - block["address_id"].nunique())
                 ring_span.append(_span_days(block["signup_ts"]))
             for gid, block in merged[merged["group_type"] == "office"].groupby("group_id"):
                 office_span.append(_span_days(block["signup_ts"]))
@@ -50,6 +51,7 @@ def run(n_accounts: int, seeds: list[int]) -> dict:
             "rings_min": min(rings), "rings_max": max(rings),
             "lookalike_groups_min": min(looks), "lookalike_groups_max": max(looks),
             "device_collisions_within_rings": int(sum(dev_shared)),
+            "address_collisions_within_rings": int(sum(addr_shared)),
             "ring_signup_span_days_median": round(
                 sorted(ring_span)[len(ring_span) // 2], 3),
             "office_signup_span_days_max": round(max(office_span), 2),
@@ -93,13 +95,15 @@ def main() -> None:
     print(f"\nPhase 0 check, {args.accounts:,} accounts per world, "
           f"seeds {seeds[0]}-{seeds[-1]}")
     print(f"{'tier':<15} {'prevalence':<18} {'rings':<8} {'lookalikes':<12} "
-          f"{'shared devices':<15} {'ring span (d)':<14} {'office span (d)'}")
+          f"{'dev reuse':<11} {'addr reuse':<12} {'ring span (d)':<14} "
+          f"{'office span (d)'}")
     for tier, t in report["tiers"].items():
         print(f"{tier:<15} "
               f"{t['prevalence_min']:.4f}-{t['prevalence_max']:.4f}   "
               f"{t['rings_min']}-{t['rings_max']:<6} "
               f"{t['lookalike_groups_min']}-{t['lookalike_groups_max']:<10} "
-              f"{t['device_collisions_within_rings']:<15} "
+              f"{t['device_collisions_within_rings']:<11} "
+              f"{t['address_collisions_within_rings']:<12} "
               f"{t['ring_signup_span_days_median']:<14} "
               f"{t['office_signup_span_days_max']}")
 

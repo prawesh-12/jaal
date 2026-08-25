@@ -1,0 +1,105 @@
+{
+ "threshold": 0.5,
+ "link_fields": [
+  "device_id",
+  "address_id"
+ ],
+ "min_group_size": 3,
+ "n_seeds": 3,
+ "seed_range": [
+  700,
+  702
+ ],
+ "n_accounts_per_world": 12000,
+ "breakeven_precision": 0.9868,
+ "tiers": {
+  "obvious": {
+   "n_worlds": 3,
+   "n_accounts": 36000,
+   "n_ring_accounts": 288,
+   "prevalence": 0.008,
+   "groups_found": 185,
+   "groups_flagged": 19,
+   "skipped_buckets": 0,
+   "accounts_flagged": 312,
+   "tp": 288,
+   "fp": 24,
+   "missed": 0,
+   "precision": 0.9231,
+   "recall": 1.0,
+   "fp_by_kind": {
+    "normal": 24
+   },
+   "cost_rupees": 360000,
+   "do_nothing_rupees": 57600,
+   "block_everyone_rupees": 535680000,
+   "net_vs_nothing_rupees": -302400
+  },
+  "moderate": {
+   "n_worlds": 3,
+   "n_accounts": 36000,
+   "n_ring_accounts": 288,
+   "prevalence": 0.008,
+   "groups_found": 188,
+   "groups_flagged": 22,
+   "skipped_buckets": 0,
+   "accounts_flagged": 314,
+   "tp": 288,
+   "fp": 26,
+   "missed": 0,
+   "precision": 0.9172,
+   "recall": 1.0,
+   "fp_by_kind": {
+    "normal": 26
+   },
+   "cost_rupees": 390000,
+   "do_nothing_rupees": 57600,
+   "block_everyone_rupees": 535680000,
+   "net_vs_nothing_rupees": -332400
+  },
+  "sophisticated": {
+   "n_worlds": 3,
+   "n_accounts": 36000,
+   "n_ring_accounts": 288,
+   "prevalence": 0.008,
+   "groups_found": 208,
+   "groups_flagged": 47,
+   "skipped_buckets": 0,
+   "accounts_flagged": 248,
+   "tp": 235,
+   "fp": 13,
+   "missed": 53,
+   "precision": 0.9476,
+   "recall": 0.816,
+   "fp_by_kind": {
+    "normal": 13
+   },
+   "cost_rupees": 205600,
+   "do_nothing_rupees": 57600,
+   "block_everyone_rupees": 535680000,
+   "net_vs_nothing_rupees": -148000
+  },
+  "adaptive": {
+   "n_worlds": 3,
+   "n_accounts": 36000,
+   "n_ring_accounts": 288,
+   "prevalence": 0.008,
+   "groups_found": 150,
+   "groups_flagged": 4,
+   "skipped_buckets": 0,
+   "accounts_flagged": 14,
+   "tp": 0,
+   "fp": 14,
+   "missed": 288,
+   "precision": 0.0,
+   "recall": 0.0,
+   "fp_by_kind": {
+    "normal": 14
+   },
+   "cost_rupees": 267600,
+   "do_nothing_rupees": 57600,
+   "block_everyone_rupees": 535680000,
+   "net_vs_nothing_rupees": -210000
+  }
+ }
+}

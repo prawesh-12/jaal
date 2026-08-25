@@ -54,19 +54,19 @@ the interesting false positive rather than a labelling mistake.
 **Ring sophistication is a parameter, not a fixed setting.** Four tiers describe
 how careful the operator is:
 
-| Tier | Device reuse | Signup window | Value jitter | Camouflage |
-| ---- | ------------ | ------------- | ------------ | ---------- |
-| obvious | 100% | 1 hour | Rs.80 | none |
-| moderate | 60% | 3 days | Rs.200 | none |
-| sophisticated | 10% | 21 days | Rs.600 | none |
-| adaptive | 0% | 45 days | Rs.1,200 | 15% |
+| Tier | Device reuse | Signup window | Value jitter | Camouflage | Accounts per drop address |
+| ---- | ------------ | ------------- | ------------ | ---------- | ------------------------- |
+| obvious | 100% | 1 hour | Rs.80 | none | 20 |
+| moderate | 60% | 3 days | Rs.200 | none | 8 |
+| sophisticated | 10% | 21 days | Rs.600 | none | 3 |
+| adaptive | 0% | 45 days | Rs.1,200 | 15% | 1 |
 
 Camouflage means a slice of the ring behaves like a real customer: they order
 again, and half of those skip the coupon. It is aimed straight at the repeat
 rate, which is the strongest single feature available. The `adaptive` tier
 exists so the project can state honestly where detection stops working.
 
-What the operator cannot change is delivery. Goods have to arrive somewhere, so
+What the operator cannot change is the neighbourhood. Goods have to arrive somewhere, so
 every ring shares one pincode and a handful of drop addresses regardless of
 tier. At the adaptive tier that is nearly all the evidence left.
 
@@ -118,6 +118,17 @@ customers claim the coupon, and those whose basket falls short top it up to
 clear Rs.400. Without this, sitting on the coupon floor would be something only
 ring accounts do, and the whole problem would be trivially easy and dishonest.
 
+**Drop addresses thin out as the operator gets careful.** The plan's tier table
+varies device reuse, signup window, value jitter and camouflage, but not
+addresses, so every ring shared three to five drop addresses whatever its tier.
+Measured on seed 700, an adaptive ring of 38 accounts rotated all 38 devices and
+still shared 4 addresses. Exact address matching therefore recovered every ring
+at every tier, which contradicts the premise Phase 2 rests on, that exact
+matching fails once the operator rotates identifiers. An `accounts_per_drop`
+parameter was added so a careful operator rotates drop points too. This makes
+the generator harder, not easier, and it was changed before any model existed.
+See D-009.
+
 **Opaque ids are relabelled after shuffling.** Rings are built first, so in the
 first version of the generator every ring account carried one of the lowest
 account ids and one of the lowest device ids. That is a generator fingerprint
@@ -132,19 +143,21 @@ Real numbers, from `results/phase0_check.json`.
 ```
 $ python -m detector.check_phase0 --accounts 12000 --seeds 0-9
 
-tier            prevalence      rings  lookalikes  shared devices  ring span (d)  office span (d)
-obvious         0.0080-0.0080   3-5    40-40       919             0.037          12.38
-moderate        0.0080-0.0080   3-5    40-40       527             2.515          12.52
-sophisticated   0.0080-0.0080   3-5    40-40       64              19.43          12.78
-adaptive        0.0080-0.0080   3-5    40-40       0               41.27          12.38
+tier            prevalence      rings  lookalikes  dev reuse  addr reuse  ring span (d)  office span (d)
+obvious         0.0080-0.0080   3-5    40-40       919        907         0.037          12.90
+moderate        0.0080-0.0080   3-5    40-40       528        843         2.560          12.42
+sophisticated   0.0080-0.0080   3-5    40-40       65         655         19.342         12.54
+adaptive        0.0080-0.0080   3-5    40-40       0          0           42.249         12.37
 
 seed 5 generated twice, byte identical: True
-100 worlds of 12,000 accounts: 5.04s (under 60s: True)
+100 worlds of 12,000 accounts: 5.1s (under 60s: True)
 ```
 
-"shared devices" counts device reuse inside rings, summed over 10 worlds. It
-falls 919, 527, 64, 0 across the tiers, which is the sophistication gradient
-made visible. At the adaptive tier there is no device edge to find at all.
+"dev reuse" and "addr reuse" count how many ring accounts reused a device or an
+address another ring account already had, summed over 10 worlds. Both fall to
+zero at the adaptive tier: 919, 528, 65, 0 for devices and 907, 843, 655, 0 for
+addresses. That is the sophistication gradient made visible. At the top tier
+there is no exact-match edge to find at all, only a shared pincode.
 
 The Olist extraction, from `data/olist_priors.json`:
 
@@ -186,11 +199,12 @@ the distributions transfers: long-tailed order values, most customers never
 return, activity peaks in the late afternoon. The absolute values do not, which
 is why they are rescaled and the factor is recorded.
 
-**Address sharing does not vary by tier.** Every ring shares one pincode and a
-few drop addresses whatever its sophistication. That is deliberate, since goods
-must be delivered, but it means the generator never models an operator who uses
-many scattered addresses. A real operator with a parcel forwarding service would
-defeat this, and Jaal would not see them at all.
+**Pincode sharing does not vary by tier.** Drop addresses now thin out as the
+operator gets careful, but every ring still sits in one pincode. That is
+deliberate, since goods must be delivered somewhere reachable, but it means the
+generator never models an operator spread across a city. A real operator using a
+parcel forwarding service in three pincodes would defeat this, and Jaal would
+not see them at all.
 
 **Rings never overlap with lookalike groups.** No ring in this generator
 recruits from a hostel or runs out of an office. Real ones sometimes do, and

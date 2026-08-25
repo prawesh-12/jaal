@@ -14,8 +14,9 @@
    "lookalike_groups_min": 40,
    "lookalike_groups_max": 40,
    "device_collisions_within_rings": 919,
+   "address_collisions_within_rings": 907,
    "ring_signup_span_days_median": 0.037,
-   "office_signup_span_days_max": 12.38
+   "office_signup_span_days_max": 12.9
   },
   "moderate": {
    "prevalence_min": 0.008,
@@ -24,9 +25,10 @@
    "rings_max": 5,
    "lookalike_groups_min": 40,
    "lookalike_groups_max": 40,
-   "device_collisions_within_rings": 527,
-   "ring_signup_span_days_median": 2.515,
-   "office_signup_span_days_max": 12.52
+   "device_collisions_within_rings": 528,
+   "address_collisions_within_rings": 843,
+   "ring_signup_span_days_median": 2.56,
+   "office_signup_span_days_max": 12.42
   },
   "sophisticated": {
    "prevalence_min": 0.008,
@@ -35,9 +37,10 @@
    "rings_max": 5,
    "lookalike_groups_min": 40,
    "lookalike_groups_max": 40,
-   "device_collisions_within_rings": 64,
-   "ring_signup_span_days_median": 19.43,
-   "office_signup_span_days_max": 12.78
+   "device_collisions_within_rings": 65,
+   "address_collisions_within_rings": 655,
+   "ring_signup_span_days_median": 19.342,
+   "office_signup_span_days_max": 12.54
   },
   "adaptive": {
    "prevalence_min": 0.008,
@@ -47,8 +50,9 @@
    "lookalike_groups_min": 40,
    "lookalike_groups_max": 40,
    "device_collisions_within_rings": 0,
-   "ring_signup_span_days_median": 41.27,
-   "office_signup_span_days_max": 12.38
+   "address_collisions_within_rings": 0,
+   "ring_signup_span_days_median": 42.249,
+   "office_signup_span_days_max": 12.37
   }
  },
  "determinism": {
@@ -59,7 +63,7 @@
  "timing": {
   "worlds": 100,
   "accounts_each": 12000,
-  "seconds": 5.04,
+  "seconds": 5.1,
   "under_60s": true
  }
 }

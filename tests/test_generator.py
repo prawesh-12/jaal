@@ -160,3 +160,35 @@ def test_opaque_ids_do_not_leak_group_membership(priors):
         dev = w.accounts.loc[w.truth["is_ring"].values, "device_id"]
         dev_pos = np.array([int(d[2:], 16) for d in dev])
         assert dev_pos.mean() > 0.15 * w.accounts["device_id"].nunique()
+
+
+def test_drop_addresses_thin_out_as_the_operator_gets_careful(priors):
+    """Without this the ring shares 4 addresses at every tier and exact
+    matching finds all of them, which leaves Phase 2 nothing to do."""
+    reuse = {}
+    for tier in config.TIER_NAMES:
+        shared = 0
+        for seed in range(4):
+            w = gen.generate(seed, tier, config.N_ACCOUNTS, priors)
+            m = w.truth.merge(w.accounts, on="account_id")
+            for _gid, block in m[m["is_ring"]].groupby("group_id"):
+                shared += len(block) - block["address_id"].nunique()
+        reuse[tier] = shared
+    ordered = [reuse[t] for t in config.TIER_NAMES]
+    assert ordered == sorted(ordered, reverse=True), reuse
+    assert reuse["adaptive"] == 0, "adaptive rings must not share an address"
+
+
+def test_adaptive_rings_still_share_a_pincode(priors):
+    """Goods have to be delivered. The neighbourhood is the last thing left."""
+    w = gen.generate(2, "adaptive", config.N_ACCOUNTS, priors)
+    m = w.truth.merge(w.accounts, on="account_id")
+    for _gid, block in m[m["is_ring"]].groupby("group_id"):
+        assert block["pincode"].nunique() == 1
+
+
+def test_family_signups_fit_inside_the_world_window(priors):
+    """A family that has ordered for 900 days needs 900 days to sign up in."""
+    w = gen.generate(1, "moderate", config.N_ACCOUNTS, priors)
+    span = (w.accounts["signup_ts"].max() - w.accounts["signup_ts"].min()) / 86400
+    assert span <= gen.WORLD_DAYS + 1, f"world spans {span:.0f} days"

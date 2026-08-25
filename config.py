@@ -36,15 +36,24 @@ HOLDOUT_SEEDS = range(900, 1000)
 # signup_window_days:  how long the ring takes to create all its accounts
 # value_jitter:        rupee spread of order values above the coupon floor
 # camouflage:          fraction of ring accounts that behave like real customers
+# accounts_per_drop:   how many accounts share one delivery address. An operator
+#                      careful enough to rotate devices rotates drop points too.
+#                      Not in the plan's table, added because without it exact
+#                      address matching finds every ring at every tier and
+#                      Phase 2 has nothing left to do. See D-009.
 TIERS = {
     "obvious":       dict(device_reuse=1.00, signup_window_days=0.04,
-                          value_jitter=80,   camouflage=0.00),
+                          value_jitter=80,   camouflage=0.00,
+                          accounts_per_drop=20),
     "moderate":      dict(device_reuse=0.60, signup_window_days=3,
-                          value_jitter=200,  camouflage=0.00),
+                          value_jitter=200,  camouflage=0.00,
+                          accounts_per_drop=8),
     "sophisticated": dict(device_reuse=0.10, signup_window_days=21,
-                          value_jitter=600,  camouflage=0.00),
+                          value_jitter=600,  camouflage=0.00,
+                          accounts_per_drop=3),
     "adaptive":      dict(device_reuse=0.00, signup_window_days=45,
-                          value_jitter=1200, camouflage=0.15),
+                          value_jitter=1200, camouflage=0.15,
+                          accounts_per_drop=1),
 }
 TIER_NAMES = list(TIERS)
 

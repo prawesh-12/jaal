@@ -33,9 +33,11 @@ import config
 from detector.cli import add_common_args, parse_seeds
 from detector.resources import announce, apply
 
-# 2026-01-01 00:00:00 UTC. Worlds span one year from here.
+# 2026-01-01 00:00:00 UTC. A world covers the merchant's operating history.
+# It has to be at least as long as the longest lookalike span, since a family
+# that has been ordering for 900 days needs 900 days to have signed up in.
 EPOCH = 1_767_225_600
-WORLD_DAYS = 365
+WORLD_DAYS = 900
 DAY = 86_400
 
 # How the ordinary population behaves.
@@ -313,12 +315,15 @@ def _ring(rng, size, tier, priors, pools, ids, index) -> tuple[dict, dict]:
     reuse = rng.random(size) < t["device_reuse"]
     device = np.where(reuse, shared_device, fresh)
 
-    # Goods have to be delivered somewhere, so the operator cannot rotate
-    # addresses the way they rotate devices. One pincode, a handful of drops.
+    # Goods have to be delivered somewhere. The operator can change which door
+    # they knock on, but not which neighbourhood, so the pincode holds at every
+    # tier while the number of drop addresses grows with sophistication. At the
+    # adaptive tier every account has its own address and the pincode is the
+    # only static attribute the ring still shares.
     pincode = str(rng.choice(pools["pincodes"], p=pools["pin_w"]))
-    n_drops = max(1, size // 8)
+    n_drops = max(1, min(size, round(size / t["accounts_per_drop"])))
     drops = ids.addresses(n_drops)
-    address = rng.choice(drops, size)
+    address = (drops if n_drops == size else rng.choice(drops, size))
 
     # One or two prepaid card BINs.
     ring_bins = rng.choice(pools["bins"], size=int(rng.integers(1, 3)),
