@@ -168,3 +168,114 @@ shipped. The UI is first on the cut list.
 
 Pinned at 3.11.1 in requirements.txt. Charts are written offline by `run.sh`
 with no network access, and the backend is set to Agg so nothing needs a display.
+
+## D-013: Comparison levels are mutually exclusive
+Date: 2026-08-26
+Phase: 2
+
+The plan's step 2.1 lists `signup_1h` and `signup_24h` as separate entries in
+one dictionary, and step 2.4 sums the weight of every entry that fires. A pair
+30 minutes apart satisfies both, so its timing evidence is counted twice. The
+same holds for `value_within50` against a wider band.
+
+Implemented as Splink does it instead: a comparison holds ordered levels,
+evaluation stops at the first that matches, and exactly one level of every
+comparison contributes. `signup_gap` is one comparison with five levels rather
+than four separate flags.
+
+Non-agreement also carries weight now, `log2((1-m)/(1-u))`, which is negative.
+The plan's sketch skips fields that do not agree. Keeping them is what makes the
+total a real log-likelihood ratio, which is what `bits_to_probability` needs to
+mean anything. The cost of that choice shows up in D-016.
+
+## D-014: The m bootstrap seeds on popular values, not rare ones
+Date: 2026-08-26
+Phase: 2
+
+The plan's step 2.3 seeds m from pairs sharing a value held by at most three
+accounts, on the reasoning that a value nobody else has identifies one entity.
+Measured over 20 worlds across all four tiers, those pairs are **0.7%** true
+matches.
+
+The reasoning does not transfer. It assumes duplicates come in twos, which is
+true when deduplicating a customer table and false here: an operator runs eight
+to forty-five accounts, so their device is not rare, it is popular. Meanwhile a
+device held by exactly two accounts is a couple sharing a phone, which is the
+one thing that is definitely not one operator.
+
+Inverted: the seed is a device carrying six or more accounts, six being one more
+than the largest family in `config.LOOKALIKE_KINDS`. Purity 99.3% over 37,124
+pairs. The threshold comes from config, not from the answer key.
+
+Address cannot be used the same way at any window. A hostel holds 20 to 60
+unrelated students at one address, giving 3.3% purity, so the obvious
+cross-seeding trick is unavailable and m for the device comparison comes from a
+second scoring pass instead.
+
+## D-015: EM was built, measured, and lost to the bootstrap
+Date: 2026-08-26
+Phase: 2
+
+The plan names Expectation Maximisation as the proper fix for the seed bias, so
+it was implemented rather than waved at.
+
+Two failures on the way, both worth recording. Left free, the match rate ran
+from 0.0098 to the 0.5 ceiling in nine iterations and every weight collapsed to
+zero as m converged on u: blocked pairs all agree on something, so a free
+lambda lets EM explain the blocking structure instead of the ring structure.
+Fixing lambda at the value config implies stopped that. Then EM drove levels it
+could not see to zero, putting `order_value: no` at m = 0.0002, a weight of
+-11.95 bits, when the true pooled value across tiers is nearer 0.31. EM only
+learns from pairs it already believes are matches, so the careful operators it
+misses never get a vote and their absence hardens into a penalty against exactly
+the pairs it should be learning from. Dirichlet smoothing, 2% of the mass spread
+evenly, bounds that.
+
+With both fixes it produced a sensible table and still lost on every tier. Best
+pair F1, bootstrap against EM: obvious 0.991 / 0.793, moderate 0.706 / 0.372,
+sophisticated 0.118 / 0.101. The bootstrap ships. EM stays in `link_train.py`
+and its parameters stay in `link_params.json` under `m_em`.
+
+## D-016: `coupon_floor` and `order_value` are computed but not scored
+Date: 2026-08-26
+Phase: 2
+
+Both comparisons encode "the ring ordered near-identical amounts just above the
+coupon floor". That is a property of a careless operator. Because m is estimated
+from a seed set of careless operators, their no-agreement levels carry -6.61 and
+-6.99 bits, so a ring that jitters its order values is actively punished for
+doing so. The harder the case, the bigger the penalty, which is backwards.
+
+Measured on three independent blocks of ten validation worlds, removing them
+lifts sophisticated pair recall from 0.60, 0.47 and 0.55 to 0.84, 0.74 and 0.86,
+and adaptive recall from 0.14, 0.17 and 0.20 to 0.50, 0.49 and 0.56. Precision
+improves and the edge count falls. Capping negative weights instead was tried at
+0, -0.5, -1, -2, -3, -4 and -6 bits and recovered at best about half of it.
+
+They stay in `link.COMPARISONS` and are still computed, so the ablation reports
+what adding them back would cost. `link.SCORED_COMPARISONS` is what the scorer
+uses.
+
+The same bias is visible in `signup_gap`, where removing it raises adaptive
+recall by 0.118. It stays because dropping it costs moderate recall, and the
+ablation table names the trade rather than burying it.
+
+## D-017: The edge threshold is chosen by edge budget, not by pair F1
+Date: 2026-08-26
+Phase: 2
+
+Pair F1 is the wrong objective for this stage. The pair scorer is not the
+product, it builds the graph that Leiden partitions in Phase 3. The F1-optimal
+threshold is 40 bits, where the obvious tier reaches 0.9922 precision and the
+moderate tier has already lost 71% of its true pairs. An edge that is never
+created cannot be recovered by any later stage.
+
+So: take every edge the clustering can afford. The budget is 50,000 edges per
+12,000-account world, a mean degree near 8, which Leiden handles easily and
+which is sparse enough that a ring of thirty still stands out as a near-clique.
+That lands on 6 bits.
+
+The consequence is that 96% of edges at the operating threshold are wrong. That
+is deliberate and it must not be quoted as a detector precision. If Phase 3
+cannot separate signal from that graph, this threshold moves and the reason gets
+recorded here.

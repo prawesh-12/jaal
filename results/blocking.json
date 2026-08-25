@@ -1,0 +1,83 @@
+{
+ "n_seeds": 10,
+ "seed_range": [
+  0,
+  9
+ ],
+ "n_accounts_per_world": 12000,
+ "rules": [
+  "device",
+  "address",
+  "pin_bin",
+  "pin_month",
+  "pin_month_shift",
+  "bin_week"
+ ],
+ "max_block_size": 400,
+ "tiers": {
+  "obvious": {
+   "blocking_recall": 1.0,
+   "recall_min": 1.0,
+   "pair_reduction_ratio": 0.992336,
+   "candidate_pairs_mean": 551801,
+   "true_pairs_mean": 1327,
+   "blocks_skipped_mean": 1.0,
+   "recall_by_rule": {
+    "device": 1.0,
+    "address": 0.707,
+    "pin_bin": 0.6877,
+    "pin_month": 1.0,
+    "pin_month_shift": 1.0,
+    "bin_week": 0.7172
+   }
+  },
+  "moderate": {
+   "blocking_recall": 1.0,
+   "recall_min": 1.0,
+   "pair_reduction_ratio": 0.992466,
+   "candidate_pairs_mean": 542431,
+   "true_pairs_mean": 1322,
+   "blocks_skipped_mean": 1.0,
+   "recall_by_rule": {
+    "device": 0.3449,
+    "address": 0.2977,
+    "pin_bin": 0.7832,
+    "pin_month": 0.959,
+    "pin_month_shift": 0.9882,
+    "bin_week": 0.6426
+   }
+  },
+  "sophisticated": {
+   "blocking_recall": 0.9949,
+   "recall_min": 0.981,
+   "pair_reduction_ratio": 0.992451,
+   "candidate_pairs_mean": 543506,
+   "true_pairs_mean": 1256,
+   "blocks_skipped_mean": 1.0,
+   "recall_by_rule": {
+    "device": 0.0115,
+    "address": 0.115,
+    "pin_bin": 0.7036,
+    "pin_month": 0.6975,
+    "pin_month_shift": 0.828,
+    "bin_week": 0.2094
+   }
+  },
+  "adaptive": {
+   "blocking_recall": 0.9528,
+   "recall_min": 0.8778,
+   "pair_reduction_ratio": 0.992336,
+   "candidate_pairs_mean": 551733,
+   "true_pairs_mean": 1393,
+   "blocks_skipped_mean": 1.0,
+   "recall_by_rule": {
+    "device": 0.0,
+    "address": 0.0,
+    "pin_bin": 0.8188,
+    "pin_month": 0.5144,
+    "pin_month_shift": 0.5108,
+    "bin_week": 0.1178
+   }
+  }
+ }
+}
