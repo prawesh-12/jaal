@@ -1,0 +1,118 @@
+{
+ "resolution": 1.0,
+ "edge_threshold_bits": 6.0,
+ "min_cluster_size": 3,
+ "seed": 42,
+ "seed_range": [
+  700,
+  704
+ ],
+ "n_seeds": 5,
+ "n_accounts": 12000,
+ "tiers": {
+  "obvious": {
+   "n_clusters": 892,
+   "n_rings": 18,
+   "rings_fully_intact": 2,
+   "mean_ring_recovered": 1.0,
+   "rings_over_half_recovered": 18,
+   "max_cluster_size": 1812,
+   "mean_cluster_size": 40.53,
+   "clustered_accounts": 36096,
+   "ring_accounts_clustered": 480,
+   "n_ring_accounts": 480,
+   "pair_precision": 0.00071,
+   "pair_recall": 1.0,
+   "pair_f1": 0.00142,
+   "pairs_claimed": 10698123,
+   "leiden_disconnected": 0,
+   "dropped_small": 1636,
+   "edges": 159879,
+   "louvain": {
+    "disconnected": 0,
+    "n_clusters": 848,
+    "max_cluster_size": 1797,
+    "mean_ring_recovered": 1.0,
+    "pair_f1": 0.00171
+   }
+  },
+  "moderate": {
+   "n_clusters": 891,
+   "n_rings": 21,
+   "rings_fully_intact": 1,
+   "mean_ring_recovered": 1.0,
+   "rings_over_half_recovered": 21,
+   "max_cluster_size": 1604,
+   "mean_cluster_size": 40.21,
+   "clustered_accounts": 35793,
+   "ring_accounts_clustered": 480,
+   "n_ring_accounts": 480,
+   "pair_precision": 0.00086,
+   "pair_recall": 1.0,
+   "pair_f1": 0.00172,
+   "pairs_claimed": 8005386,
+   "leiden_disconnected": 0,
+   "dropped_small": 1608,
+   "edges": 157426,
+   "louvain": {
+    "disconnected": 4,
+    "n_clusters": 869,
+    "max_cluster_size": 1655,
+    "mean_ring_recovered": 1.0,
+    "pair_f1": 0.00158
+   }
+  },
+  "sophisticated": {
+   "n_clusters": 856,
+   "n_rings": 20,
+   "rings_fully_intact": 0,
+   "mean_ring_recovered": 1.0,
+   "rings_over_half_recovered": 20,
+   "max_cluster_size": 1613,
+   "mean_cluster_size": 42.67,
+   "clustered_accounts": 36439,
+   "ring_accounts_clustered": 480,
+   "n_ring_accounts": 480,
+   "pair_precision": 0.00077,
+   "pair_recall": 1.0,
+   "pair_f1": 0.00153,
+   "pairs_claimed": 8626940,
+   "leiden_disconnected": 0,
+   "dropped_small": 1555,
+   "edges": 164621,
+   "louvain": {
+    "disconnected": 3,
+    "n_clusters": 836,
+    "max_cluster_size": 1491,
+    "mean_ring_recovered": 1.0,
+    "pair_f1": 0.00151
+   }
+  },
+  "adaptive": {
+   "n_clusters": 853,
+   "n_rings": 21,
+   "rings_fully_intact": 1,
+   "mean_ring_recovered": 0.885,
+   "rings_over_half_recovered": 21,
+   "max_cluster_size": 1738,
+   "mean_cluster_size": 42.36,
+   "clustered_accounts": 35996,
+   "ring_accounts_clustered": 431,
+   "n_ring_accounts": 480,
+   "pair_precision": 0.00057,
+   "pair_recall": 0.78566,
+   "pair_f1": 0.00113,
+   "pairs_claimed": 8891547,
+   "leiden_disconnected": 0,
+   "dropped_small": 1583,
+   "edges": 161641,
+   "louvain": {
+    "disconnected": 1,
+    "n_clusters": 823,
+    "max_cluster_size": 1739,
+    "mean_ring_recovered": 0.9017,
+    "pair_f1": 0.00114
+   }
+  }
+ }
+}

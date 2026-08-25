@@ -1,0 +1,118 @@
+{
+ "resolution": 1.0,
+ "edge_threshold_bits": 14.0,
+ "min_cluster_size": 3,
+ "seed": 42,
+ "seed_range": [
+  700,
+  709
+ ],
+ "n_seeds": 10,
+ "n_accounts": 12000,
+ "tiers": {
+  "obvious": {
+   "n_clusters": 1854,
+   "n_rings": 35,
+   "rings_fully_intact": 21,
+   "mean_ring_recovered": 1.0,
+   "rings_over_half_recovered": 35,
+   "max_cluster_size": 62,
+   "mean_cluster_size": 6.59,
+   "clustered_accounts": 12222,
+   "ring_accounts_clustered": 960,
+   "n_ring_accounts": 960,
+   "pair_precision": 0.12771,
+   "pair_recall": 1.0,
+   "pair_f1": 0.2255,
+   "pairs_claimed": 120570,
+   "leiden_disconnected": 0,
+   "dropped_small": 5584,
+   "edges": 58613,
+   "louvain": {
+    "disconnected": 0,
+    "n_clusters": 1854,
+    "max_cluster_size": 62,
+    "mean_ring_recovered": 1.0,
+    "pair_f1": 0.2255
+   }
+  },
+  "moderate": {
+   "n_clusters": 1915,
+   "n_rings": 42,
+   "rings_fully_intact": 11,
+   "mean_ring_recovered": 1.0,
+   "rings_over_half_recovered": 42,
+   "max_cluster_size": 64,
+   "mean_cluster_size": 6.43,
+   "clustered_accounts": 12289,
+   "ring_accounts_clustered": 960,
+   "n_ring_accounts": 960,
+   "pair_precision": 0.11313,
+   "pair_recall": 1.0,
+   "pair_f1": 0.20281,
+   "pairs_claimed": 115288,
+   "leiden_disconnected": 0,
+   "dropped_small": 5577,
+   "edges": 54032,
+   "louvain": {
+    "disconnected": 0,
+    "n_clusters": 1915,
+    "max_cluster_size": 64,
+    "mean_ring_recovered": 1.0,
+    "pair_f1": 0.20281
+   }
+  },
+  "sophisticated": {
+   "n_clusters": 1904,
+   "n_rings": 37,
+   "rings_fully_intact": 6,
+   "mean_ring_recovered": 0.9889,
+   "rings_over_half_recovered": 37,
+   "max_cluster_size": 69,
+   "mean_cluster_size": 6.76,
+   "clustered_accounts": 12800,
+   "ring_accounts_clustered": 953,
+   "n_ring_accounts": 960,
+   "pair_precision": 0.10078,
+   "pair_recall": 0.97285,
+   "pair_f1": 0.1822,
+   "pairs_claimed": 135556,
+   "leiden_disconnected": 0,
+   "dropped_small": 5565,
+   "edges": 55774,
+   "louvain": {
+    "disconnected": 0,
+    "n_clusters": 1904,
+    "max_cluster_size": 69,
+    "mean_ring_recovered": 0.9889,
+    "pair_f1": 0.1822
+   }
+  },
+  "adaptive": {
+   "n_clusters": 1851,
+   "n_rings": 39,
+   "rings_fully_intact": 1,
+   "mean_ring_recovered": 0.58185,
+   "rings_over_half_recovered": 25,
+   "max_cluster_size": 64,
+   "mean_cluster_size": 6.52,
+   "clustered_accounts": 12047,
+   "ring_accounts_clustered": 678,
+   "n_ring_accounts": 960,
+   "pair_precision": 0.04685,
+   "pair_recall": 0.44119,
+   "pair_f1": 0.08444,
+   "pairs_claimed": 117475,
+   "leiden_disconnected": 0,
+   "dropped_small": 5577,
+   "edges": 45481,
+   "louvain": {
+    "disconnected": 0,
+    "n_clusters": 1851,
+    "max_cluster_size": 64,
+    "mean_ring_recovered": 0.5818,
+    "pair_f1": 0.08444
+   }
+  }
+ }
+}

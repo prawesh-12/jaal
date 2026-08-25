@@ -279,3 +279,50 @@ The consequence is that 96% of edges at the operating threshold are wrong. That
 is deliberate and it must not be quoted as a detector precision. If Phase 3
 cannot separate signal from that graph, this threshold moves and the reason gets
 recorded here.
+
+## D-018: The edge threshold moved from 6 bits to 14
+Date: 2026-08-26
+Phase: 3
+
+D-017 chose 6 bits on an edge budget and said the real test was whether Leiden
+could find structure in a graph where 96% of edges are wrong. It cannot. At 6
+bits Leiden returns clusters of up to 1,812 accounts and a pairwise F1 of
+0.0014. A blob containing every ring in the world is not a detection.
+
+Swept the threshold against the recall ceiling the classifier inherits, defined
+as the fraction of ring accounts sitting in a cluster that is majority ring:
+
+```
+threshold   obvious   moderate   sophisticated   adaptive   clusters/world
+   10        0.9740     0.8802        0.7474      0.5729        430
+   12        1.0000     0.9193        0.9766      0.8047        419
+   14        1.0000     1.0000        1.0000      0.7786        188
+   16        1.0000     1.0000        0.9948      0.6198         91
+   20        1.0000     1.0000        0.9583      0.2682         40
+   28        1.0000     1.0000        0.7995      0.0234         38
+```
+
+14 bits, which is where three tiers reach 1.0000 and adaptive is within 0.03 of
+its best while producing less than half the clusters of 12 bits.
+
+Recorded rather than quietly changed, because it is a case of a stage being
+tuned on the wrong objective. Pair F1 and cluster quality disagree, and cluster
+quality wins, because clusters are the only thing anything downstream can see.
+
+## D-019: Louvain did not fail at the operating point, and that is reported
+Date: 2026-08-26
+Phase: 3
+
+The plan expects Louvain to produce internally disconnected communities and
+treats the count as a headline. It does, but only on the dense graph: 8
+disconnected communities across 20 worlds at 6 bits, against zero from Leiden.
+
+On the 14 bit graph that ships, Louvain produces zero disconnected communities
+and the same pairwise F1 to four decimal places, across 40 worlds. The graph is
+sparse enough that its components are already small, so there is nothing for
+Louvain to glue together.
+
+Leiden stays the default because the guarantee is free and the failure mode is
+real. But the honest sentence is "Louvain fails on a graph we rejected for other
+reasons, and matches Leiden on the one we ship", not "Louvain produced 7 broken
+rings". The first sentence is true and the second one would not have been.
