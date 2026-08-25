@@ -22,10 +22,8 @@ Current phase: 1 (honest baseline), complete. Phase 2 next.
     2.4 score pairs, 2.5 threshold and ablation
 
 ## Blocked or uncertain
-- **Needs a decision from the developer.** The plan asks for `results/*.png`
-  (PR curves in 5.2, reliability diagram in 5.4, cost curve in 6.3) but caps
-  dependencies at nine and lists no plotting library. matplotlib is not
-  installed. Nothing before Phase 5 needs it. See D-002 for the fallback.
+- nothing. The matplotlib question is resolved: approved as a tenth dependency,
+  pinned at 3.11.1. See D-012.
 
 ## Numbers so far (all real, from committed runs)
 

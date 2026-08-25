@@ -13,6 +13,7 @@ untouched. `run.sh` will use `.venv/bin/python` if it exists and fall back to
 whatever `python3` is on PATH, so a judge who pip-installs globally still works.
 
 ## D-002: matplotlib will be needed, flagged not added
+**Resolved 2026-08-26: approved, see D-012.**
 Date: 2026-08-26
 Phase: 0
 
@@ -151,3 +152,19 @@ signups ran off the end of the world. One group spanned 724 days inside a
 365-day window. The window is now 900 days, which is the longest span any group
 needs. A world is the merchant's operating history, so it has to be at least as
 long as the oldest customer relationship in it.
+
+## D-012: matplotlib added as a tenth dependency
+Date: 2026-08-26
+Phase: 1, ahead of Phase 5
+
+Raised as a stop-and-ask under CLAUDE.md and approved by the developer. The plan
+requires `results/*.png` for the PR curves (5.2), the reliability diagram (5.4)
+and the cost curve (6.3), and none of the nine listed libraries can draw one.
+
+The alternative was to write curve data to JSON and render it in the Phase 9
+React dashboard. Rejected because the cost curve is the single most important
+chart in the submission, and under that plan it would only exist if the UI
+shipped. The UI is first on the cut list.
+
+Pinned at 3.11.1 in requirements.txt. Charts are written offline by `run.sh`
+with no network access, and the backend is set to Agg so nothing needs a display.
