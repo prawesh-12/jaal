@@ -302,9 +302,10 @@ def _singletons(rng, n, priors, pools, ids) -> tuple[dict, dict]:
     return accounts, truth
 
 
-def _ring(rng, size, tier, priors, pools, ids, index) -> tuple[dict, dict]:
+def _ring(rng, size, tier, priors, pools, ids, index,
+          tier_params=None) -> tuple[dict, dict]:
     """One operator running `size` accounts to farm the coupon `size` times."""
-    t = config.TIERS[tier]
+    t = tier_params or config.TIERS[tier]
     account_id = ids.accounts(size)
 
     # Devices. The operator has one phone and reuses it with probability
@@ -446,8 +447,15 @@ def load_priors(path: str = config.OLIST_PRIORS_PATH) -> dict:
 
 
 def generate(seed: int, tier: str, n_accounts: int = None,
-             priors: dict = None, n_lookalike_groups: int = None) -> World:
-    """One deterministic world. Same arguments always give the same accounts."""
+             priors: dict = None, n_lookalike_groups: int = None,
+             tier_params: dict = None, prevalence: float = None) -> World:
+    """One deterministic world. Same arguments always give the same accounts.
+
+    `tier_params` overrides the tier's settings, which is how Phase 7 sweeps
+    operator sophistication continuously instead of at four fixed points.
+    `prevalence` of 0.0 gives a world with no rings at all, which is how the
+    lookalike stress test measures false positives directly.
+    """
     if tier not in config.TIERS:
         raise ValueError(f"unknown tier {tier!r}, expected one of {config.TIER_NAMES}")
     n_accounts = n_accounts or config.N_ACCOUNTS
@@ -458,13 +466,17 @@ def generate(seed: int, tier: str, n_accounts: int = None,
         n_lookalike_groups = max(8, round(config.LOOKALIKE_GROUPS
                                           * n_accounts / config.N_ACCOUNTS))
 
+    if prevalence is None:
+        prevalence = config.RING_PREVALENCE
+
     rng = np.random.default_rng([seed, config.TIER_NAMES.index(tier)])
     pools = _make_pools(rng)
     ids = _Counter()
 
     blocks: list[tuple[dict, dict]] = []
-    for i, size in enumerate(ring_sizes(rng, n_accounts, config.RING_PREVALENCE)):
-        blocks.append(_ring(rng, size, tier, priors, pools, ids, i))
+    for i, size in enumerate(ring_sizes(rng, n_accounts, prevalence)):
+        blocks.append(_ring(rng, size, tier, priors, pools, ids, i,
+                            tier_params=tier_params))
     for i, (kind, size) in enumerate(lookalike_plan(rng, n_lookalike_groups)):
         blocks.append(_lookalike(rng, kind, size, priors, pools, ids, i))
 

@@ -109,6 +109,7 @@ def score_policy(table: pd.DataFrame, action: np.ndarray, **kw) -> dict:
 
     tp = int(n_ring[blocked].sum())
     fp = int(n_innocent[blocked].sum())
+    ring_reviewed = int(n_ring[reviewed].sum())
     missed = int(n_ring[allowed].sum()) + unclustered_ring_accounts(table)
     n_reviewed = int((n_ring + n_innocent)[reviewed].sum())
 
@@ -128,8 +129,13 @@ def score_policy(table: pd.DataFrame, action: np.ndarray, **kw) -> dict:
         "accounts_blocked": tp + fp,
         "accounts_reviewed": n_reviewed,
         "tp": tp, "fp": fp, "missed": missed,
+        "ring_accounts_reviewed": ring_reviewed,
         "precision": round(tp / (tp + fp), 4) if tp + fp else 0.0,
         "recall": round(tp / n_ring_total, 4) if n_ring_total else 0.0,
+        # Review is an action, not a miss. A reviewed ring account reaches a
+        # human, which is the point of having a third action at all.
+        "recall_including_review": round((tp + ring_reviewed) / n_ring_total, 4)
+        if n_ring_total else 0.0,
         "cost_rupees": total_cost,
         "do_nothing_rupees": costs.do_nothing_cost(n_ring_total),
         "net_vs_nothing_rupees": costs.do_nothing_cost(n_ring_total) - total_cost,
