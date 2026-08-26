@@ -329,6 +329,8 @@ twenty-four by permutation importance, and that is documented rather than hidden
 | Path | What is in it |
 | ---- | ------------- |
 | `docs/PITCH.md` | The opening above, on its own, for reading aloud |
+| `docs/VIDEO_SCRIPT.md` | Five minute script with timestamps |
+| `docs/phases/phase-11-adversarial.md` | The operator that adapts, round by round |
 | `docs/built_till_now.md` | Everything built so far, in depth, with every measured number |
 | `docs/00-overview.md` | What this is, for someone who knows nothing |
 | `docs/01-architecture.md` | How the pieces fit, and the three boundaries |
