@@ -1,22 +1,21 @@
 /*
-  Jaal means net. Four nodes caught in one mesh, which is the whole idea:
+  Jaal means net. Four accounts caught in one mesh, which is the whole idea:
   no single account looks wrong, the edges between them do.
 */
-export function Mark({ size = 28 }) {
+export function Mark({ size = 22 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <g stroke="var(--color-accent)" strokeWidth="1.25" opacity="0.55">
-        <path d="M8 9 L24 9 M8 23 L24 23 M8 9 L8 23 M24 9 L24 23" />
-        <path d="M8 9 L24 23 M24 9 L8 23" />
-        <path d="M16 4 L16 28 M4 16 L28 16" opacity="0.35" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <g stroke="var(--color-primary)" strokeWidth="1.1" strokeLinecap="round" opacity="0.5">
+        <path d="M6 6 H18 M6 18 H18 M6 6 V18 M18 6 V18" />
+        <path d="M6 6 L18 18 M18 6 L6 18" />
       </g>
-      <g fill="var(--color-accent)">
-        <circle cx="8" cy="9" r="2.1" />
-        <circle cx="24" cy="9" r="2.1" />
-        <circle cx="8" cy="23" r="2.1" />
-        <circle cx="24" cy="23" r="2.1" />
+      <g fill="var(--color-primary)">
+        <circle cx="6" cy="6" r="1.9" />
+        <circle cx="18" cy="6" r="1.9" />
+        <circle cx="6" cy="18" r="1.9" />
+        <circle cx="18" cy="18" r="1.9" />
       </g>
-      <circle cx="16" cy="16" r="2.6" fill="var(--color-pos)" />
+      <circle cx="12" cy="12" r="2.4" fill="var(--color-mark-1)" />
     </svg>
   );
 }

@@ -3,10 +3,7 @@ import { cn } from "@/lib/utils";
 export function Table({ className, ...props }) {
   return (
     <div className="w-full overflow-x-auto">
-      <table
-        className={cn("w-full border-collapse text-[13px]", className)}
-        {...props}
-      />
+      <table className={cn("w-full border-collapse text-[13px]", className)} {...props} />
     </div>
   );
 }
@@ -19,7 +16,7 @@ export function TR({ className, ...props }) {
   return (
     <tr
       className={cn(
-        "border-b border-line-soft last:border-0 transition-colors hover:bg-surface-2/40",
+        "border-b border-border-subtle transition-colors last:border-0 hover:bg-muted/35",
         className
       )}
       {...props}
@@ -31,7 +28,7 @@ export function TH({ className, align = "right", ...props }) {
   return (
     <th
       className={cn(
-        "eyebrow border-b border-line px-3 py-2.5 font-medium",
+        "border-b border-border px-3 py-2.5 text-[12px] font-medium text-subtle",
         align === "left" ? "text-left" : "text-right",
         className
       )}

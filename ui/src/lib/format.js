@@ -15,6 +15,7 @@ export function compactRupees(n) {
 export const count = (n) => Number(n).toLocaleString("en-IN");
 export const pct = (n, dp = 1) => `${(n * 100).toFixed(dp)}%`;
 export const dp4 = (n) => Number(n).toFixed(4);
+export const dp2 = (n) => Number(n).toFixed(2);
 
 // Nothing blocked means precision is 0 of 0. That is undefined, not zero.
 export const isUndefinedPrecision = (p) => p === null || p === undefined;
@@ -26,4 +27,15 @@ export const TIER_COLOR = {
   moderate: "var(--color-tier-moderate)",
   sophisticated: "var(--color-tier-sophisticated)",
   adaptive: "var(--color-tier-adaptive)",
+};
+
+/*
+  The only four hues anything on this page is allowed to draw with. They come
+  from one validated set, so a chart never invents a fifth colour.
+*/
+export const MARK = {
+  green: "var(--color-mark-1)",
+  blue: "var(--color-mark-2)",
+  amber: "var(--color-mark-3)",
+  red: "var(--color-mark-4)",
 };

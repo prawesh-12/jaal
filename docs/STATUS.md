@@ -19,9 +19,9 @@ round tested a claim the round before had published, and withdrew it.
 | holdout | Seeds 900 to 999, opened once, re-run twice since and identical each time. |
 | adversarial loop | An operator that adapts to its own outcomes and drives blocking to zero in two moves. How much of the review queue it can see is a setting, swept from none to all. |
 | explanations | 1,334 review notes, 40 written by a language model, every number audited against the pipeline. |
-| interface | README opening in plain language, run.sh, a Flask service taking raw accounts, and a React dashboard on Tailwind with a filterable review queue, per-tier meters and a diverging baseline comparison. |
+| interface | README opening in plain language, run.sh, a Flask service taking raw accounts, and a six-tab React dashboard on Tailwind and shadcn/ui: results, cost, failures, the pipeline stage by stage, a filterable review queue, and the charts the pipeline drew. Chart colours pass a colour-vision check. |
 
-202 tests. 39 decisions recorded, including every wrong turn.
+202 tests. 40 decisions recorded, including every wrong turn.
 
 Full account: `docs/built_till_now.md`. Every measured number: `docs/METRICS.md`.
 

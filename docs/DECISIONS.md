@@ -696,3 +696,54 @@ What the redesign actually changed, beyond looks:
 - Chart animation is off. It said nothing and it left the lines undrawn in a
   headless screenshot.
 
+
+## D-039: Rebuild the dashboard as a product page, and validate the chart palette
+Date: 2026-08-26
+Phase: 9
+
+The last version was reviewed as looking generated rather than designed. Four
+things were wrong with it and all four are fixed here.
+
+**The page repeated itself.** A full hero and a five-line defence notice sat
+above the tab strip, so every tab opened with the same 400 pixels of text before
+any content. The hero now belongs to the Overview tab alone, the tabs are real
+navigation in the header, each other tab opens with its own title and one line
+of context, and the defence statement is a single line under the header with the
+reasoning moved into a structured footer.
+
+**Coloured left rails.** Three components carried a 3px accent bar down their
+left edge: the defence notice, each failure catalogue entry, and each review
+note. They are gone. Structure now comes from a numbered index badge on a
+failure entry, a metadata band on a review note, and a tinted card on the
+break-even callout.
+
+**The `./run.sh` chip in the header.** It sat next to the run scope and told a
+reader nothing. Removed. The reproducibility claim still appears in the footer,
+where it is a claim rather than decoration.
+
+**The palette was never checked.** The tier ramp was green, cyan, amber, red.
+Run through the dataviz palette validator against the dark surface, two adjacent
+pairs failed: green against cyan at Delta E 12.8 for normal vision, which is
+below the 15 floor, and amber against red at 3.9 under simulated deuteranopia.
+The ramp is now green, blue, amber, red with lightness carrying the ordering,
+which passes every check. Mark colours and text colours are separate token
+families, because a colour dark enough to be a distinguishable line is not
+always light enough to be readable 12px text.
+
+Alongside that, a new Pipeline tab. Four result files that the pipeline has been
+writing since Phase 2 had never been shown anywhere: `blocking.json`,
+`link_params.json`, `clustering.json` and `model.json`. The tab shows blocking
+recall and pair reduction per tier, the per-rule breakdown, the match weight in
+bits for every comparison level, the Leiden and Louvain comparison, the four
+calibration variants, and permutation importance. Nothing on it is new work,
+only measured numbers that had no home.
+
+Rendering the tab caught a wrong sentence before it shipped. The first draft
+said device is the only blocking rule that holds across the tiers. The table
+underneath it says the opposite: device runs 1.0000 on the obvious tier and
+0.0000 on the adaptive one, and `pin_bin` is the rule that holds, at 0.8188.
+That is the case for looking at the rendered page rather than trusting the prose
+you just wrote.
+
+Separately, `results/explanations.json` was found holding 40 notes instead of
+the committed 1,334, left behind by a partial run. Restored from the commit.

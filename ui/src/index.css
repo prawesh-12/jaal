@@ -1,84 +1,97 @@
 @import "tailwindcss";
 
 /*
-  Dark only. This is a risk console, it is read in a dark room next to a
-  terminal, and a light theme would mean a second palette to keep honest.
+  Dark only. This is a risk console, read next to a terminal, and a light
+  theme would mean a second palette to keep honest.
+
+  Token names follow shadcn/ui so the components read the way that library
+  expects: background / card / muted / border, and a -foreground for text.
 */
 @theme {
-  --color-bg: oklch(0.145 0.008 265);
-  --color-bg-deep: oklch(0.115 0.008 265);
-  --color-surface: oklch(0.187 0.011 265);
-  --color-surface-2: oklch(0.225 0.013 265);
-  --color-line: oklch(0.272 0.014 265);
-  --color-line-soft: oklch(0.232 0.012 265);
-  --color-ink: oklch(0.965 0.004 265);
-  --color-ink-dim: oklch(0.715 0.017 265);
-  --color-ink-faint: oklch(0.565 0.018 265);
+  --color-background: oklch(0.152 0.006 265);
+  --color-card: oklch(0.191 0.008 265);
+  --color-elevated: oklch(0.224 0.009 265);
+  --color-muted: oklch(0.238 0.009 265);
 
-  --color-accent: oklch(0.705 0.155 258);
-  --color-accent-soft: oklch(0.42 0.10 258);
-  --color-pos: oklch(0.775 0.155 158);
-  --color-neg: oklch(0.675 0.185 22);
-  --color-warn: oklch(0.815 0.135 78);
+  --color-border: oklch(0.272 0.011 265);
+  --color-border-subtle: oklch(0.229 0.009 265);
 
-  /* Tier ramp, easiest to hardest. Green means we catch it, red means we do not. */
-  --color-tier-obvious: oklch(0.775 0.155 158);
-  --color-tier-moderate: oklch(0.745 0.135 210);
-  --color-tier-sophisticated: oklch(0.815 0.135 78);
-  --color-tier-adaptive: oklch(0.675 0.185 22);
+  --color-foreground: oklch(0.972 0.003 265);
+  --color-muted-foreground: oklch(0.724 0.014 265);
+  --color-subtle: oklch(0.582 0.015 265);
+
+  /*
+    Two colour families, because marks and text have different jobs.
+
+    Mark colours are what a chart draws with. They were checked with the
+    dataviz palette validator against this surface: every adjacent pair stays
+    apart under simulated protanopia and deuteranopia, which the earlier
+    green/cyan and amber/red pairs did not. Lightness carries the tier
+    ordering so the ramp still reads in greyscale.
+  */
+  --color-mark-1: oklch(0.665 0.16 152);
+  --color-mark-2: oklch(0.635 0.16 255);
+  --color-mark-3: oklch(0.665 0.15 80);
+  --color-mark-4: oklch(0.535 0.19 25);
+
+  --color-tier-obvious: oklch(0.665 0.16 152);
+  --color-tier-moderate: oklch(0.635 0.16 255);
+  --color-tier-sophisticated: oklch(0.665 0.15 80);
+  --color-tier-adaptive: oklch(0.535 0.19 25);
+
+  /* Text versions of the same four, lifted until they clear 4.5:1 on the card. */
+  --color-primary: oklch(0.720 0.145 255);
+  --color-positive: oklch(0.780 0.150 152);
+  --color-negative: oklch(0.700 0.190 25);
+  --color-caution: oklch(0.820 0.130 80);
 
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --radius-card: 0.875rem;
+  --radius-panel: 0.75rem;
 }
 
 @layer base {
   * {
-    border-color: var(--color-line);
+    border-color: var(--color-border-subtle);
   }
 
   html {
     color-scheme: dark;
+    scroll-behavior: smooth;
   }
 
   body {
     margin: 0;
-    background: var(--color-bg);
-    color: var(--color-ink);
+    background: var(--color-background);
+    color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-size: 14px;
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "ss01";
   }
 
-  /* A single cool wash behind the header so the page has a top and a bottom. */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: -20% 0 auto 0;
-    height: 70vh;
-    pointer-events: none;
-    background:
-      radial-gradient(60% 55% at 50% 0%, oklch(0.45 0.11 258 / 0.30), transparent 70%),
-      radial-gradient(35% 40% at 85% 5%, oklch(0.52 0.13 158 / 0.11), transparent 70%);
-    z-index: 0;
-  }
-
   ::selection {
-    background: var(--color-accent-soft);
-    color: var(--color-ink);
+    background: color-mix(in oklch, var(--color-primary) 32%, transparent);
+    color: var(--color-foreground);
   }
 
-  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  :focus-visible {
+    outline: 2px solid color-mix(in oklch, var(--color-primary) 70%, transparent);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: var(--color-line);
-    border: 3px solid var(--color-bg);
+    background: var(--color-border);
+    border: 3px solid var(--color-background);
     border-radius: 999px;
   }
-  ::-webkit-scrollbar-thumb:hover { background: var(--color-surface-2); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-elevated); }
 }
 
+/* Figures line up in columns when they are tabular and monospaced. */
 @utility num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -86,26 +99,25 @@
   letter-spacing: -0.02em;
 }
 
-@utility eyebrow {
-  font-size: 0.6875rem;
-  line-height: 1rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-ink-faint);
+/* Small caption above or beside a value. Sentence case on purpose. */
+@utility label {
+  font-size: 0.75rem;
+  line-height: 1.1rem;
+  font-weight: 500;
+  color: var(--color-subtle);
 }
 
-/* One hairline of light along the top edge, so cards read as lifted. */
-@utility lift {
-  box-shadow:
-    inset 0 1px 0 0 oklch(1 0 0 / 0.045),
-    0 1px 2px 0 oklch(0 0 0 / 0.4);
+@utility panel {
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
 }
 
-@keyframes rise {
-  from { opacity: 0; transform: translateY(6px); }
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
 
-@utility rise {
-  animation: rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+@utility fade-up {
+  animation: fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

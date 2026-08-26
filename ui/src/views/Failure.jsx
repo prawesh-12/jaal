@@ -2,12 +2,11 @@ import {
   CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
-import { AlertTriangle, Home } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Empty, SectionHead, Skeleton } from "@/components/bits";
+import { Empty, PageHead, SectionHead, Skeleton } from "@/components/bits";
 import { ChartFrame, ChartTooltip, LegendChips, axisProps, gridProps } from "@/components/chart";
-import { count, dp4, pct } from "@/lib/format";
+import { MARK, count, dp4 } from "@/lib/format";
 
 const TICKS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
@@ -19,30 +18,35 @@ function deadZoneStart(curve) {
 
 function FailureCard({ f, index }) {
   return (
-    <Card className="relative overflow-hidden">
-      <span className="absolute inset-y-0 left-0 w-[3px] bg-neg/70" />
-      <CardContent className="pt-5 pl-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="num text-[11px] text-ink-faint">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-          <h3 className="text-[14px] font-semibold tracking-tight text-ink">
-            {f.failure}
-          </h3>
-          <Badge>{f.example}</Badge>
+    <Card>
+      <div className="flex gap-4 px-5 pt-5 pb-4">
+        <span className="num grid size-6 shrink-0 place-items-center rounded-md border border-border bg-muted text-[11px] text-subtle">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <h3 className="text-[14px] font-semibold tracking-tight text-foreground">
+              {f.failure}
+            </h3>
+            <Badge tone="outline">{f.example}</Badge>
+          </div>
+          <p className="num mt-2 text-[12.5px] text-muted-foreground">{f.detail}</p>
         </div>
-        <p className="num mt-2.5 text-[12.5px] text-ink-dim">{f.detail}</p>
-        <dl className="mt-3 grid gap-3 border-t border-line-soft pt-3 sm:grid-cols-2">
-          <div>
-            <dt className="eyebrow">why it happens</dt>
-            <dd className="mt-1 text-[12.5px] leading-relaxed text-ink-dim">{f.why}</dd>
-          </div>
-          <div>
-            <dt className="eyebrow">what it costs</dt>
-            <dd className="mt-1 text-[12.5px] leading-relaxed text-ink-dim">{f.cost}</dd>
-          </div>
-        </dl>
-      </CardContent>
+      </div>
+      <dl className="grid border-t border-border-subtle sm:grid-cols-2">
+        <div className="border-b border-border-subtle px-5 py-4 sm:border-r sm:border-b-0">
+          <dt className="label">Why it happens</dt>
+          <dd className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+            {f.why}
+          </dd>
+        </div>
+        <div className="px-5 py-4">
+          <dt className="label">What it costs</dt>
+          <dd className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+            {f.cost}
+          </dd>
+        </div>
+      </dl>
     </Card>
   );
 }
@@ -52,42 +56,41 @@ function Lookalikes({ stress }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Home size={15} className="text-pos" />
-          Groups that look like rings but are not
-        </CardTitle>
+        <CardTitle>Groups that look like rings but are not</CardTitle>
         <CardDescription>
           {count(stress.worlds)} worlds containing no rings at all,{" "}
           {count(stress.n_accounts)} accounts. Families share an address. Flatmates
-          share a device. Hostels share both. If a detector cannot tell them from a
-          ring, it is worthless in production.
+          share a device. Hostels share both. A detector that cannot tell them from a
+          ring is worthless in production.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {kinds.map(([kind, k]) => (
-            <div key={kind} className="rounded-lg border border-line-soft bg-surface-2/40 p-3">
-              <div className="eyebrow">{kind}</div>
-              <div className="num mt-1.5 text-lg text-ink">{count(k.clusters)}</div>
-              <div className="mt-0.5 text-[11.5px] text-ink-faint">clusters</div>
-              <div className="mt-2.5 border-t border-line-soft pt-2 text-[11.5px]">
-                <span className="num text-pos">{k.wrongly_blocked}</span>
-                <span className="text-ink-faint"> blocked</span>
+            <div key={kind} className="rounded-md border border-border-subtle bg-muted/35 p-3">
+              <div className="label">{kind}</div>
+              <div className="num mt-1.5 text-[19px] leading-none text-foreground">
+                {count(k.clusters)}
+              </div>
+              <div className="mt-1 text-[11.5px] text-subtle">clusters</div>
+              <div className="mt-3 border-t border-border-subtle pt-2 text-[11.5px]">
+                <span className="num text-positive">{k.wrongly_blocked}</span>
+                <span className="text-subtle"> blocked</span>
                 {k.sent_to_review > 0 && (
                   <>
-                    <span className="num text-warn">, {k.sent_to_review}</span>
-                    <span className="text-ink-faint"> reviewed</span>
+                    <span className="num text-caution">, {k.sent_to_review}</span>
+                    <span className="text-subtle"> reviewed</span>
                   </>
                 )}
               </div>
             </div>
           ))}
         </div>
-        <p className="mt-4 text-[13px] leading-relaxed text-ink-dim">
-          <span className="num text-pos">{count(stress.accounts_wrongly_blocked)}</span>{" "}
+        <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">
+          <span className="num text-positive">{count(stress.accounts_wrongly_blocked)}</span>{" "}
           accounts wrongly blocked across all{" "}
-          <span className="num text-ink">{count(stress.n_clusters)}</span> clusters. One
-          ordinary cluster reached the review queue. Nothing else was touched.
+          <span className="num text-foreground">{count(stress.n_clusters)}</span> clusters.
+          One ordinary cluster reached the review queue. Nothing else was touched.
         </p>
       </CardContent>
     </Card>
@@ -115,16 +118,21 @@ export default function Failure({ holdout, loading }) {
     Math.max(...device.map((d) => d.blocked)) - Math.min(...device.map((d) => d.blocked));
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
+      <PageHead
+        title="Where this stops working"
+        lede="Naming the blind spot precisely is worth more than claiming there isn't one. Everything on this page is a measured failure, not a caveat."
+      />
+
       <ChartFrame
-        title="Where this detector stops working"
-        description="Operator sophistication swept from the obvious tier at 0.0 to the adaptive tier at 1.0. Naming the blind spot precisely is worth more than claiming there isn't one."
+        title="Recall as the operator gets better"
+        description="Operator sophistication swept from the obvious tier at 0.0 to the adaptive tier at 1.0. Past the shaded edge, blocking has stopped contributing anything and only the review queue is still working."
         legend={
           <LegendChips
             items={[
-              { label: "recall, blocked or reviewed", color: "var(--color-pos)" },
-              { label: "recall, blocked", color: "var(--color-accent)" },
-              { label: "precision", color: "var(--color-warn)" },
+              { label: "recall, blocked or reviewed", color: MARK.green },
+              { label: "recall, blocked", color: MARK.blue },
+              { label: "precision", color: MARK.amber },
             ]}
           />
         }
@@ -138,11 +146,11 @@ export default function Failure({ holdout, loading }) {
               <ReferenceArea
                 x1={dead}
                 x2={1}
-                fill="var(--color-neg)"
-                fillOpacity={0.06}
+                fill={MARK.red}
+                fillOpacity={0.07}
                 label={{
                   value: "blocking is finished here",
-                  fill: "var(--color-neg)",
+                  fill: "var(--color-negative)",
                   fontSize: 11,
                   position: "center",
                 }}
@@ -150,17 +158,17 @@ export default function Failure({ holdout, loading }) {
             )}
             <XAxis dataKey="sophistication" ticks={TICKS} tickFormatter={(v) => v.toFixed(1)} {...axisProps} />
             <YAxis domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} width={40} {...axisProps} />
-            <ReferenceLine y={0.5} stroke="var(--color-line)" strokeDasharray="3 6" />
+            <ReferenceLine y={0.5} stroke="var(--color-border)" strokeDasharray="3 6" />
             <Tooltip
-              cursor={{ stroke: "var(--color-line)" }}
+              cursor={{ stroke: "var(--color-border)" }}
               content={<ChartTooltip labelPrefix="sophistication " format={(v) => dp4(v)} />}
             />
             <Line type="monotone" dataKey="withReview" name="blocked or reviewed"
-              stroke="var(--color-pos)" strokeWidth={2} dot={false} isAnimationActive={false} />
+              stroke={MARK.green} strokeWidth={2} dot={false} isAnimationActive={false} />
             <Line type="monotone" dataKey="blocked" name="blocked"
-              stroke="var(--color-accent)" strokeWidth={2} dot={false} isAnimationActive={false} />
+              stroke={MARK.blue} strokeWidth={2} dot={false} isAnimationActive={false} />
             <Line type="monotone" dataKey="precision" name="precision"
-              stroke="var(--color-warn)" strokeWidth={2} strokeDasharray="4 3"
+              stroke={MARK.amber} strokeWidth={2} strokeDasharray="4 3"
               dot={false} isAnimationActive={false} connectNulls={false} />
           </LineChart>
         </ResponsiveContainer>
@@ -172,8 +180,8 @@ export default function Failure({ holdout, loading }) {
         legend={
           <LegendChips
             items={[
-              { label: "recall, blocked or reviewed", color: "var(--color-pos)" },
-              { label: "recall, blocked", color: "var(--color-accent)" },
+              { label: "recall, blocked or reviewed", color: MARK.green },
+              { label: "recall, blocked", color: MARK.blue },
             ]}
           />
         }
@@ -186,13 +194,13 @@ export default function Failure({ holdout, loading }) {
             <XAxis dataKey="reuse" ticks={TICKS} tickFormatter={(v) => v.toFixed(1)} {...axisProps} />
             <YAxis domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} width={40} {...axisProps} />
             <Tooltip
-              cursor={{ stroke: "var(--color-line)" }}
+              cursor={{ stroke: "var(--color-border)" }}
               content={<ChartTooltip labelPrefix="device reuse " format={(v) => dp4(v)} />}
             />
             <Line type="monotone" dataKey="withReview" name="blocked or reviewed"
-              stroke="var(--color-pos)" strokeWidth={2} dot={false} isAnimationActive={false} />
+              stroke={MARK.green} strokeWidth={2} dot={false} isAnimationActive={false} />
             <Line type="monotone" dataKey="blocked" name="blocked"
-              stroke="var(--color-accent)" strokeWidth={2} dot={false} isAnimationActive={false} />
+              stroke={MARK.blue} strokeWidth={2} dot={false} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       </ChartFrame>
@@ -202,11 +210,7 @@ export default function Failure({ holdout, loading }) {
       <section>
         <SectionHead
           title="Failure catalogue"
-          right={
-            <Badge tone="neg">
-              <AlertTriangle size={12} /> {holdout.failure_catalogue.length} known
-            </Badge>
-          }
+          right={<Badge tone="negative">{holdout.failure_catalogue.length} known</Badge>}
         >
           Every way this system is known to fail, each with a real cluster from a real
           seed. Kept because a failure nobody wrote down gets rediscovered in
