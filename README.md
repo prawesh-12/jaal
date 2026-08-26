@@ -41,7 +41,7 @@ once. Never averaged across tiers, because the variation is the finding.
 | obvious | 0.9974 | 1.0000 | 0.5016 | 0.9931 | 0.00067 | 4,815 | 5,054 | **+Rs.1,148,700** |
 | moderate | 0.9971 | 1.0000 | 0.1425 | 0.9609 | 0.00055 | 1,368 | 8,504 | **+Rs.569,400** |
 | sophisticated | 0.9763 | 0.9961 | 0.0266 | 0.9129 | 0.00162 | 256 | 9,298 | **+Rs.343,100** |
-| **adaptive** | 0.8046 | **0.0000** | **0.0000** | 0.5669 | 0.01035 | **0** | 5,977 | +Rs.191,850 |
+| **adaptive** | 0.8046 | **n/a (no blocks)** | **0.0000** | 0.5669 | 0.01035 | **0** | 5,977 | +Rs.191,850 |
 
 Pooled: precision **0.9998**, recall 0.1677, recall including review 0.8585,
 total loss Rs.5,426,950 against Rs.7,680,000 for deploying nothing, so
@@ -50,7 +50,9 @@ total loss Rs.5,426,950 against Rs.7,680,000 for deploying nothing, so
 Read the `adaptive` row before anything else. Against an operator who rotates
 every device, uses a different delivery address for every account, spreads
 signups over six weeks and has 15% of accounts behave like real customers, this
-system **blocks nothing at all**. It still saves money, because it routes 57% of
+system **blocks nothing at all**. Its precision is reported as `n/a` rather than
+0.0000, because 0 of 0 blocked is undefined. Printing it as a zero would read as
+"everything it blocked was wrong", which is a different and untrue claim. It still saves money, because it routes 57% of
 those ring accounts to a human instead of throwing customers away, but as an
 automatic detector it does not work there and the table says so.
 

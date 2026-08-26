@@ -126,7 +126,7 @@ def device_only_curve(fitted: dict, n_accounts: int, seeds: list[int],
                          "precision": r["precision"]})
             print(f"  device reuse {reuse:.2f}: recall {r['recall']:.4f} "
                   f"(+review {r['recall_including_review']:.4f}), "
-                  f"precision {r['precision']:.4f}")
+                  f"precision {decide.format_precision(r['precision'])}")
     return rows
 
 
@@ -159,7 +159,7 @@ def detection_curve(fitted: dict, n_accounts: int, seeds: list[int],
         print(f"  sophistication {s_val:.2f} (device reuse "
               f"{tp['device_reuse']:.2f}, {tp['accounts_per_drop']:.1f} accounts "
               f"per drop): recall {r['recall']:.4f}, "
-              f"precision {r['precision']:.4f}")
+              f"precision {decide.format_precision(r['precision'])}")
     return rows
 
 
@@ -332,8 +332,8 @@ def plot_detection_curve(curve: list[dict], device_curve: list[dict],
     ax.plot(x, [c["recall_including_review"] for c in curve], "^-",
             c="tab:green", label="recall (blocked or reviewed)")
     ax.plot(x, [c["recall"] for c in curve], "o-", label="recall (blocked)")
-    ax.plot(x, [c["precision"] for c in curve], "s-", alpha=0.6,
-            label="precision")
+    ax.plot(x, [c["precision"] or 0.0 for c in curve], "s-", alpha=0.6,
+            label="precision (0 where nothing was blocked)")
     ax.axhline(costs.breakeven_precision(), ls="--", c="grey",
                label=f"breakeven precision ({costs.breakeven_precision():.3f})")
     ax.set_xlabel("operator sophistication\n"
@@ -406,7 +406,8 @@ def main() -> None:
     for tier, r in matrix.items():
         net = r["net_vs_nothing_rupees"]
         print(f"{tier:<15} {r['account_prevalence']:<11.5f} {r['n_clusters']:<9,} "
-              f"{r['pr_auc']:<9.4f} {r['precision']:<9.4f} {r['recall']:<9.4f} "
+              f"{r['pr_auc']:<9.4f} {decide.format_precision(r['precision'], 9)} "
+              f"{r['recall']:<9.4f} "
               f"{r['recall_including_review']:<9.4f} "
               f"{r['brier']:<9.5f} {r['accounts_blocked']:<9,} "
               f"{r['accounts_reviewed']:<10,} "

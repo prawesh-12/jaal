@@ -28,7 +28,7 @@ A full account of everything built is in `docs/built_till_now.md`.
 | item | state |
 | ---- | ----- |
 | 1. Review accuracy sensitivity | done. Break-even reviewer accuracy 0.5753 pooled |
-| 2. Undefined precision | not started |
+| 2. Undefined precision | done. Adaptive precision reads `n/a (no blocks)` everywhere |
 | 3. Bounded review capacity | not started |
 | 4. Ninety-second version | not started |
 | 5. Adversarial loop | not started |

@@ -114,7 +114,7 @@ Seeds 900 to 999, 100 worlds per tier, 12,000 accounts each. Opened once.
 | obvious | 0.9974 | 1.0000 | 0.5016 | 0.9931 | 0.00067 | +Rs.1,148,700 |
 | moderate | 0.9971 | 1.0000 | 0.1425 | 0.9609 | 0.00055 | +Rs.569,400 |
 | sophisticated | 0.9763 | 0.9961 | 0.0266 | 0.9129 | 0.00162 | +Rs.343,100 |
-| adaptive | 0.8046 | 0.0000 | 0.0000 | 0.5669 | 0.01035 | +Rs.191,850 |
+| adaptive | 0.8046 | n/a (no blocks) | 0.0000 | 0.5669 | 0.01035 | +Rs.191,850 |
 
 Pooled: precision 0.9998, recall 0.1677, recall including review 0.8585, **+Rs.2,253,050** against Rs.7,680,000 for doing nothing.
 

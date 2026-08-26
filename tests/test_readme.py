@@ -41,7 +41,8 @@ def test_the_results_table_matches_the_holdout_file(readme, holdout):
                     if line.strip().startswith(f"| {tier} |")
                     or line.strip().startswith(f"| **{tier}** |")), None)
         assert row, f"no README row for {tier}"
-        for value in (f"{r['pr_auc']:.4f}", f"{r['precision']:.4f}",
+        from detector.decide import format_precision
+        for value in (f"{r['pr_auc']:.4f}", format_precision(r["precision"]),
                       f"{r['recall']:.4f}",
                       f"{r['recall_including_review']:.4f}"):
             assert value in row, f"{tier}: {value} missing from README row"
@@ -53,7 +54,8 @@ def test_the_pooled_figure_matches(readme, holdout):
     pooled = holdout["pooled"]
     assert f"Rs.{pooled['net_vs_nothing_rupees']:,}" in readme
     assert f"Rs.{pooled['do_nothing_rupees']:,}" in readme
-    assert f"{pooled['precision']:.4f}" in readme
+    from detector.decide import format_precision
+    assert format_precision(pooled["precision"]) in readme
 
 
 def test_the_baseline_comparison_uses_the_same_worlds(readme):

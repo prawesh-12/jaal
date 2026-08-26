@@ -8,6 +8,8 @@ const TIERS = ["obvious", "moderate", "sophisticated", "adaptive"];
 const rupees = (n) =>
   (n < 0 ? "-" : "+") + "Rs." + Math.abs(Math.round(n)).toLocaleString("en-IN");
 const plain = (n) => "Rs." + Math.round(n).toLocaleString("en-IN");
+// Nothing blocked means precision is 0 of 0, which is undefined, not zero.
+const precision = (p) => (p === null || p === undefined ? "n/a (no blocks)" : p.toFixed(4));
 
 function useJson(name) {
   const [data, setData] = useState(null);
@@ -49,7 +51,7 @@ function Results({ holdout, baseline }) {
           items={[
             { label: "net against deploying nothing", value: rupees(pooled.net_vs_nothing_rupees),
               tone: pooled.net_vs_nothing_rupees >= 0 ? "pos" : "neg" },
-            { label: "precision, blocked accounts", value: pooled.precision.toFixed(4) },
+            { label: "precision, blocked accounts", value: precision(pooled.precision) },
             { label: "recall, blocked", value: pooled.recall.toFixed(4) },
             { label: "recall, blocked or reviewed", value: pooled.recall_including_review.toFixed(4) },
           ]}
@@ -71,7 +73,7 @@ function Results({ holdout, baseline }) {
                 <td>{t}</td>
                 <td>{m[t].n_clusters.toLocaleString()}</td>
                 <td>{m[t].pr_auc.toFixed(4)}</td>
-                <td>{m[t].precision.toFixed(4)}</td>
+                <td>{precision(m[t].precision)}</td>
                 <td>{m[t].recall.toFixed(4)}</td>
                 <td>{m[t].recall_including_review.toFixed(4)}</td>
                 <td>{m[t].brier.toFixed(5)}</td>
@@ -103,7 +105,7 @@ function Results({ holdout, baseline }) {
                 {TIERS.map((t) => (
                   <tr key={t}>
                     <td>{t}</td>
-                    <td>{baseline.tiers[t].precision.toFixed(4)}</td>
+                    <td>{precision(baseline.tiers[t].precision)}</td>
                     <td>{baseline.tiers[t].recall.toFixed(4)}</td>
                     <td className="neg">{rupees(baseline.tiers[t].net_vs_nothing_rupees)}</td>
                   </tr>
@@ -203,7 +205,7 @@ function Curve({ holdout }) {
     sophistication: c.sophistication,
     blocked: c.recall,
     withReview: c.recall_including_review,
-    precision: c.precision,
+    precision: c.precision ?? 0,
   }));
   const device = holdout.device_only_curve.map((c) => ({
     reuse: c.device_reuse, blocked: c.recall,

@@ -14,6 +14,7 @@ import json
 import os
 
 import config
+from detector.decide import format_precision
 
 RESULTS = config.RESULTS_DIR
 
@@ -150,7 +151,8 @@ def build() -> str:
                            ("best two-action threshold", "cost_optimal"),
                            ("three actions, expected cost", "three_action")):
             r = dec[key]
-            out.append(f"| {label} | {r['precision']:.4f} | {r['recall']:.4f} "
+            out.append(f"| {label} | {format_precision(r['precision'])} | "
+                       f"{r['recall']:.4f} "
                        f"| {r['accounts_blocked']:,} | "
                        f"{r['accounts_reviewed']:,} | "
                        f"{rupees(r['net_vs_nothing_rupees'])} |")
@@ -176,13 +178,14 @@ def build() -> str:
                    "| Brier | net |")
         out.append("| --- | --- | --- | --- | --- | --- | --- |")
         for tier, r in ho["results_matrix"].items():
-            out.append(f"| {tier} | {r['pr_auc']:.4f} | {r['precision']:.4f} | "
+            out.append(f"| {tier} | {r['pr_auc']:.4f} | "
+                       f"{format_precision(r['precision'])} | "
                        f"{r['recall']:.4f} | "
                        f"{r['recall_including_review']:.4f} | "
                        f"{r['brier']:.5f} | "
                        f"{rupees(r['net_vs_nothing_rupees'])} |")
         p = ho["pooled"]
-        out.append(f"\nPooled: precision {p['precision']:.4f}, recall "
+        out.append(f"\nPooled: precision {format_precision(p['precision'])}, recall "
                    f"{p['recall']:.4f}, recall including review "
                    f"{p['recall_including_review']:.4f}, "
                    f"**{rupees(p['net_vs_nothing_rupees'])}** against "

@@ -30,6 +30,13 @@ from detector import costs
 from detector.resources import announce, apply
 
 ACTIONS = ("block", "allow", "review")
+NO_BLOCKS = "n/a (no blocks)"
+
+
+def format_precision(precision, width: int = 0) -> str:
+    """Precision as text. Nothing blocked means undefined, not zero."""
+    text = NO_BLOCKS if precision is None else f"{precision:.4f}"
+    return f"{text:<{width}}" if width else text
 
 
 def expected_costs(purity: float | np.ndarray, n_accounts: int | np.ndarray,
@@ -119,7 +126,9 @@ def score_policy(table: pd.DataFrame, action: np.ndarray, **kw) -> dict:
         "accounts_reviewed": n_reviewed,
         "tp": tp, "fp": fp, "missed": missed,
         "ring_accounts_reviewed": ring_reviewed,
-        "precision": round(tp / (tp + fp), 4) if tp + fp else 0.0,
+        # 0 of 0 blocked is undefined, not zero. None says so, and every
+        # caller formats it as "n/a (no blocks)".
+        "precision": round(tp / (tp + fp), 4) if tp + fp else None,
         "recall": round(tp / n_ring_total, 4) if n_ring_total else 0.0,
         # Review is an action, not a miss: the account still reaches a human.
         "recall_including_review": round((tp + ring_reviewed) / n_ring_total, 4)
@@ -142,8 +151,7 @@ def sweep(table: pd.DataFrame, p: np.ndarray,
     rows = []
     for t in thresholds:
         r = score_policy(table, threshold_policy(p, t))
-        tp, fp = r["tp"], r["fp"]
-        prec, rec = r["precision"], r["recall"]
+        prec, rec = r["precision"] or 0.0, r["recall"]
         r["threshold"] = float(t)
         r["f1"] = round(2 * prec * rec / (prec + rec), 4) if prec + rec else 0.0
         rows.append(r)
@@ -277,7 +285,8 @@ def main() -> None:
                      ("three actions, expected cost rule", three)):
         thr = f"{r.get('threshold', float('nan')):.2f}" if "threshold" in r else "-"
         net = r["net_vs_nothing_rupees"]
-        print(f"{label:<34} {thr:<7} {r['precision']:<8.4f} {r['recall']:<8.4f} "
+        print(f"{label:<34} {thr:<7} {format_precision(r['precision'], 8)} "
+              f"{r['recall']:<8.4f} "
               f"{r['accounts_blocked']:<9,} {r['accounts_reviewed']:<10,} "
               f"Rs.{r['cost_rupees']:<12,} "
               f"{'+' if net >= 0 else '-'}Rs.{abs(net):,}")
