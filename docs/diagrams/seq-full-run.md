@@ -12,7 +12,7 @@ sequenceDiagram
 
     U->>R: measure MemAvailable, set RLIMIT_AS
     R-->>U: budget and worker count, printed
-    U->>P: check_phase0        (~10s, generator check list)
+    U->>P: check_generator        (~10s, generator check list)
     U->>P: baseline            (~40s, rules-only reference)
     U->>P: blocking            (~30s, recall and reduction)
     U->>P: link_train          (~5m,  m and u, plus EM)

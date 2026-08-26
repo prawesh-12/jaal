@@ -1,4 +1,4 @@
-"""The budget helper is what stops a run freezing the developer's laptop."""
+"""The budget helper keeps a run from taking all of the machine's memory."""
 
 from detector import resources
 

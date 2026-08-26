@@ -92,7 +92,7 @@ every static attribute. Only repeat behaviour separates them.
 | `detector/cli.py` | Shared `--accounts` and `--seeds` handling | `parse_seeds`, `add_common_args` |
 | `detector/calibrate_from_olist.py` | Turns raw Olist CSVs into committed priors | `order_values`, `repeat_rate`, `hour_weights` |
 | `detector/generate_accounts.py` | Builds worlds and the hidden answer key | `generate`, `ring_sizes`, `lookalike_plan` |
-| `detector/check_phase0.py` | Runs the plan's check list at full size | `run`, `timing`, `determinism` |
+| `detector/check_generator.py` | Runs the plan's check list at full size | `run`, `timing`, `determinism` |
 
 ## Key decisions
 
@@ -141,7 +141,7 @@ regresses.
 Real numbers, from `results/phase0_check.json`.
 
 ```
-$ python -m detector.check_phase0 --accounts 12000 --seeds 0-9
+$ python -m detector.check_generator --accounts 12000 --seeds 0-9
 
 tier            prevalence      rings  lookalikes  dev reuse  addr reuse  ring span (d)  office span (d)
 obvious         0.0080-0.0080   3-5    40-40       919        907         0.037          12.90

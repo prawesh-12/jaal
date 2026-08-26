@@ -1,4 +1,4 @@
-"""The decision rule. This is where the cost asymmetry is actually paid for."""
+"""The decision rule, where the cost asymmetry decides the action."""
 
 import json
 
@@ -15,7 +15,7 @@ def report():
         return json.load(f)
 
 
-def test_the_plans_worked_example_still_holds():
+def test_a_twenty_account_cluster_at_seventy_percent_is_allowed():
     """20 accounts at 70% ring purity. Allowing wins, and that is correct."""
     ec = decide.expected_costs(0.7, 20)
     assert ec["block"] == pytest.approx(0.3 * 20 * 15_000)
@@ -52,7 +52,7 @@ def test_realised_cost_bills_only_the_accounts_it_should():
 
 
 def test_every_two_action_threshold_loses_money(report):
-    """The headline. If this stops being true, the write-up is wrong."""
+    """No single probability threshold turns a profit at this cost ratio."""
     losing = [r for r in report["threshold_sweep"]
               if r["net_vs_nothing_rupees"] > 0]
     assert losing == [], f"{len(losing)} thresholds turned a profit"
@@ -65,7 +65,7 @@ def test_three_actions_is_the_only_policy_that_pays(report):
 
 
 def test_the_f1_optimal_threshold_is_expensive(report):
-    """The gap between these two numbers is the whole point of Phase 6."""
+    """Choosing the threshold by F1 costs several times more than by cost."""
     f1 = report["f1_optimal"]["cost_rupees"]
     three = report["three_action"]["cost_rupees"]
     assert f1 > 5 * three
@@ -76,7 +76,7 @@ def test_the_rule_blocks_above_the_breakeven_precision(report):
 
 
 def test_the_review_queue_is_a_sane_size(report):
-    """A system sending 90% to review is useless however good its metrics look."""
+    """A rule that sends most clusters to a human is not usable."""
     assert 0 < report["three_action"]["review_rate"] < 0.20
 
 

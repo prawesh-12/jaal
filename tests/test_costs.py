@@ -1,4 +1,4 @@
-"""The cost model is load-bearing. Everything after Phase 6 is arithmetic on it."""
+"""The cost model. Every decision and every rupee figure is arithmetic on it."""
 
 import config
 from detector import costs
@@ -24,7 +24,7 @@ def test_blocking_everyone_only_bills_the_innocents():
 
 
 def test_one_wrong_block_costs_exactly_seventyfive_misses():
-    """The asymmetry, stated as a test so it cannot be forgotten."""
+    """One wrong block costs the same as 75 missed abusers."""
     assert costs.decision_cost(75, 0) == costs.decision_cost(0, 1)
     assert costs.decision_cost(74, 0) < costs.decision_cost(0, 1)
 

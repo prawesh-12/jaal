@@ -63,7 +63,8 @@ def test_circular_hour_gap_wraps_midnight():
 
 
 def test_rarer_shared_values_are_worth_more(params, world):
-    """The term frequency adjustment, which is the whole reason this beats rules."""
+    """The term frequency adjustment. A rare shared value is stronger evidence
+    than a common one."""
     accounts = world.accounts
     counts = accounts["pincode"].value_counts()
     common, rare = counts.index[0], counts.index[-1]
@@ -107,7 +108,7 @@ def test_the_two_excluded_comparisons_are_computed_but_not_scored():
     assert set(link.EXCLUDED_COMPARISONS) < set(link.COMPARISONS)
 
 
-def test_frozen_link_eval_meets_the_phase_two_bar():
+def test_frozen_link_eval_recovers_the_hard_tiers():
     with open("results/link_eval.json") as f:
         report = json.load(f)
     t = report["threshold_bits"]
@@ -115,5 +116,5 @@ def test_frozen_link_eval_meets_the_phase_two_bar():
             for tier, sweep in report["sweep"].items()}
     assert rows["obvious"]["recall"] > 0.95
     assert rows["moderate"]["recall"] > 0.95
-    # The sophisticated tier is where exact matching scored zero in Phase 1.
+    # Exact matching scores zero on the sophisticated tier, so the bar is lower.
     assert rows["sophisticated"]["recall"] > 0.5

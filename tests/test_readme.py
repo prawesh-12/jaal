@@ -27,7 +27,7 @@ def holdout():
 
 
 def test_defence_only_statement_is_in_the_first_200_words(readme):
-    """A judge skims. This cannot be at the bottom."""
+    """Readers skim the top of the file, so this cannot sit at the bottom."""
     words = readme.split()[:200]
     head = " ".join(words).lower()
     assert "defence only" in head

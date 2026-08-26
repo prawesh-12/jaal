@@ -1,15 +1,10 @@
-"""Open the seal, run once, report whatever comes out.
+"""Score the model on the sealed holdout seeds, once.
 
-Everything before this was measured on worlds that were tuned against. Those
-numbers are optimistic and should be assumed wrong. Seeds 900 to 999 were sealed
-before any code existed and the protocol was published in the README before any
-result did.
+Every other number was measured on worlds that were tuned against, so assume
+those are optimistic. Seeds 900 to 999 are used for nothing else.
 
-If the holdout is worse than validation, that gap is a finding worth reporting,
-not a problem to hide.
-
-The script refuses to run twice. That sounds paranoid and it is exactly the
-discipline this is testing.
+A holdout result worse than validation is a finding to report, not a problem
+to hide. The script refuses to run a second time unless you pass --force.
 
     python -m detector.evaluate_holdout --accounts 12000 --seeds 900-999
 """
@@ -52,7 +47,7 @@ def score_table(table: pd.DataFrame, fitted: dict) -> tuple[np.ndarray, np.ndarr
 
 
 def results_matrix(table: pd.DataFrame, fitted: dict) -> dict:
-    """The headline table. Per tier, never averaged."""
+    """Results per tier. Never averaged across tiers."""
     from sklearn.metrics import average_precision_score, brier_score_loss
 
     p, purity = score_table(table, fitted)
@@ -82,20 +77,12 @@ SWEPT_PARAMS = ("device_reuse", "signup_window_days", "value_jitter",
 def interpolate_tier(s: float) -> dict:
     """Operator sophistication as one dial from 0 (obvious) to 1 (adaptive).
 
-    The plan suggests sweeping device reuse alone. Measured, that curve is flat:
-    recall does not move at all as device reuse falls from 1.00 to 0.00, because
-    a moderate-tier ring still shares a drop address every eight accounts and
-    address linking carries the whole result. Rotating devices does not defeat
-    this system. Rotating delivery addresses does. So the sweep moves every tier
-    parameter together, and the device-only sweep is reported beside it as the
-    negative result it is. See D-023.
+    Every tier parameter moves together. Sweeping device reuse alone from 1.00
+    to 0.00 leaves recall flat, so on its own it shows nothing.
     """
     lo = config.TIERS["obvious"]
     hi = config.TIERS["adaptive"]
-    # Signup window runs 0.04 days to 45 and value jitter Rs.80 to Rs.1,200.
-    # Interpolated linearly, the first 5% step already takes the signup window
-    # from one hour to 2.3 days, which is most of the difficulty in one jump.
-    # These three move geometrically, which is how they actually vary.
+    # Linear steps would take the signup window from one hour to 2.3 days at 5%.
     geometric = ("signup_window_days", "value_jitter", "accounts_per_drop")
     out = {}
     for k in SWEPT_PARAMS:
@@ -127,7 +114,7 @@ def sweep_worlds(fitted: dict, n_accounts: int, seeds: list[int],
 
 def device_only_curve(fitted: dict, n_accounts: int, seeds: list[int],
                       base_tier: str = "moderate") -> list[dict]:
-    """The plan's suggested sweep, kept because its flatness is the finding."""
+    """Sweep device reuse on its own. The curve stays flat, which is the point."""
     rows = []
     for reuse in np.round(np.arange(1.0, -0.001, -0.1), 2):
         tp = dict(config.TIERS[base_tier])
@@ -147,8 +134,7 @@ def detection_curve(fitted: dict, n_accounts: int, seeds: list[int],
                     base_tier: str = "moderate") -> list[dict]:
     """Recall against operator sophistication, swept continuously.
 
-    Four tiers give four points. This gives twenty one, by moving every tier
-    parameter together from careless to fully evasive.
+    Four tiers give four points. Moving every parameter gives twenty one.
     """
     rows = []
     for s_val in np.round(np.arange(0.0, 1.001, 0.05), 2):
@@ -223,14 +209,13 @@ def lookalike_stress(fitted: dict, n_accounts: int, seeds: list[int]) -> dict:
 
 def failure_catalogue(table: pd.DataFrame, fitted: dict, stress: dict,
                       curve: list[dict]) -> list[dict]:
-    """Concrete failures with a named example, not a paragraph of hedging."""
+    """Concrete failures, each with a named example."""
     p, purity = score_table(table, fitted)
     action = decide.best_action(purity, table["size"].to_numpy())
     t = table.assign(action=action, purity=purity, p=p)
 
     out = []
 
-    # 1. Rings that never became a cluster at all.
     per_world = t.groupby(["tier", "seed"]).agg(
         found=("n_ring_members", "sum"), total=("world_ring_accounts", "first"))
     lost = (per_world["total"] - per_world["found"]).clip(lower=0)
@@ -246,7 +231,6 @@ def failure_catalogue(table: pd.DataFrame, fitted: dict, stress: dict,
                  "recall"),
     })
 
-    # 2. Ring clusters the model saw and allowed.
     missed = t[(t["label"] == 1) & (t["action"] == "allow")]
     if len(missed):
         w = missed.nlargest(1, "n_ring_members").iloc[0]
@@ -262,7 +246,6 @@ def failure_catalogue(table: pd.DataFrame, fitted: dict, stress: dict,
                     f"in farmed coupons",
         })
 
-    # 3. Benign clusters that got blocked.
     fp = t[(t["label"] == 0) & (t["action"] == "block")]
     if len(fp):
         w = fp.nlargest(1, "size").iloc[0]
@@ -279,7 +262,6 @@ def failure_catalogue(table: pd.DataFrame, fitted: dict, stress: dict,
                      f"in lost lifetime value"),
         })
 
-    # 4. Camouflage defeating the repeat-rate feature.
     camo = t[(t["tier"] == "adaptive") & (t["label"] == 1) & (t["repeat_rate"] > 0)]
     if len(camo):
         w = camo.nlargest(1, "repeat_rate").iloc[0]
@@ -295,7 +277,6 @@ def failure_catalogue(table: pd.DataFrame, fitted: dict, stress: dict,
             "cost": "the strongest behavioural signal stops discriminating",
         })
 
-    # 5. Rings that were found but split across several clusters.
     ring_clusters = t[t["label"] == 1]
     if len(ring_clusters):
         frag = ring_clusters.groupby(["tier", "seed"]).size()
@@ -311,7 +292,6 @@ def failure_catalogue(table: pd.DataFrame, fitted: dict, stress: dict,
                      "of a caught ring still gets through"),
         })
 
-    # 6. The worst lookalike kind, if any of them actually got blocked.
     blocked_kinds = {k: v for k, v in stress["by_kind"].items()
                      if v["wrongly_blocked"] > 0}
     worst_kind = max(blocked_kinds.items(),
@@ -328,7 +308,6 @@ def failure_catalogue(table: pd.DataFrame, fitted: dict, stress: dict,
             "cost": f"Rs.{v['accounts_blocked'] * config.COST_BLOCKED_INNOCENT:,}",
         })
 
-    # 7. Where the detection curve gives out.
     dead = [c for c in curve if c["recall"] < 0.05]
     if dead:
         edge = min(c["sophistication"] for c in dead)
@@ -398,7 +377,7 @@ def main() -> None:
         raise SystemExit(
             f"{args.out} already exists, so the holdout has been opened once "
             f"already. That is the point of a holdout. Pass --force only if you "
-            f"know why you are re-opening it, and say so in docs/DECISIONS.md."
+            f"know why you are re-opening it, and write down the reason."
         )
 
     announce(apply())
@@ -443,7 +422,7 @@ def main() -> None:
 
     print(f"\ndetection curve, {CURVE_SEEDS} worlds per point")
     curve = detection_curve(fitted, args.accounts, seeds[:CURVE_SEEDS])
-    print(f"\nthe plan's device-only sweep, for comparison")
+    print(f"\ndevice reuse swept on its own, for comparison")
     device_curve = device_only_curve(fitted, args.accounts, seeds[:CURVE_SEEDS])
 
     print(f"\nlookalike stress test, {STRESS_SEEDS} worlds containing zero rings")

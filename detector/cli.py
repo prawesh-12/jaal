@@ -1,7 +1,7 @@
 """Argument helpers shared by every entry point.
 
-Every script takes --accounts and --seeds so a small job can be run while
-developing and the full one only when a step is finished.
+Every script takes --accounts and --seeds, so you can run a small job first
+and the full one once it works.
 """
 
 import argparse

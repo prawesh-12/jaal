@@ -1,9 +1,9 @@
-"""Phase 0 gate: run the plan's check list at full size and write the numbers.
+"""Run the generator check list at full size and write the numbers.
 
-Every line it prints comes from a world it just generated. Nothing is asserted
-from memory.
+Every line it prints comes from a world it just generated. No number is copied
+from an earlier run.
 
-    python -m detector.check_phase0 --accounts 12000 --seeds 0-9
+    python -m detector.check_generator --accounts 12000 --seeds 0-9
 """
 
 import argparse
@@ -92,7 +92,7 @@ def main() -> None:
     report["determinism"] = determinism(args.accounts)
     report["timing"] = timing(args.accounts)
 
-    print(f"\nPhase 0 check, {args.accounts:,} accounts per world, "
+    print(f"\nGenerator check, {args.accounts:,} accounts per world, "
           f"seeds {seeds[0]}-{seeds[-1]}")
     print(f"{'tier':<15} {'prevalence':<18} {'rings':<8} {'lookalikes':<12} "
           f"{'dev reuse':<11} {'addr reuse':<12} {'ring span (d)':<14} "

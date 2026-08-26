@@ -1,4 +1,4 @@
-"""Community detection. The guarantees are the point, so they get asserted."""
+"""Community detection, and the guarantees it has to keep."""
 
 import json
 
@@ -28,7 +28,7 @@ def clustered(params):
 
 
 def test_leiden_never_returns_a_disconnected_community(clustered):
-    """The whole reason Leiden is here rather than Louvain."""
+    """Leiden is used instead of Louvain because Louvain can return these."""
     _, clusters, graph = clustered
     assert cluster.count_disconnected(graph, clusters) == 0
 
@@ -69,7 +69,7 @@ def test_pairwise_quality_punishes_a_giant_cluster(params):
 
 
 def test_a_sophisticated_ring_survives_as_one_cluster(params):
-    """Phase 1 exact matching fragmented these. This is what Phase 2 bought."""
+    """A sophisticated ring stays in one cluster, which exact matching cannot do."""
     world = gen.generate(700, "sophisticated", config.N_ACCOUNTS)
     clusters, _, _ = cluster.cluster_world(world, params)
     is_ring = world.truth["is_ring"].to_numpy()
@@ -77,7 +77,7 @@ def test_a_sophisticated_ring_survives_as_one_cluster(params):
                for c in clusters)
 
 
-def test_frozen_clustering_report_meets_the_phase_three_bar():
+def test_frozen_clustering_report_holds_its_guarantees():
     with open("results/clustering.json") as f:
         report = json.load(f)
     for tier, t in report["tiers"].items():
@@ -86,7 +86,7 @@ def test_frozen_clustering_report_meets_the_phase_three_bar():
 
 
 def test_results_are_stable_across_resolution():
-    """The sensitivity claim in the README, asserted."""
+    """Cluster quality barely moves when the Leiden resolution changes."""
     with open("results/clustering_sweep.json") as f:
         sweep = json.load(f)["sweep"]
     for tier in config.TIER_NAMES:

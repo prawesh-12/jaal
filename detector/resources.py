@@ -1,13 +1,13 @@
 """Runtime resource budget. Measure, then decide.
 
-This runs on a daily-use laptop. Every entry point calls apply() first so a
-runaway job dies instead of swapping the desktop out from under the developer.
+This runs on a daily-use laptop. Every entry point calls apply() first, so a
+runaway job dies instead of pushing the desktop into swap.
 """
 
 import os
 import resource
 
-DESKTOP_RESERVE_MB = 3000   # never take this from the developer
+DESKTOP_RESERVE_MB = 3000   # always leave this much for the desktop
 FLOOR_MB = 1500             # below this, refuse to run
 MAX_WORKERS = 4             # ceiling regardless of what the machine offers
 

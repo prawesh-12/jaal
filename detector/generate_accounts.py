@@ -1,20 +1,9 @@
 """Synthetic account worlds with a hidden answer key.
 
-This is a test fixture, not an attack tool. Real promo abuse is unlabelled, so
-there is no other way to measure a detector against a known answer. Every
-record here is invented. No real identifier appears anywhere.
-
-One world holds three kinds of accounts:
-
-  singletons  one person, one account. Most of the population.
-  rings       one operator, many accounts, farming the first-order coupon.
-              Sophistication is a parameter, see config.TIERS.
-  lookalikes  families, flatmates, hostels and offices. Real people who share
-              a device or an address and therefore look like a ring.
-
-Only ring accounts share an operator. A family is four different people, so
-their accounts are four different operators that happen to share a card. That
-is what makes them the interesting false positive.
+A test fixture, not an attack tool. Every record here is invented. A world holds
+singletons, rings (one operator farming the coupon many times) and lookalikes
+(families, flatmates, hostels, offices) who share a device or address for
+innocent reasons. Only rings share an operator, which is the answer key.
 
     python -m detector.generate_accounts --accounts 1500 --seeds 0-4 --tier obvious
 """
@@ -33,9 +22,7 @@ import config
 from detector.cli import add_common_args, parse_seeds
 from detector.resources import announce, apply
 
-# 2026-01-01 00:00:00 UTC. A world covers the merchant's operating history.
-# It has to be at least as long as the longest lookalike span, since a family
-# that has been ordering for 900 days needs 900 days to have signed up in.
+# 2026-01-01 UTC. The window has to cover the longest lookalike span.
 EPOCH = 1_767_225_600
 WORLD_DAYS = 900
 DAY = 86_400
@@ -46,10 +33,8 @@ COUPON_TOPUP_MAX = 120     # rupees a coupon user adds to clear the Rs.400 floor
 SHARED_DEVICE_RATE = 0.02  # cyber cafes, refurbished phones, emulators
 MAX_ORDERS = 6
 
-# Attribute pools. Sizes are chosen so rarity varies: a few pincodes and card
-# BINs carry most of the population and the rest are thin. Phase 2 needs that
-# spread, because sharing a rare value is strong evidence and sharing a common
-# one is almost none.
+# Pool sizes vary rarity on purpose. Sharing a rare value is strong evidence,
+# sharing a common one is weak evidence.
 N_SHARED_DEVICES = 200
 N_IP_PREFIXES = 1_500
 N_PINCODES = 150
@@ -94,10 +79,6 @@ class World:
             "prevalence": round(self.prevalence, 5),
         }
 
-
-# --------------------------------------------------------------------------
-# pools and samplers
-# --------------------------------------------------------------------------
 
 def _zipf_weights(n: int, alpha: float = ZIPF_ALPHA) -> np.ndarray:
     """Skewed weights so a few values are common and most are rare."""
@@ -158,9 +139,7 @@ class _Counter:
 
 def _sample_values(rng: np.random.Generator, n: int, priors: dict) -> np.ndarray:
     """Order values in rupees, drawn from the real Olist distribution.
-
-    Inverse transform sampling: draw a uniform percentile and read it off the
-    percentile curve. Integers, because money is never a float here.
+    Inverse transform sampling. Integers, because money is never a float here.
     """
     pts = np.asarray(priors["value_percentile_points"], dtype=float)
     vals = np.asarray(priors["value_percentile_values"], dtype=float)
@@ -175,9 +154,7 @@ def _sample_hours(rng: np.random.Generator, n: int, priors: dict) -> np.ndarray:
 def _signup_times(rng: np.random.Generator, n: int, priors: dict,
                   start_ts: int, span_days: float) -> np.ndarray:
     """Signup timestamps inside a window, following the real hour-of-day curve.
-
-    A window shorter than a day cannot carry an hour-of-day pattern, so those
-    are laid out uniformly from a start time that itself has a realistic hour.
+    A window under a day cannot carry an hour pattern, so it is laid out flat.
     """
     if span_days >= 1.0:
         day = rng.integers(0, max(1, int(round(span_days))), n)
@@ -212,10 +189,7 @@ def _order_history(rng: np.random.Generator, n: int, priors: dict,
 def _coupon(rng: np.random.Generator, n: int, first: np.ndarray,
             takeup: float) -> tuple[np.ndarray, np.ndarray]:
     """Who claims the coupon, and the top-up they add to clear the floor.
-
-    Real coupon users pile up just above the Rs.400 minimum too. Without this
-    the ring accounts would be the only orders sitting on the floor, which
-    would make the whole problem trivially easy and dishonest.
+    Real users pile up on the floor too, so rings are not the only ones there.
     """
     wants = rng.random(n) < takeup
     topped = np.where(
@@ -227,16 +201,9 @@ def _coupon(rng: np.random.Generator, n: int, first: np.ndarray,
     return used, topped.astype(np.int64)
 
 
-# --------------------------------------------------------------------------
-# group plans
-# --------------------------------------------------------------------------
-
 def ring_sizes(rng: np.random.Generator, n_total: int, prevalence: float) -> list[int]:
     """Split the fraud budget across a realistic number of operators.
-
-    At 12,000 accounts and 0.8% that is about 96 ring accounts over three to
-    five operators. Sparse, and much harder than a world where one in ten
-    accounts is a fraudster.
+    At 12,000 accounts and 0.8% that is about 96 accounts over three to five.
     """
     budget = int(n_total * prevalence)
     sizes: list[int] = []
@@ -259,10 +226,6 @@ def lookalike_plan(rng: np.random.Generator, n_groups: int) -> list[tuple[str, i
         plan.append((kind, int(rng.integers(lo, hi + 1))))
     return plan
 
-
-# --------------------------------------------------------------------------
-# the three kinds of account block
-# --------------------------------------------------------------------------
 
 def _singletons(rng, n, priors, pools, ids) -> tuple[dict, dict]:
     account_id = ids.accounts(n)
@@ -308,19 +271,14 @@ def _ring(rng, size, tier, priors, pools, ids, index,
     t = tier_params or config.TIERS[tier]
     account_id = ids.accounts(size)
 
-    # Devices. The operator has one phone and reuses it with probability
-    # device_reuse. At the adaptive tier that probability is zero, so no two
-    # ring accounts ever share a device id.
+    # The operator reuses one phone with probability device_reuse, zero at adaptive.
     fresh = ids.devices(rng, size)
     shared_device = ids.devices(rng, 1)[0]
     reuse = rng.random(size) < t["device_reuse"]
     device = np.where(reuse, shared_device, fresh)
 
-    # Goods have to be delivered somewhere. The operator can change which door
-    # they knock on, but not which neighbourhood, so the pincode holds at every
-    # tier while the number of drop addresses grows with sophistication. At the
-    # adaptive tier every account has its own address and the pincode is the
-    # only static attribute the ring still shares.
+    # An operator can change the door but not the neighbourhood. Pincode is shared
+    # at every tier, and the number of drop addresses grows with the tier.
     pincode = str(rng.choice(pools["pincodes"], p=pools["pin_w"]))
     n_drops = max(1, min(size, round(size / t["accounts_per_drop"])))
     drops = ids.addresses(n_drops)
@@ -338,9 +296,7 @@ def _ring(rng, size, tier, priors, pools, ids, index,
     first = (config.COUPON_MIN_ORDER
              + rng.integers(0, int(t["value_jitter"]) + 1, size)).astype(np.int64)
 
-    # Camouflage: a slice of the ring behaves like a real customer. They order
-    # again, and some of them skip the coupon entirely. This is aimed straight
-    # at the repeat-rate feature, which is the strongest one we have.
+    # Camouflage aims at the repeat-rate feature, which is the strongest signal.
     camo = rng.random(size) < t["camouflage"]
     n_orders = np.where(camo, rng.integers(2, MAX_ORDERS + 1, size), 1)
     total = first.copy()
@@ -426,8 +382,7 @@ def _lookalike(rng, kind, size, priors, pools, ids, index) -> tuple[dict, dict]:
     }
     truth = {
         "account_id": account_id,
-        # Every member is a different person, so every account is its own
-        # operator. Only rings share one. This is what makes them false positives.
+        # Different people, so each gets its own operator id. Only rings share one.
         "operator_id": ids.operators(size),
         "group_id": np.repeat(group_id, size),
         "group_type": np.repeat(kind, size),
@@ -436,10 +391,6 @@ def _lookalike(rng, kind, size, priors, pools, ids, index) -> tuple[dict, dict]:
     }
     return accounts, truth
 
-
-# --------------------------------------------------------------------------
-# world assembly
-# --------------------------------------------------------------------------
 
 def load_priors(path: str = config.OLIST_PRIORS_PATH) -> dict:
     with open(path) as f:
@@ -450,19 +401,14 @@ def generate(seed: int, tier: str, n_accounts: int = None,
              priors: dict = None, n_lookalike_groups: int = None,
              tier_params: dict = None, prevalence: float = None) -> World:
     """One deterministic world. Same arguments always give the same accounts.
-
-    `tier_params` overrides the tier's settings, which is how Phase 7 sweeps
-    operator sophistication continuously instead of at four fixed points.
-    `prevalence` of 0.0 gives a world with no rings at all, which is how the
-    lookalike stress test measures false positives directly.
+    tier_params overrides tier settings for sweeps, prevalence 0.0 gives no rings.
     """
     if tier not in config.TIERS:
         raise ValueError(f"unknown tier {tier!r}, expected one of {config.TIER_NAMES}")
     n_accounts = n_accounts or config.N_ACCOUNTS
     priors = priors or load_priors()
     if n_lookalike_groups is None:
-        # Keep the lookalike share of the population steady when the world is
-        # scaled down for development runs.
+        # Keep the lookalike share steady when the world is scaled down for dev runs.
         n_lookalike_groups = max(8, round(config.LOOKALIKE_GROUPS
                                           * n_accounts / config.N_ACCOUNTS))
 
@@ -494,9 +440,7 @@ def generate(seed: int, tier: str, n_accounts: int = None,
     truth = pd.DataFrame({c: np.concatenate([b[1][c] for b in blocks])
                           for c in TRUTH_COLUMNS})
 
-    # Rings are built first, so without this the ring accounts would hold the
-    # lowest ids in every world. Shuffle the rows, then hand out fresh ids in
-    # the shuffled order, so no opaque id leaks which group a row came from.
+    # Rings are built first, so ids are handed out after the shuffle.
     order = rng.permutation(len(accounts))
     accounts = accounts.iloc[order].reset_index(drop=True)
     truth = truth.iloc[order].reset_index(drop=True)
@@ -539,7 +483,7 @@ def main() -> None:
             world = generate(seed, tier, args.accounts, priors)
             rows.append(world.summary())
         df = pd.DataFrame(rows)
-        # Step 0.7: every output states the base rate it was measured at.
+        # Every output states the base rate it was measured at.
         print(f"\n[{tier}] {len(seeds)} worlds, {args.accounts:,} accounts each")
         print(f"  prevalence      {df['prevalence'].min():.4f} to "
               f"{df['prevalence'].max():.4f} (target {config.RING_PREVALENCE})")

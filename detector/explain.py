@@ -1,26 +1,11 @@
 """Turn a flagged cluster into something a human can act on in ten seconds.
 
-A reviewer handed `cluster_id: 47, p=0.83, size=22` has been told nothing. What
-they need is:
+The LLM does no detection. Every number in a note comes from the pipeline and
+the model only writes the prose, so with no API key every metric and every
+decision is unchanged.
 
-    22 accounts created within 4 hours, all from pincode 560034, all used the
-    first-order coupon, none ordered again. Strongest linking signal: signup
-    timing. Rs.4,400 extracted. Recommended: review.
-
-Every number in that sentence comes from the pipeline. The model only writes
-the prose.
-
-**The design rule that matters most: the LLM does no detection.** It reads
-structured output and produces a sentence. If it is unavailable, every metric
-still computes and every decision is unchanged. That is what makes this
-reproducible by someone with no API key, which is the situation this repository
-was actually built in.
-
-Three sources, in order of preference:
-
-    cache     a committed JSON file, keyed on the evidence
-    live      a call to gpt-oss:120b via Ollama Cloud, needs OLLAMA_API_KEY
-    template  a hand-written sentence, always available, never fails
+Three sources, in order: cache (a committed JSON file, keyed on the evidence),
+live (Ollama Cloud, needs OLLAMA_API_KEY), template (hand written, never fails).
 
     python -m detector.explain --holdout results/holdout.json --limit 40
 """
@@ -40,7 +25,7 @@ from detector.resources import announce, apply
 
 CACHE_DIR = config.CACHE_DIR
 MODEL = "minimax-m3:cloud"
-FALLBACK_MODEL = "gpt-oss:120b"     # used if the primary is unavailable
+FALLBACK_MODEL = "gpt-oss:120b"
 HOST = "https://ollama.com"
 
 PROMPT_FIELDS = ("size", "signup_span_days", "coupon_rate", "repeat_rate",
@@ -50,12 +35,10 @@ PROMPT_FIELDS = ("size", "signup_span_days", "coupon_rate", "repeat_rate",
 
 def cache_key(facts: dict, p: float, action: str,
               signals: list[tuple[str, float]] | None = None) -> str:
-    """Keyed on everything that appears in the note, evidence included.
+    """Keyed on everything a note can contain, evidence bullets included.
 
-    The evidence bullets were left out of the key at first, and the audit caught
-    it: two clusters with identical rounded facts but different edge strengths
-    shared a cache entry, so the second one was handed a note quoting the
-    first one's bits. Anything the note can contain has to be in the key.
+    Leaving the bullets out gave 7 notes out of 1,334 another cluster's bit
+    values.
     """
     payload = json.dumps({"f": {k: round(float(facts[k]), 4)
                                 for k in sorted(facts)},
@@ -68,11 +51,9 @@ def cache_key(facts: dict, p: float, action: str,
 
 def build_prompt(facts: dict, p: float, action: str,
                  top_signals: list[tuple[str, float]]) -> str:
-    """The prompt is built entirely from numbers the pipeline produced.
+    """Built only from numbers the pipeline produced.
 
-    "Use ONLY the facts below" is not politeness. Without it the model invents
-    plausible details, and an invented number in a fraud review note is worse
-    than no note at all.
+    "Use ONLY the facts below" stops the model from inventing details.
     """
     signals = ", ".join(f"{name} {bits:+.1f} bits" for name, bits in top_signals)
     return f"""You are writing a one-paragraph review note for a fraud analyst.
@@ -96,7 +77,8 @@ Write 2 sentences, then list the 3 strongest signals as bullets."""
 
 def template_explanation(facts: dict, p: float, action: str,
                          top_signals: list[tuple[str, float]]) -> str:
-    """Always available, never fails. The fallback the whole layer rests on."""
+    """Always available and never fails. Used when there is no cache entry and
+    no live call."""
     bullets = "\n".join(f"  - {name.replace('_', ' ')}: {bits:+.1f} bits"
                         for name, bits in top_signals[:3])
     return (
@@ -173,8 +155,7 @@ def explain(facts: dict, p: float, action: str,
 def top_signals(row) -> list[tuple[str, float]]:
     """The evidence bullets, all genuinely measured in bits.
 
-    Cluster size is not a bit count and does not belong on this list, even
-    though it is the most eye-catching number on the row.
+    Cluster size is left out because it is not measured in bits.
     """
     return [
         (f"{row['dominant_signal']} agreement, average edge",
@@ -194,13 +175,8 @@ def audit_note(note: str, facts: dict, p: float,
                signals: list[tuple[str, float]] | None = None) -> list[str]:
     """Numbers in the note that do not trace back to the pipeline.
 
-    Every figure a note may contain comes from either the feature dict or the
-    evidence bullets, so both go into the allowed set. Anything else was
-    invented, and an invented number in a fraud review note is worse than no
-    note at all.
-
-    This catches obvious inventions. It does not catch a model that rephrases a
-    real figure into a wrong claim, so ten notes still get read by hand.
+    Allowed figures come from the feature dict and the evidence bullets. This
+    catches an invented number, not a real one rephrased into a wrong claim.
     """
     allowed = {"0", "1", "2", "3"}
     values = list(facts.values()) + [p]
@@ -238,8 +214,7 @@ def main() -> None:
     purity = np.clip(fitted["purity"].predict(X), 0.0, 1.0)
     action = decide.best_action(purity, table["size"].to_numpy())
 
-    # Explain what a human would actually be handed: everything blocked or
-    # queued for review, worst first.
+    # A human is only ever handed the blocked and reviewed clusters, worst first.
     interesting = table.assign(p=p, action=action)
     interesting = interesting[interesting["action"] != "allow"]
     interesting = interesting.nlargest(args.limit, "total_discount")

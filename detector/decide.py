@@ -1,21 +1,13 @@
 """Turn a calibrated probability into an action that minimises rupees lost.
 
-The naive answer is "block if p > 0.5". That is wrong here, and understanding
-why is the whole phase.
-
-Missing a promo abuser costs Rs.200, one coupon. Wrongly blocking a real
-customer costs Rs.15,000, their lifetime value. That is 75 to 1. At that ratio
-optimising F1 is optimising the wrong thing, because F1 treats a false positive
-and a false negative as equally bad when one is 75 times worse.
-
-Work an example. A cluster of 20 accounts at p = 0.7:
+Missing an abuser costs Rs.200, wrongly blocking a real customer costs
+Rs.15,000, so "block if p > 0.5" is the wrong rule. A cluster of 20 at p = 0.7:
 
     block   0.3 x 20 x 15,000 = Rs.90,000
     allow   0.7 x 20 x    200 = Rs.2,800
     review        20 x    150 = Rs.3,000
 
-Allowing wins, at 70% confidence it is a ring. That is counter-intuitive and it
-is correct.
+Allowing is cheaper even at 70% confidence that it is a ring.
 
     python -m detector.decide --val results/features_val.csv
 """
@@ -46,11 +38,8 @@ def expected_costs(purity: float | np.ndarray, n_accounts: int | np.ndarray,
                    c_review: int = config.COST_ANALYST_REVIEW) -> dict:
     """What each action is expected to cost, before we know the answer.
 
-    `purity` is the predicted share of the cluster's accounts that really are
-    ring accounts, not the probability the cluster is majority ring. Blocking
-    blocks everyone in the cluster, so the bill is the innocent accounts caught
-    in the net, and a cluster that is 90% ring still costs 10% of its members
-    at Rs.15,000 each.
+    `purity` is the predicted ring share of the cluster, not the probability it
+    is majority ring. Blocking bills the innocent members.
     """
     return {
         # block and be wrong about a member: that customer walks
@@ -78,10 +67,7 @@ def realised_cost(action: np.ndarray, n_ring: np.ndarray,
                   c_review: int = config.COST_ANALYST_REVIEW) -> np.ndarray:
     """What each decision actually cost, once the answer key is opened.
 
-    Blocking bills only the innocent accounts caught in the net. Allowing bills
-    only the coupons the ring accounts farmed. Review bills analyst time, and
-    the human is assumed to then decide correctly, which is generous to the
-    review action and is stated as a limitation.
+    Review is assumed to end in the right call. That is generous to review.
     """
     cost = np.zeros(len(action), dtype=np.int64)
     cost[action == "block"] = n_innocent[action == "block"] * c_fp
@@ -92,7 +78,9 @@ def realised_cost(action: np.ndarray, n_ring: np.ndarray,
 
 
 def unclustered_ring_accounts(table: pd.DataFrame) -> int:
-    """Ring accounts that joined no cluster. Invisible, and still billed."""
+    """Ring accounts that joined no cluster. The detector never sees them, and
+    they still cost money.
+    """
     per_world = table.groupby(["tier", "seed"]).agg(
         found=("n_ring_members", "sum"),
         total=("world_ring_accounts", "first"))
@@ -133,8 +121,7 @@ def score_policy(table: pd.DataFrame, action: np.ndarray, **kw) -> dict:
         "ring_accounts_reviewed": ring_reviewed,
         "precision": round(tp / (tp + fp), 4) if tp + fp else 0.0,
         "recall": round(tp / n_ring_total, 4) if n_ring_total else 0.0,
-        # Review is an action, not a miss. A reviewed ring account reaches a
-        # human, which is the point of having a third action at all.
+        # Review is an action, not a miss: the account still reaches a human.
         "recall_including_review": round((tp + ring_reviewed) / n_ring_total, 4)
         if n_ring_total else 0.0,
         "cost_rupees": total_cost,
@@ -165,7 +152,7 @@ def sweep(table: pd.DataFrame, p: np.ndarray,
 
 def sensitivity(table: pd.DataFrame, p: np.ndarray, purity: np.ndarray,
                 ratios=(10, 25, 50, 75, 100, 150, 200)) -> list[dict]:
-    """The Rs.15,000 is an assumption. Challenge it before a judge does."""
+    """The Rs.15,000 is an assumption. This checks what happens if it is wrong."""
     out = []
     for ratio in ratios:
         c_fp = config.COST_MISSED_ABUSER * ratio
@@ -197,8 +184,7 @@ def plot_cost_curve(rows: list[dict], three_action: dict, path: str) -> None:
     nothing = rows[0]["do_nothing_rupees"]
 
     fig, ax = plt.subplots(figsize=(8.5, 5.5))
-    # Log scale, because blocking everything costs Rs.4.1 billion and on a
-    # linear axis that one point flattens the entire region anyone cares about.
+    # Log scale: blocking everything costs Rs.4.1 billion and flattens the rest.
     ax.set_yscale("log")
     ax.plot(t, np.asarray(cost) / 1e6, label="block above threshold, allow below")
     ax.axhline(nothing / 1e6, ls="--", c="grey",

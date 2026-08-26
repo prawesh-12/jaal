@@ -1,29 +1,10 @@
 """Estimate m and u without labels, and print the match weight table.
 
-u is easy. Sample random pairs. At 0.8% prevalence essentially every one is a
-pair of strangers, so how often a field agrees in that sample is u.
-
-m is harder, because it needs pairs that really are the same operator and no
-such list exists. The plan's bootstrap takes pairs sharing a *rare* value, on
-the reasoning that two records holding a value nobody else has are one entity.
-That is right for deduplicating a customer table. It is wrong here, and the
-measurement says so: pairs sharing a device held by two or three accounts are
-**0.7%** true matches. An operator does not run two accounts, they run eight to
-forty-five, so their device is not rare, it is popular. Meanwhile a device held
-by exactly two accounts is a couple sharing a phone.
-
-So the seed rule is inverted. A device fingerprint carrying **six or more**
-accounts is the seed, six being one more than the largest household in
-`config.LOOKALIKE_KINDS["family"]`. Measured purity: **99.4%**.
-
-Address cannot be used the same way. A hostel puts 20 to 60 unrelated students
-at one address, so address-seeded pairs are 3.3% true matches whatever window
-is used. That rules out the obvious cross-seeding trick, so m for the device
-comparison, which the device seed cannot estimate without circularity, comes
-from a second pass instead: score every candidate pair with the device
-comparison switched off, keep the pairs whose remaining evidence alone puts the
-posterior above 0.99, and measure device agreement inside that set. It is one
-step of Expectation Maximisation, which is the proper fix the plan names.
+u comes from random pairs: at 0.8% prevalence they are all strangers.
+m comes from a seed set of pairs sharing a device held by six or more accounts.
+Sharing a rare device, one held by two or three accounts, is a weak signal: only
+0.7% of those pairs are true matches. A device held by six or more accounts
+gives 99.3%. So the seed set uses the popular values, not the rare ones.
 
     python -m detector.link_train --accounts 12000 --seeds 0-19
 """
@@ -45,26 +26,18 @@ from detector.resources import announce, apply
 
 U_SAMPLES_PER_WORLD = 50_000
 
-# One more than the largest family. Below this a shared device is a household,
-# above it it is one person running accounts.
+# One more than the largest household, so a shared device means one operator.
 MIN_SEED_FREQ = max(config.LOOKALIKE_KINDS["family"]["size"]) + 1
 SEED_FIELD = "device_id"
 
-# Pass two keeps a pair only if the evidence excluding device already puts the
-# posterior above this. Chosen from the cost of being wrong, not by tuning.
+# Pass two keeps a pair only if the non-device evidence alone clears this.
 SEED_B_POSTERIOR = 0.99
 
 # Expectation Maximisation, run after the seed bootstrap to undo its bias.
 EM_WORLDS_PER_TIER = 5
 EM_MAX_ITERS = 25
 EM_TOLERANCE = 1e-4
-# Dirichlet smoothing on the M step. Without it EM drives levels it cannot see
-# to zero: order_value "no" came out at m = 0.0002, a weight of -11.95 bits,
-# when the true pooled value across tiers is nearer 0.31. EM only learns from
-# pairs it already believes are matches, so the careful operators it misses
-# never get a vote, and their absence hardens into a huge penalty against
-# exactly the pairs it should be learning from. Spreading 2% of the mass evenly
-# over the levels puts a bound on how confident a single level may become.
+# Without smoothing, the order_value "no" level fell to m = 0.0002.
 EM_SMOOTHING = 0.02
 
 
@@ -118,12 +91,7 @@ def popular_value_pairs(accounts: pd.DataFrame, field: str = SEED_FIELD,
 
 
 def purity(world: World, pairs: np.ndarray) -> tuple[int, int]:
-    """How many of these pairs really are one operator.
-
-    Only measurable because the data is synthetic. In production this number
-    does not exist, which is exactly why the seed rule has to stand on domain
-    reasoning rather than on this measurement.
-    """
+    """How many of these pairs really are one operator. Synthetic data only."""
     if len(pairs) == 0:
         return 0, 0
     n = len(world.accounts)
@@ -132,12 +100,7 @@ def purity(world: World, pairs: np.ndarray) -> tuple[int, int]:
 
 
 def expected_match_rate(n_accounts: int, n_candidate_pairs: int) -> float:
-    """Roughly what share of candidate pairs are real matches.
-
-    Derived from config, not from labels. The business states a ring prevalence
-    and a ring size range, and those two give an expected number of within-ring
-    pairs without anyone having to know which pairs they are.
-    """
+    """Roughly what share of candidate pairs are real matches, from config."""
     ring_accounts = n_accounts * config.RING_PREVALENCE
     lo, hi = 8, 45                      # config.generate_accounts.ring_sizes
     mean_size = (lo + hi) / 2
@@ -151,24 +114,8 @@ def em_refine(level_blocks: list[dict], m0: dict, u: dict, lam: float,
               ) -> tuple[dict, float, int]:
     """Soft Expectation Maximisation for m, over blocked candidate pairs.
 
-    The seed bootstrap can only see operators careless enough to reuse a device,
-    so its m for signup timing says 74% of true pairs sign up within an hour.
-    That is true of the obvious tier and false everywhere else, and it would
-    punish a careful ring for taking three weeks. EM fixes it by letting every
-    candidate pair contribute to m in proportion to how likely it is to be a
-    match, so pairs that look like matches for other reasons pull the timing
-    estimate back out.
-
-    u stays fixed at the random-sample estimate. Blocked pairs agree on
-    something by construction, so re-estimating u on them would inflate it. This
-    is what Splink does for the same reason.
-
-    The match rate lambda is held fixed too. Left free it ran away: it climbed
-    from 0.0098 to the 0.5 ceiling in nine iterations, concluding that half of
-    all candidate pairs were matches, and every weight collapsed to zero as m
-    converged on u. Blocked pairs all agree on something, so a free lambda lets
-    EM explain the blocking structure instead of the ring structure. Fixing it
-    at the value config implies removes that degree of freedom.
+    u and the match rate lambda stay fixed. A free lambda ran to the 0.5 ceiling
+    and every weight collapsed to zero as m converged on u.
     """
     m = {k: np.asarray(v, dtype=float) for k, v in m0.items()}
     log_u = {k: np.log(np.maximum(np.asarray(v, dtype=float), link.U_FLOOR))
@@ -244,8 +191,7 @@ def train(seeds: list[int], n_accounts: int, tiers=None,
     prior = n_true_pairs / n_possible_pairs
     prior_odds = prior / (1 - prior)
 
-    # Pass two: m for the device comparison, which pass one cannot estimate
-    # because every one of its seed pairs shares a device by construction.
+    # Pass one cannot estimate m for device: its seed pairs all share one.
     without_device = tuple(c for c in link.COMPARISONS if c != "device")
     threshold = float(np.log2(SEED_B_POSTERIOR / (1 - SEED_B_POSTERIOR)
                               / prior_odds))
@@ -294,11 +240,7 @@ def train(seeds: list[int], n_accounts: int, tiers=None,
     m_em, lam, em_iters = em_refine(level_blocks, m, u, lam)
     del level_blocks
 
-    # EM was measured against the bootstrap on ten validation worlds and lost
-    # on every tier that works at all. Best pair F1, bootstrap against EM:
-    # obvious 0.991 / 0.793, moderate 0.706 / 0.372, sophisticated 0.118 / 0.101.
-    # So the bootstrap estimate ships and EM is kept beside it, reported rather
-    # than quietly dropped. See D-015.
+    # The bootstrap estimate beat EM on every tier, so it is the one used.
     return {
         "trained_on": {"seeds": [seeds[0], seeds[-1]], "n_seeds": len(seeds),
                        "tiers": tiers, "n_accounts": n_accounts},

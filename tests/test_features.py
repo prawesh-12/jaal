@@ -24,8 +24,8 @@ def table(train_table_path):
 
 
 def test_no_feature_function_can_see_the_answer():
-    """The mandatory leakage test. A feature that encodes the label makes a
-    model look brilliant in testing and useless in reality."""
+    """A feature that encodes the label would make the model look good in
+    testing and fail in use."""
     src = "\n".join(inspect.getsource(fn) for fn in
                     (features.structural, features.temporal,
                      features.behavioural, features.economic,
@@ -76,8 +76,8 @@ def test_economic_features_price_the_coupon_correctly():
 
 
 def test_rings_and_office_lookalikes_differ_on_repeat_rate(table):
-    """The trap the generator was built for. If these two look the same, the
-    model has nothing to separate them with."""
+    """Rings and office groups have to differ on repeat rate. If they look the
+    same, the model has nothing to separate them with."""
     rings = table[table["label"] == 1]["repeat_rate"]
     office = table[(table["label"] == 0)
                    & (table["dominant_benign_kind"] == "office")]["repeat_rate"]

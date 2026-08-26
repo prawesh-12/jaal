@@ -1,7 +1,7 @@
-"""The Phase 0 check list, written as tests so it stays true.
+"""What the world generator has to guarantee, written as tests.
 
-These run on small worlds. The full-size checks live in
-scripts/check_phase0.py, which is what produces the numbers in the phase doc.
+These run on small worlds. The full-size versions live in
+scripts/check_generator.py.
 """
 
 import numpy as np
@@ -35,7 +35,7 @@ def test_prevalence_lands_between_seven_and_nine_per_thousand(worlds):
 
 
 def test_at_least_three_rings_and_thirty_lookalike_groups(priors):
-    """Checked at full size, where the plan's counts apply."""
+    """Checked at full size, where these counts are meant to hold."""
     w = gen.generate(0, "moderate", config.N_ACCOUNTS, priors)
     s = w.summary()
     assert s["n_rings"] >= 3
@@ -163,8 +163,8 @@ def test_opaque_ids_do_not_leak_group_membership(priors):
 
 
 def test_drop_addresses_thin_out_as_the_operator_gets_careful(priors):
-    """Without this the ring shares 4 addresses at every tier and exact
-    matching finds all of them, which leaves Phase 2 nothing to do."""
+    """Without this a ring shares 4 addresses at every tier, and plain exact
+    matching would find all of them."""
     reuse = {}
     for tier in config.TIER_NAMES:
         shared = 0

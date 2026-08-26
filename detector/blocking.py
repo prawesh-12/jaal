@@ -1,12 +1,9 @@
 """Candidate pair generation.
 
-12,000 accounts is 72 million possible pairs. Scoring all of them is not an
-option, so we only compare accounts that agree on some coarse key. That is
-blocking, and it buys speed at the price of a hard ceiling: a true pair that no
-rule ever generates can never be recovered, however good the scoring is.
-
-So the ceiling gets measured and reported, not assumed. The two numbers are
-pair reduction ratio and blocking recall, and both appear in every run.
+12,000 accounts make 72 million possible pairs. So we only compare accounts
+that agree on some coarse key. That is fast, but it sets a ceiling: a true pair
+that no rule produces can never be found later. Every run measures that ceiling,
+as pair reduction ratio and blocking recall.
 
     python -m detector.blocking --accounts 12000 --seeds 0-4
 """
@@ -28,19 +25,8 @@ from detector.resources import announce, apply
 WEEK = 7 * 86_400
 MONTH = 30 * 86_400
 
-# Each rule is a set of columns that must all agree exactly. Loose rules that
-# each recover a different slice beat one tight rule, which is the standard
-# advice from the record linkage literature.
-#
-# Nothing blocks on pincode or card_bin alone: the busiest pincode holds 2,639
-# accounts and the busiest BIN 2,964, which would produce over 5 million pairs
-# from a single bucket. Paired with anything else they become usable.
-#
-# A seventh rule, pincode with a Rs.100 value band, was measured and dropped.
-# It cost 291,868 pairs and recovered 0.0795 of adaptive ring pairs on its own,
-# the worst trade of anything tried. Month buckets replaced week buckets for
-# the same reason in reverse: they cost more pairs each but lift adaptive recall
-# from 0.9293 to 0.9732 and the worst single world from 0.7975 to 0.9490.
+# Several loose rules. Each one finds a different set of pairs. No rule blocks
+# on pincode alone, because the busiest pincode holds 2,639 accounts.
 BLOCKING_RULES = (
     ("device", ("device_id",)),
     ("address", ("address_id",)),
@@ -52,12 +38,9 @@ BLOCKING_RULES = (
 
 
 def derive_keys(accounts: pd.DataFrame) -> pd.DataFrame:
-    """Coarse columns the rules block on. Cheap, and computed once per world.
-
-    `signup_month_shift` is the same monthly bucketing offset by half a month.
-    Two accounts three days apart can fall either side of a bucket boundary, and
-    the shifted copy catches them. It costs one more pass and recovers pairs a
-    single bucketing loses at random.
+    """Coarse columns the rules block on. `signup_month_shift` moves the monthly
+    bucket forward by half a month. That catches pairs a month boundary would
+    otherwise split.
     """
     return pd.DataFrame({
         "signup_week": accounts["signup_ts"] // WEEK,
@@ -87,10 +70,8 @@ def _pairs_from_buckets(indices: dict, max_block: int) -> tuple[np.ndarray, int]
 def candidate_pairs(accounts: pd.DataFrame, rules=BLOCKING_RULES,
                     max_block: int = config.MAX_BLOCK_SIZE
                     ) -> tuple[np.ndarray, dict]:
-    """Row-position pairs worth scoring, deduplicated across rules.
-
-    Returns pairs sorted and unique, plus per-rule statistics so the report can
-    say which rule earned its keep.
+    """Row-position pairs worth scoring, deduplicated across rules. Also returns
+    a count per rule, so you can see how much each rule contributes.
     """
     n = len(accounts)
     keyed = pd.concat([accounts, derive_keys(accounts)], axis=1)
@@ -100,8 +81,7 @@ def candidate_pairs(accounts: pd.DataFrame, rules=BLOCKING_RULES,
     for name, cols in rules:
         idx = keyed.groupby(list(cols)).indices
         pairs, skipped = _pairs_from_buckets(idx, max_block)
-        # Encode each pair as one int64 so deduplication is a numpy sort, not a
-        # Python set of tuples. 12,000 accounts needs 28 bits, so this is safe.
+        # One int64 per pair, so deduplication is a numpy sort, not a set.
         code = pairs[:, 0] * n + pairs[:, 1]
         codes.append(code)
         stats[name] = {"pairs": int(len(code)), "blocks_skipped": int(skipped)}
@@ -132,10 +112,8 @@ def candidate_pairs(accounts: pd.DataFrame, rules=BLOCKING_RULES,
 
 
 def true_pair_codes(world: World) -> np.ndarray:
-    """Every pair of accounts that really does share an operator.
-
-    Only rings share one, so this is the union of within-ring pairs. A family
-    sharing a device and a card is still two different people, so it is not here.
+    """Every pair of accounts that really does share an operator. Only rings
+    share one, so a family on one device and one card is not in here.
     """
     n = len(world.truth)
     operator = world.truth["operator_id"].to_numpy()
@@ -169,7 +147,7 @@ def measure(world: World, rules=BLOCKING_RULES) -> dict:
     stats["blocking_recall"] = (round(len(found) / len(truth), 6)
                                 if len(truth) else 0.0)
 
-    # What each rule recovers on its own, so a rule that earns nothing can go.
+    # What each rule finds on its own. A rule that finds nothing can be dropped.
     keyed = pd.concat([world.accounts, derive_keys(world.accounts)], axis=1)
     for name, cols in rules:
         idx = keyed.groupby(list(cols)).indices

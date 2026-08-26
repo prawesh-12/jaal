@@ -1,26 +1,9 @@
 """Turn one cluster into a row of numbers.
 
-This matters more than which model comes next. Good features make almost any
-classifier work and bad ones make none of them work.
-
-**The insight everything here is built on: real families share more than rings
-do.** A family shares one actual card, one real address, one device, and orders
-for years. A ring shares a device by accident and fakes the rest, because faking
-is the entire point. So the separator is not how much a group shares, it is
-whether their behaviour persists. Rings are born, harvest, and die. Families keep
-ordering.
-
-| Signal | Ring | Family | Office lunch group |
-| ------ | ---- | ------ | ------------------ |
-| Signup span | days | years | days, the trap |
-| Repeat orders | almost none | routine | routine |
-| Coupon usage | near 100% | some | some |
-| Order values | near the coupon floor | scattered | scattered |
-| Cards | many, one BIN | one shared card | many BINs |
-
-Nothing in this module may read `world.truth`. A feature that quietly encodes
-the answer makes a model look brilliant in testing and useless in reality, and
-`tests/test_features.py` reads this file's source to check.
+Real families share more than rings do: one real card, one address, years of
+orders. A ring shares a device by accident and fakes the rest, so the separator
+is whether the behaviour persists, not how much the group shares.
+Nothing here may read the answer key, and tests/test_features.py checks that.
 """
 
 from __future__ import annotations
@@ -71,11 +54,7 @@ def _gini(x: np.ndarray) -> float:
 
 
 def _entropy_of_hours(ts: np.ndarray) -> float:
-    """Normalised entropy of signup hour-of-day. Low means machine-like.
-
-    Real people sign up across the day. A script run at 3am gives near zero.
-    This is a signal an operator does not think to hide.
-    """
+    """Normalised entropy of signup hour-of-day. Low means machine-like."""
     hours = (ts // HOUR) % 24
     counts = np.bincount(hours, minlength=24).astype(float)
     p = counts / counts.sum()
@@ -112,8 +91,7 @@ def structural(graph: ig.Graph, rows: list[int], contributions: np.ndarray | Non
         "mean_edge_bits": float(weights.mean()),
         "min_edge_bits": float(weights.min()),
         "weight_spread": float(weights.std()),
-        # Rings hang off one shared asset, so they are star shaped and their
-        # diameter is small. Organic groups spread out.
+        # Rings hang off one shared asset, so they are star shaped and shallow.
         "diameter": float(sub.diameter(unconn=False)) if sub.ecount() else -1.0,
         "degree_gini": _gini(degrees),
         "top_signal_share": top_share,
@@ -143,7 +121,7 @@ def behavioural(block: pd.DataFrame) -> dict:
             & (values < config.COUPON_MIN_ORDER + NEAR_MIN_BAND))
     return {
         "coupon_rate": float(block["coupon_used"].mean()),
-        # The strongest single feature, and the one camouflage attacks.
+        # The strongest single feature. Camouflaged rings aim at it.
         "repeat_rate": float((block["n_orders"] > 1).mean()),
         "near_min_rate": float(near.mean()),
         "value_cv": float(values.std() / mean_value) if mean_value else 0.0,
@@ -156,7 +134,7 @@ def behavioural(block: pd.DataFrame) -> dict:
 
 
 def economic(block: pd.DataFrame) -> dict:
-    """Rupees. This is what connects the model to the decision in Phase 6.
+    """Rupees. This is what the decision step uses to price a cluster.
 
     A cluster extracting Rs.400 is noise. One extracting Rs.40,000 is the target.
     """
@@ -182,10 +160,7 @@ def cluster_features(accounts: pd.DataFrame, graph: ig.Graph, rows: list[int],
 
 
 def dominant_signal(graph: ig.Graph, rows: list[int]) -> str:
-    """Which comparison carried the most weight inside this cluster.
-
-    Not a feature. It goes into the review note in Phase 8.
-    """
+    """Which comparison carried most weight here. Feeds the review note."""
     sub = graph.subgraph(rows)
     if not sub.ecount() or "contributions" not in graph.es.attributes():
         return "unknown"
@@ -193,16 +168,11 @@ def dominant_signal(graph: ig.Graph, rows: list[int]) -> str:
     return link.SCORED_COMPARISONS[int(per_field.argmax())]
 
 
-# --------------------------------------------------------------------------
-# building the training table
-# --------------------------------------------------------------------------
-
 def label_cluster(truth: pd.DataFrame, rows: list[int]) -> dict:
     """Ground truth for one cluster. Evaluation only, never a feature.
 
-    A cluster counts as a ring when most of its accounts are ring accounts. The
-    per-account counts come along too, because the Phase 6 cost model prices
-    innocent accounts inside a blocked cluster individually.
+    Ring when most of its accounts are ring accounts. Per-account counts come
+    too, because the cost model prices innocent accounts one by one.
     """
     block = truth.iloc[rows]
     n_ring = int(block["is_ring"].sum())
@@ -218,12 +188,10 @@ def label_cluster(truth: pd.DataFrame, rows: list[int]) -> dict:
 
 def world_rows(world: World, params: dict) -> list[dict]:
     clusters, graph, contributions = cluster.cluster_world(world, params)
-    keep = np.asarray(graph.es["weight"]) >= 0  # all edges kept in the graph
+    keep = np.asarray(graph.es["weight"]) >= 0
     del keep
 
-    # Ring accounts that joined no cluster are invisible to everything
-    # downstream, and Phase 6 still has to pay for them. Carry the world totals
-    # so the cost model can find them.
+    # Ring accounts in no cluster still cost money, so carry the world totals.
     world_ring_accounts = int(world.truth["is_ring"].sum())
     world_accounts = len(world.accounts)
 
@@ -264,16 +232,14 @@ def build_table(seeds, tiers, n_accounts: int, params: dict,
 
 def audit(table: pd.DataFrame, leak_limit: float = 0.95,
           redundancy_limit: float = 0.90) -> dict:
-    """Leakage and redundancy check. Step 4.5 and the first half of 4.6.
+    """Leakage and redundancy check.
 
-    Leakage means a feature secretly encodes the answer. It makes a model look
-    brilliant in testing and useless in reality. Any single feature correlating
-    above 0.95 with the label is a leak, not a triumph.
+    A feature that correlates above 0.95 with the label is encoding the answer.
+    That is a leak, not a good feature.
     """
     import inspect
 
-    # Only the feature functions are audited. label_cluster is meant to read
-    # the answer key, that is its entire job, and world_rows calls it.
+    # Only feature functions are audited. label_cluster is meant to read truth.
     feature_source = "\n".join(
         inspect.getsource(fn) for fn in
         (structural, temporal, behavioural, economic, cluster_features,

@@ -58,51 +58,51 @@ if [ ! -f data/olist_priors.json ]; then
   exit 1
 fi
 
-run "Phase 0: generator check list"            -m detector.check_phase0 \
+run "Generator check list"            -m detector.check_generator \
     --accounts "$ACCOUNTS" --seeds "$GEN_SEEDS"
 
-run "Phase 1: rules-only baseline"             -m detector.baseline \
+run "Rules-only baseline"             -m detector.baseline \
     --accounts "$ACCOUNTS" --seeds "$VAL_SEEDS" --out results/baseline.json
 
-run "Phase 2a: blocking recall and reduction"  -m detector.blocking \
+run "Blocking, recall and reduction"  -m detector.blocking \
     --accounts "$ACCOUNTS" --seeds "$GEN_SEEDS" --out results/blocking.json
 
-run "Phase 2b: estimate m and u"               -m detector.link_train \
+run "Linkage weights, estimate m and u"               -m detector.link_train \
     --accounts "$ACCOUNTS" --seeds "$LINK_SEEDS" --out results/link_params.json
 
-run "Phase 2c: threshold sweep and ablation"   -m detector.link_eval \
+run "Pair scoring, threshold and ablation"   -m detector.link_eval \
     --accounts "$ACCOUNTS" --seeds "$EVAL_SEEDS" --out results/link_eval.json
 
-run "Phase 3: Leiden clustering"               -m detector.cluster \
+run "Clustering with Leiden"               -m detector.cluster \
     --accounts "$ACCOUNTS" --seeds "$EVAL_SEEDS" --out results/clustering.json
 
-run "Phase 4a: feature table, training seeds"  -m detector.features \
+run "Feature table, training seeds"  -m detector.features \
     --accounts "$ACCOUNTS" --seeds "$TRAIN_SEEDS" --out results/features_train.csv
 
-run "Phase 4b: feature table, validation"      -m detector.features \
+run "Feature table, validation seeds"      -m detector.features \
     --accounts "$ACCOUNTS" --seeds "$VAL_SEEDS" --out results/features_val.csv
 
-run "Phase 4c: leakage and redundancy audit"   -m detector.features \
+run "Leakage and redundancy audit"   -m detector.features \
     --audit results/features_train.csv
 
-run "Phase 5: train and calibrate"             -m detector.model
+run "Train and calibrate"             -m detector.model
 
-run "Phase 6: cost-optimal decisions"          -m detector.decide
+run "Cost-optimal decisions"          -m detector.decide
 
 if [ -f results/holdout.json ]; then
   echo
   echo "=============================================================="
-  echo "  Phase 7: holdout already opened, not re-running"
+  echo "  Holdout already opened, not re-running"
   echo "=============================================================="
   echo "results/holdout.json exists. A holdout opened twice is not a holdout."
   echo "Its numbers are in the README and in that file."
 else
-  run "Phase 7: open the sealed holdout"       -m detector.evaluate_holdout \
+  run "Open the sealed holdout"       -m detector.evaluate_holdout \
       --accounts "$ACCOUNTS" --seeds "900-999"
 fi
 
 if [ -f results/features_holdout.csv ]; then
-  run "Phase 8: review notes"                  -m detector.explain \
+  run "Review notes"                  -m detector.explain \
       --features results/features_holdout.csv --limit 40
 fi
 
@@ -112,4 +112,4 @@ echo "  done"
 echo "=============================================================="
 echo "results/       every number, as JSON"
 echo "results/*.png  PR curves, reliability diagram, cost curve, detection curve"
-echo "docs/          how it works, one document per phase"
+echo "docs/          how it works, stage by stage"

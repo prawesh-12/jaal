@@ -25,7 +25,8 @@ def fitted():
 
 
 def test_split_by_seed_never_shares_a_world():
-    """The single most common way a project like this produces fiction."""
+    """Clusters from one world must not land in both the fit and the
+    calibration set."""
     table = pd.DataFrame({"seed": [0, 0, 1, 1, 2, 2, 3, 3],
                           "label": [0, 1, 0, 1, 0, 1, 0, 1]})
     fit, cal = model.split_by_seed(table, fraction=0.5)
@@ -59,13 +60,13 @@ def test_calibration_improves_the_brier_score(report):
 
 
 def test_the_raw_forest_is_underconfident(report):
-    """Why calibration is here at all. If this stops being true, say so."""
+    """The raw forest is underconfident, which is why calibration is applied."""
     assert report["brier_raw"] > min(report["brier_sigmoid"],
                                      report["brier_isotonic"])
 
 
 def test_detection_degrades_with_sophistication(report):
-    """The shape of the result matters as much as its size."""
+    """PR-AUC has to fall as the operator gets more careful."""
     best = report["variants"][f"forest_{report['calibration_method']}"]
     aucs = [best[t]["pr_auc"] for t in config.TIER_NAMES]
     assert aucs == sorted(aucs, reverse=True), aucs

@@ -1,5 +1,4 @@
-// Copy what the pipeline wrote into public/data so the dashboard can fetch it.
-// The UI computes nothing. It reads results and draws them.
+// The UI computes nothing, so results are copied into public/data to be fetched.
 import { cpSync, mkdirSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 

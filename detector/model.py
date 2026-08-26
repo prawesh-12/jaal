@@ -1,17 +1,9 @@
 """Train a cluster classifier, then make its scores mean what they say.
 
-Training is four lines. The rest of this module is about a problem that is easy
-to miss: a random forest's 0.80 does not mean 80%.
-
-Forests are badly calibrated by construction. The ensemble averages many trees,
-so for it to output 0 every tree must output 0, and any noise in any tree pushes
-the average up. Errors near the boundaries are one sided and probabilities get
-squeezed toward the middle.
-
-That matters here more than usual. Phase 6 computes expected cost in rupees
-directly from p. If p is not a real probability, the entire cost model is
-arithmetic on a meaningless number. Calibration is not polish, it is load
-bearing.
+A random forest's 0.80 does not mean 80%. Averaging many trees makes errors near
+the boundaries one sided and squeezes probabilities toward the middle. The
+decision stage works out expected cost in rupees straight from p, so the
+probabilities have to be right.
 
     python -m detector.model --train results/features_train.csv \
                              --val results/features_val.csv
@@ -25,7 +17,7 @@ import json
 import pickle
 
 import matplotlib
-matplotlib.use("Agg")               # no display on a build machine
+matplotlib.use("Agg")               # no display, so write plots to file
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -46,7 +38,6 @@ from detector.resources import announce, apply, budget
 RANDOM_STATE = 42
 CALIBRATION_FRACTION = 0.25     # share of training seeds held back to calibrate
 
-# Dropped after the Phase 4 audit and confirmed on validation PR-AUC.
 # discount_per_account is coupon_rate times Rs.200, correlation exactly 1.0000.
 DROPPED_FEATURES = ("discount_per_account",)
 MODEL_FEATURES = tuple(f for f in FEATURE_NAMES if f not in DROPPED_FEATURES)
@@ -56,9 +47,8 @@ def split_by_seed(table: pd.DataFrame, fraction: float = CALIBRATION_FRACTION
                   ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Hold back whole worlds to calibrate on, never individual rows.
 
-    Clusters from one generated world share generator artefacts. A random row
-    split leaks them across the boundary and silently inflates every score. It
-    is the most common way a project like this produces fictional numbers.
+    Clusters from one world share generator artefacts, so a random row split
+    leaks them across the boundary and silently inflates every score.
     """
     seeds = np.sort(table["seed"].unique())
     cut = int(len(seeds) * (1 - fraction))
@@ -76,11 +66,8 @@ def make_forest(n_jobs: int) -> RandomForestClassifier:
 def make_purity_model(n_jobs: int) -> RandomForestRegressor:
     """Predicts what fraction of a cluster's accounts are really ring accounts.
 
-    The classifier answers "is this cluster majority ring", which is not the
-    question the cost model asks. Blocking a cluster blocks every account in
-    it, so the bill is the number of *innocent* accounts caught in the net, and
-    a cluster that is 90% ring still costs 10% of its members at Rs.15,000
-    each. Expected cost needs purity, not a class probability. See D-022.
+    The cost model needs purity, not "is this cluster majority ring". Using the
+    class probability lost Rs.16.4 million where purity gains Rs.1.3 million.
     """
     return RandomForestRegressor(
         n_estimators=300, min_samples_leaf=5,
@@ -88,11 +75,7 @@ def make_purity_model(n_jobs: int) -> RandomForestRegressor:
 
 
 def make_mlp() -> object:
-    """A small network on the same features, for the comparison plan 2.6 asks for.
-
-    If the forest wins at this data scale, that is a measured result about where
-    the constraint lies, not an omission.
-    """
+    """A small network on the same features, used to compare against the forest."""
     return make_pipeline(
         StandardScaler(),
         MLPClassifier(hidden_layer_sizes=(32, 16), max_iter=400,
@@ -102,9 +85,8 @@ def make_mlp() -> object:
 def evaluate(y: np.ndarray, p: np.ndarray) -> dict:
     """PR-AUC as the headline, with the prevalence it must be read against.
 
-    At this prevalence ROC-AUC is dominated by the true-negative pool and can
-    read 0.97 while precision is unusable. It is reported alongside, small, so
-    the difference is visible.
+    At this prevalence ROC-AUC can read 0.97 while precision is unusable, so it
+    is reported alongside rather than on its own.
     """
     prevalence = float(y.mean())
     pr_auc = float(average_precision_score(y, p)) if y.sum() else 0.0
@@ -143,9 +125,7 @@ def train_and_calibrate(train: pd.DataFrame, val: pd.DataFrame,
     forest = make_forest(n_jobs).fit(Xf, yf)
     raw = forest.predict_proba(Xv)[:, 1]
 
-    # FrozenEstimator keeps the forest exactly as fitted, so the calibrator
-    # only learns the mapping from its scores to probabilities. It replaced
-    # cv="prefit", which sklearn 1.9 removed.
+    # FrozenEstimator keeps the forest as fitted. It replaces the old cv="prefit".
     calibrators = {}
     models = {"forest_raw": raw}
     for method in ("sigmoid", "isotonic"):
@@ -191,9 +171,8 @@ def plot_pr_curves(val: pd.DataFrame, p: np.ndarray, path: str) -> None:
 def plot_reliability(y: np.ndarray, curves: dict, path: str) -> None:
     """Predicted probability against observed frequency, in ten equal bins.
 
-    Uniform bins, not quantile bins. At 2.3% prevalence a quantile split puts
-    nine bins of ten inside [0, 0.001] and the whole chart collapses into the
-    bottom corner, which hides the only region anyone cares about.
+    Uniform bins, not quantile. At 2.3% prevalence a quantile split crams nine
+    bins of ten into [0, 0.001] and hides the region we care about.
     """
     fig, (ax, ax2) = plt.subplots(2, 1, figsize=(6.5, 7.5),
                                   gridspec_kw={"height_ratios": [3, 1]},
@@ -269,11 +248,7 @@ def main() -> None:
     # Which calibration method, decided on the Brier score it produces.
     sig = report["variants"]["forest_sigmoid"]["all_tiers_pooled"]["brier"]
     iso = report["variants"]["forest_isotonic"]["all_tiers_pooled"]["brier"]
-    # Brier picks isotonic by a hair, but Platt keeps the ranking intact and
-    # isotonic's step function creates ties that cost PR-AUC. The difference is
-    # small enough either way that the tie-break belongs to the objective that
-    # actually matters, expected cost in rupees, so both are saved and Phase 6
-    # confirms the choice. See D-021.
+    # Both calibrators are saved, and the decision stage picks on cost.
     chosen = "sigmoid" if sig <= iso else "isotonic"
     report["calibration_method"] = chosen
     report["brier_sigmoid"] = sig
@@ -313,8 +288,7 @@ def main() -> None:
                          "isotonic": fitted["models"]["forest_isotonic"]},
                      "results/reliability.png")
 
-    # Permutation importance on the validation set, which is what the plan's
-    # step 4.6 asks for and needs a fitted model to compute.
+    # Which features matter, measured by shuffling each one on the validation set.
     print("\npermutation importance, top 15")
     imp = permutation_importance(
         fitted["forest"], val[list(MODEL_FEATURES)], y, n_repeats=3,
@@ -327,8 +301,7 @@ def main() -> None:
     for i in order[:15]:
         print(f"  {MODEL_FEATURES[i]:<24} {imp.importances_mean[i]:>8.5f}")
 
-    # gzip, because an uncompressed forest pair is 16 MB and this file is
-    # committed so the API works without retraining. Stdlib only.
+    # gzip because an uncompressed forest pair is 16 MB and this file is committed.
     with gzip.open(args.model_out, "wb") as f:
         pickle.dump({"forest": fitted["forest"],
                      "purity": fitted["purity"],

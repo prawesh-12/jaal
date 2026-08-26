@@ -1,7 +1,7 @@
 """Locks the frozen baseline so it cannot drift without someone noticing.
 
-Every later phase reports as a delta against results/baseline.json. If a change
-to the generator or the linker quietly moves those numbers, the delta is
+Later results are reported as a delta against results/baseline.json. If a
+change to the generator or the linker quietly moves those numbers, the delta is
 measured against a different world and means nothing.
 """
 
@@ -56,7 +56,7 @@ def test_baseline_numbers_have_not_drifted():
 
 
 def test_every_tier_loses_money(frozen):
-    """The Phase 1 finding. 90% precision and it still destroys value."""
+    """Ninety percent precision still loses money at this cost ratio."""
     for tier, t in frozen["tiers"].items():
         assert t["net_vs_nothing_rupees"] < 0, f"{tier} unexpectedly turned a profit"
 
@@ -67,7 +67,7 @@ def test_the_baseline_is_blind_to_the_adaptive_tier(frozen):
 
 
 def test_precision_is_far_below_the_breakeven_point(frozen):
-    """Reported precision looks good and is nowhere near good enough."""
+    """The reported precision reads well but sits below breakeven."""
     breakeven = costs.breakeven_precision()
     for tier, t in frozen["tiers"].items():
         assert t["precision"] < breakeven, tier

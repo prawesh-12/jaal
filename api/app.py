@@ -1,8 +1,7 @@
 """Two endpoints over results the pipeline already produced.
 
-There is no detection logic in this file and there must never be. The route
-handlers load what `detector/` wrote and return it. If you find yourself
-computing a feature here, it belongs in `detector/features.py`.
+There is no detection logic here and there must never be. If you are computing
+a feature in this file, it belongs in `detector/features.py`.
 
     POST /score       cluster features in, probability, action and reason out
     GET  /runs/<id>   a whole batch result, by name
@@ -55,8 +54,7 @@ def score():
                         "expected": model()["features"]}), 400
 
     m = model()
-    # A DataFrame, not an array. The models were fitted with feature names and
-    # sklearn warns, correctly, when it is handed bare numbers.
+    # A DataFrame, not an array: the models were fitted with feature names.
     row = pd.DataFrame([{f: float(payload[f]) for f in m["features"]}])
     p = float(m["calibrator"].predict_proba(row)[0, 1])
     purity = float(np.clip(m["purity"].predict(row)[0], 0.0, 1.0))

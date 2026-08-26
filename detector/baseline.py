@@ -4,8 +4,8 @@ Deliberately dumb. It links accounts that share an identifier exactly, groups
 them with union-find, and scores each group with five hand-written rules. No
 probabilities, no learning, no tuning.
 
-This exists so there is something to compare against. Without it nobody, the
-author included, can tell whether the machine learning contributed anything.
+This exists so there is something to compare against. Without it there is no
+way to tell whether the machine learning helped.
 
     python -m detector.baseline --accounts 12000 --seeds 700-899
 """
@@ -27,12 +27,12 @@ from detector.resources import announce, apply
 
 # Fields an analyst would actually link on. Three are left out on purpose.
 # A card BIN identifies an issuer and a pincode identifies an area, so neither
-# says anything about a person. ip_prefix is a /24 network: measured on seed
-# 700, one prefix covered 694 accounts, and union-find chained those buckets
-# through shared devices into a single component of 5,754 accounts holding
-# every ring in the world. That blob scores 0.3 and gets flagged as nothing.
-# The failure is transitive closure itself, and it is the reason Phase 2 scores
-# weighted edges instead of merging whatever touches.
+# says anything about a person. ip_prefix is a /24 network: on seed 700 one
+# prefix covered 694 accounts, and union-find chained those buckets through
+# shared devices into one component of 5,754 accounts holding every ring in the
+# world. That component scores 0.3, so nothing is flagged.
+# Transitive closure cannot express a weak edge. It merges completely or not
+# at all.
 LINK_FIELDS = ("device_id", "address_id")
 
 MIN_GROUP_SIZE = 3

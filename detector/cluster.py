@@ -1,18 +1,10 @@
 """Community detection over the weighted evidence graph.
 
-Accounts are nodes, scored pairs are edges, and edge weight is how many bits of
-evidence say the two share an operator. The job is to cut that graph into groups
-that are strongly tied inside and weakly tied to everything else.
-
-This is a graph algorithm, not machine learning. No training, no labels.
-
-**Leiden, not Louvain.** Louvain can produce badly connected communities and, in
-the worst case, internally disconnected ones. For this problem that is not a
-technicality: a "ring" that is internally disconnected is not a ring, it is two
-unrelated clumps the algorithm glued together, and reporting one as a detection
-falls apart under the first question a reviewer asks. Leiden guarantees
-connected communities by construction. Both are run and Louvain's failures are
-counted, in `results/clustering.json`.
+Accounts are nodes, scored pairs are edges, and edge weight is bits of evidence
+that two accounts share an operator. A graph algorithm, no training, no labels.
+Leiden rather than Louvain, because Louvain can return internally disconnected
+communities and a disconnected "ring" is not a ring. Both are run and Louvain's
+failures are counted in results/clustering.json.
 
     python -m detector.cluster --accounts 12000 --seeds 700-704
 """
@@ -35,13 +27,9 @@ from detector.cli import add_common_args, parse_seeds
 from detector.generate_accounts import World, generate, load_priors
 from detector.resources import announce, apply
 
-# Phase 2 chose 6 bits on an edge budget and said the real test was cluster
-# quality. It failed that test: at 6 bits Leiden returned clusters of up to
-# 1,812 accounts and a pairwise F1 of 0.0014, because a graph where 96% of
-# edges are wrong has no structure left to find. Raised to 14 bits, which is
-# where every tier's recall ceiling is highest. See D-018.
+# At 6 bits Leiden returned clusters of 1,812 accounts and pair F1 of 0.0014.
 EDGE_THRESHOLD_BITS = 14.0
-RESOLUTION = 1.0              # confirmed by the sweep in step 3.3
+RESOLUTION = 1.0              # a sweep from 0.5 to 2.0 barely moves it
 MIN_CLUSTER_SIZE = 3          # a "ring" of two is a couple sharing a phone
 MAX_CLUSTER_SIZE = 500        # above this the threshold is too low
 CLUSTER_SEED = 42             # community detection is randomised. Pin it.
@@ -73,7 +61,7 @@ def leiden_clusters(graph: ig.Graph, resolution: float = RESOLUTION,
 
 def louvain_clusters(graph: ig.Graph, seed: int = CLUSTER_SEED
                      ) -> list[list[int]]:
-    """The same job with the algorithm everyone reaches for, for comparison."""
+    """The same job with Louvain, for comparison."""
     nxg = nx.Graph()
     nxg.add_nodes_from(range(graph.vcount()))
     for e in graph.es:
@@ -87,7 +75,7 @@ def louvain_clusters(graph: ig.Graph, seed: int = CLUSTER_SEED
 
 
 def count_disconnected(graph: ig.Graph, clusters: list[list[int]]) -> int:
-    """How many 'communities' are not actually connected subgraphs?"""
+    """Count the clusters that are not connected subgraphs."""
     bad = 0
     for c in clusters:
         sub = graph.subgraph(c)
@@ -112,7 +100,7 @@ def cluster_world(world: World, params: dict,
     bits, contributions = link.score_pairs(world.accounts, pairs, params)
     graph = build_graph(pairs, bits, len(world.accounts), threshold)
 
-    # Keep the winning contribution row per edge so Phase 8 can say why.
+    # Keep the contribution row per edge, so we can say why a pair matched.
     keep = bits >= threshold
     graph.es["contributions"] = contributions[keep].tolist()
 
@@ -120,18 +108,11 @@ def cluster_world(world: World, params: dict,
     return clusters, graph, contributions[keep]
 
 
-# --------------------------------------------------------------------------
-# evaluation
-# --------------------------------------------------------------------------
-
 def pairwise_quality(world: World, clusters: list[list[int]]) -> dict:
     """Precision and recall over pairs the partition puts together.
 
-    The measure that matters. "Every ring account landed in some cluster" is
-    trivially true if the partition is one giant blob, and a blob is not a
-    detection. Counting pairs punishes that: a cluster of 1,800 accounts
-    containing a ring of 30 claims 1.6 million co-operator pairs and gets
-    credit for 435 of them.
+    Counting pairs punishes giant blobs. A cluster of 1,800 accounts holding a
+    ring of 30 claims 1.6 million co-operator pairs and gets credit for 435.
     """
     from detector.blocking import true_pair_codes
 

@@ -11,7 +11,7 @@ flowchart LR
     K --> C{cache hit?}
     C -->|yes| OUT[note, source cache]
     C -->|no| L{live enabled<br/>and a key set?}
-    L -->|yes| O[Ollama Cloud<br/>gpt-oss:120b]
+    L -->|yes| O[Ollama Cloud<br/>minimax-m3, then gpt-oss:120b]
     L -->|no| T[template sentence]
     O -->|success| OUT2[note, source live]
     O -->|any failure| T

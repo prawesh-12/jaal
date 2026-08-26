@@ -1,4 +1,4 @@
-"""Config invariants that other phases quietly depend on."""
+"""Config invariants that the rest of the pipeline quietly depends on."""
 
 import config
 

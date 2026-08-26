@@ -1,8 +1,7 @@
-"""Threshold sweep and ablation for the pair scorer (step 2.5).
+"""Threshold sweep and ablation for the pair scorer.
 
-Two questions. Where should the edge threshold sit, and which comparisons
-actually earn their place? The ablation answers "what if the operator hides X"
-for every X, by measuring what recall does when X is removed.
+Shows where the edge threshold should sit, and how much recall is lost when
+each comparison is removed.
 
     python -m detector.link_eval --accounts 12000 --seeds 700-709
 """
@@ -23,9 +22,7 @@ from detector.resources import announce, apply
 
 THRESHOLDS = tuple(range(0, 61, 2))
 
-# Edges per world the graph stage is willing to carry. 12,000 nodes at this
-# budget is a mean degree near 8, which Leiden handles easily and which is
-# sparse enough that a ring of 30 still stands out as a near-clique.
+# Edges per world the graph stage will carry. At 12,000 nodes, mean degree 8.
 EDGE_BUDGET = 50_000
 
 
@@ -78,15 +75,8 @@ def best_threshold(sweep_out: dict, n_worlds: int,
                    edge_budget: int = EDGE_BUDGET) -> float:
     """The lowest threshold whose graph still fits the edge budget.
 
-    Not the F1-optimal threshold. F1 over pairs is the wrong objective here,
-    because the pair scorer is not the product: it builds the graph that Leiden
-    partitions in Phase 3. Optimising pair F1 picks 40 bits, where the obvious
-    tier scores 0.9922 precision and the moderate tier has already lost 71% of
-    its true pairs. An edge that is never created can never be recovered by any
-    later stage, so the graph wants recall, and the only real limit on recall is
-    how dense a graph the clustering can still see structure in.
-
-    So: take every edge you can afford, cheapest evidence last.
+    Not the F1-optimal threshold: pair F1 picks 40 bits, where the moderate tier
+    has already lost 71% of its true pairs and no later stage can recover them.
     """
     best = None
     for k in range(len(next(iter(sweep_out.values())))):
@@ -112,8 +102,7 @@ def ablation(seeds, n_accounts, params, threshold: float, tiers=None,
 
     variants = [(name, tuple(c for c in link.SCORED_COMPARISONS if c != name))
                 for name in link.SCORED_COMPARISONS]
-    # Also measure putting the two excluded comparisons back, so the decision
-    # to leave them out stays visible in the report instead of being folded in.
+    # Add the two excluded comparisons back, so leaving them out stays visible.
     variants += [(f"+{name}", link.SCORED_COMPARISONS + (name,))
                  for name in link.EXCLUDED_COMPARISONS]
 

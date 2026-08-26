@@ -16,9 +16,9 @@ SIGNALS = [("device agreement, average edge", 41.3),
 
 
 def test_the_cache_key_covers_the_evidence_too():
-    """Regression. Two clusters with identical facts and different edge
-    strengths shared a cache entry, so the second was handed a note quoting the
-    first one's bits. The audit caught it, which is what the audit is for."""
+    """Two clusters with the same facts but different edge strengths once
+    shared a cache entry, so the second was handed a note quoting the first
+    one's bit values."""
     a = explain.cache_key(FACTS, 0.83, "review", SIGNALS)
     other = [("device agreement, average edge", 55.8)] + SIGNALS[1:]
     b = explain.cache_key(FACTS, 0.83, "review", other)

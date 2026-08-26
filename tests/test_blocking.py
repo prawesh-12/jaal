@@ -1,4 +1,4 @@
-"""Blocking sets a hard ceiling on everything downstream, so it gets tests."""
+"""Blocking sets a hard ceiling on recall for every later stage."""
 
 import json
 
@@ -25,7 +25,7 @@ def test_candidate_pairs_are_unique_and_ordered(world):
 
 
 def test_reduction_ratio_beats_ninety_nine_percent():
-    """Checked at full size, which is where the plan's bar applies.
+    """Checked at full size, which is where the target applies.
 
     Possible pairs grow with the square of the population and candidate pairs
     grow far more slowly, so the ratio improves with scale. A 3,000 account
@@ -66,7 +66,7 @@ def test_true_pairs_are_ring_pairs_only(world):
 
 
 def test_blocking_recall_holds_on_every_tier():
-    """The plan's bar. Below 0.90 no later stage can recover the difference."""
+    """Below 0.90 recall here, no later stage can recover the difference."""
     priors = gen.load_priors()
     for tier in config.TIER_NAMES:
         recalls = [blocking.measure(gen.generate(s, tier, SMALL, priors))
