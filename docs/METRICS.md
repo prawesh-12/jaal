@@ -167,6 +167,22 @@ Total wrongly blocked: **0 accounts**, Rs.0.
 | one ring split across several clusters | adaptive tier, seed 912 | 11 separate ring clusters in a world that contains at most 5 rings |
 | the operator rotates delivery addresses | sophistication 0.30 on the swept curve | recall falls below 0.05 once the operator is down to 8.1 accounts per drop address and 0.70 device reuse |
 
+## How accurate does the reviewer have to be?
+
+Every rupee above assumes a person resolves each reviewed cluster correctly. 26,527 ring accounts sit in that queue, so at Rs.200 a coupon the queue can cost at most Rs.5,305,400.
+
+| reviewer accuracy | obvious | moderate | sophisticated | adaptive | pooled |
+| --- | --- | --- | --- | --- | --- |
+| 1.00 | +Rs.1,148,700 | +Rs.569,400 | +Rs.343,100 | +Rs.191,850 | +Rs.2,253,050 |
+| 0.90 | +Rs.1,054,320 | +Rs.412,260 | +Rs.172,920 | +Rs.83,010 | +Rs.1,722,510 |
+| 0.80 | +Rs.959,940 | +Rs.255,120 | +Rs.2,740 | -Rs.25,830 | +Rs.1,191,970 |
+| 0.70 | +Rs.865,560 | +Rs.97,980 | -Rs.167,440 | -Rs.134,670 | +Rs.661,430 |
+| 0.60 | +Rs.771,180 | -Rs.59,160 | -Rs.337,620 | -Rs.243,510 | +Rs.130,890 |
+| 0.50 | +Rs.676,800 | -Rs.216,300 | -Rs.507,800 | -Rs.352,350 | -Rs.399,650 |
+| **break-even** | never | 0.6376 | 0.7984 | 0.8237 | 0.5753 |
+
+`never` means the tier stays ahead even if the reviewer resolves nothing at all, because blocking alone already pays for the queue.
+
 ## Review notes
 
 1,334 notes for every cluster not simply allowed. Sources: live 40, template 1294. Notes quoting a number not from the pipeline: **0**.

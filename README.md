@@ -81,6 +81,28 @@ That result holds if you disagree with the Rs.15,000 figure. At every cost ratio
 from 10:1 to 200:1 the three-action rule saves money, and from 25:1 upward no
 two-action threshold does.
 
+### And if the reviewer is not perfect
+
+The saving above assumes a person resolves every reviewed cluster correctly.
+26,527 ring accounts sit in that queue on the holdout, so at Rs.200 a coupon the
+queue can cost at most Rs.5,305,400 if the reviewer resolves none of them.
+
+| reviewer accuracy | obvious | moderate | sophisticated | adaptive | pooled |
+| --- | --- | --- | --- | --- | --- |
+| 1.00 | +Rs.1,148,700 | +Rs.569,400 | +Rs.343,100 | +Rs.191,850 | +Rs.2,253,050 |
+| 0.90 | +Rs.1,054,320 | +Rs.412,260 | +Rs.172,920 | +Rs.83,010 | +Rs.1,722,510 |
+| 0.80 | +Rs.959,940 | +Rs.255,120 | +Rs.2,740 | -Rs.25,830 | +Rs.1,191,970 |
+| 0.70 | +Rs.865,560 | +Rs.97,980 | -Rs.167,440 | -Rs.134,670 | +Rs.661,430 |
+| 0.60 | +Rs.771,180 | -Rs.59,160 | -Rs.337,620 | -Rs.243,510 | +Rs.130,890 |
+| 0.50 | +Rs.676,800 | -Rs.216,300 | -Rs.507,800 | -Rs.352,350 | -Rs.399,650 |
+| **break-even** | never | 0.6376 | 0.7984 | 0.8237 | **0.5753** |
+
+**The reviewer has to be right about 57.5% of the time for the system to break
+even.** Below that it loses money. The tiers do not share that burden evenly:
+blocking alone carries the easy tier whatever the reviewer does, while the
+hardest tier needs an 82% accurate reviewer, because every rupee it earns comes
+from the queue.
+
 ## Baseline comparison
 
 A rules-only detector, published before the model existed: exact matching on
@@ -204,6 +226,7 @@ twenty-four by permutation importance, and that is documented rather than hidden
 
 | Path | What is in it |
 | ---- | ------------- |
+| `docs/built_till_now.md` | Everything built so far, in depth, with every measured number |
 | `docs/00-overview.md` | What this is, for someone who knows nothing |
 | `docs/01-architecture.md` | How the pieces fit, and the three boundaries |
 | `docs/02-data-model.md` | Record shapes, and why operator is not group |

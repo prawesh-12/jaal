@@ -21,6 +21,8 @@ All 11 phases complete. Holdout opened once and reported.
 
 140 tests pass. 27 decisions recorded, including the wrong turns.
 
+A full account of everything built is in `docs/built_till_now.md`.
+
 ## Definition of done
 
 | check | state |

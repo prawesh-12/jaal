@@ -232,6 +232,34 @@ def build() -> str:
         for f in ho["failure_catalogue"]:
             out.append(f"| {f['failure']} | {f['example']} | {f['detail']} |")
 
+    ra = load("review_accuracy")
+    if ra:
+        out.append(section("How accurate does the reviewer have to be?"))
+        pooled = ra["pooled"]
+        out.append(f"Every rupee above assumes a person resolves each reviewed "
+                   f"cluster correctly. {pooled['ring_accounts_reviewed']:,} ring "
+                   f"accounts sit in that queue, so at Rs."
+                   f"{ra['cost_missed_abuser']} a coupon the queue can cost at "
+                   f"most Rs.{pooled['worst_case_review_loss_rupees']:,}.\n")
+        tiers = list(ra["tiers"])
+        out.append("| reviewer accuracy | "
+                   + " | ".join(tiers) + " | pooled |")
+        out.append("| --- |" + " --- |" * (len(tiers) + 1))
+        for i, a in enumerate(ra["accuracies"]):
+            cells = [rupees(ra["tiers"][t]["curve"][i]["net_rupees"])
+                     for t in tiers]
+            cells.append(rupees(pooled["curve"][i]["net_rupees"]))
+            out.append(f"| {a:.2f} | " + " | ".join(cells) + " |")
+        beven = [("never" if ra["tiers"][t]["breakeven_accuracy"] is None
+                  else f"{ra['tiers'][t]['breakeven_accuracy']:.4f}")
+                 for t in tiers]
+        beven.append("never" if pooled["breakeven_accuracy"] is None
+                     else f"{pooled['breakeven_accuracy']:.4f}")
+        out.append("| **break-even** | " + " | ".join(beven) + " |")
+        out.append("\n`never` means the tier stays ahead even if the reviewer "
+                   "resolves nothing at all, because blocking alone already pays "
+                   "for the queue.")
+
     ex = load("explanations")
     if ex:
         out.append(section("Review notes"))

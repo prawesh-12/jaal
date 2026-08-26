@@ -1,0 +1,174 @@
+{
+ "source": "results/holdout.json",
+ "cost_missed_abuser": 200,
+ "accuracies": [
+  1.0,
+  0.9,
+  0.8,
+  0.7,
+  0.6,
+  0.5
+ ],
+ "pooled": {
+  "net_when_perfect_rupees": 2253050,
+  "ring_accounts_reviewed": 26527,
+  "worst_case_review_loss_rupees": 5305400,
+  "breakeven_accuracy": 0.5753289101669996,
+  "curve": [
+   {
+    "accuracy": 1.0,
+    "net_rupees": 2253050
+   },
+   {
+    "accuracy": 0.9,
+    "net_rupees": 1722510
+   },
+   {
+    "accuracy": 0.8,
+    "net_rupees": 1191970
+   },
+   {
+    "accuracy": 0.7,
+    "net_rupees": 661430
+   },
+   {
+    "accuracy": 0.6,
+    "net_rupees": 130890
+   },
+   {
+    "accuracy": 0.5,
+    "net_rupees": -399650
+   }
+  ]
+ },
+ "tiers": {
+  "obvious": {
+   "net_when_perfect_rupees": 1148700,
+   "ring_accounts_reviewed": 4719,
+   "worst_case_review_loss_rupees": 943800,
+   "breakeven_accuracy": null,
+   "curve": [
+    {
+     "accuracy": 1.0,
+     "net_rupees": 1148700
+    },
+    {
+     "accuracy": 0.9,
+     "net_rupees": 1054320
+    },
+    {
+     "accuracy": 0.8,
+     "net_rupees": 959940
+    },
+    {
+     "accuracy": 0.7,
+     "net_rupees": 865560
+    },
+    {
+     "accuracy": 0.6,
+     "net_rupees": 771180
+    },
+    {
+     "accuracy": 0.5,
+     "net_rupees": 676800
+    }
+   ]
+  },
+  "moderate": {
+   "net_when_perfect_rupees": 569400,
+   "ring_accounts_reviewed": 7857,
+   "worst_case_review_loss_rupees": 1571400,
+   "breakeven_accuracy": 0.6376479572355861,
+   "curve": [
+    {
+     "accuracy": 1.0,
+     "net_rupees": 569400
+    },
+    {
+     "accuracy": 0.9,
+     "net_rupees": 412260
+    },
+    {
+     "accuracy": 0.8,
+     "net_rupees": 255120
+    },
+    {
+     "accuracy": 0.7,
+     "net_rupees": 97980
+    },
+    {
+     "accuracy": 0.6,
+     "net_rupees": -59160
+    },
+    {
+     "accuracy": 0.5,
+     "net_rupees": -216300
+    }
+   ]
+  },
+  "sophisticated": {
+   "net_when_perfect_rupees": 343100,
+   "ring_accounts_reviewed": 8509,
+   "worst_case_review_loss_rupees": 1701800,
+   "breakeven_accuracy": 0.7983899400634622,
+   "curve": [
+    {
+     "accuracy": 1.0,
+     "net_rupees": 343100
+    },
+    {
+     "accuracy": 0.9,
+     "net_rupees": 172920
+    },
+    {
+     "accuracy": 0.8,
+     "net_rupees": 2740
+    },
+    {
+     "accuracy": 0.7,
+     "net_rupees": -167440
+    },
+    {
+     "accuracy": 0.6,
+     "net_rupees": -337620
+    },
+    {
+     "accuracy": 0.5,
+     "net_rupees": -507800
+    }
+   ]
+  },
+  "adaptive": {
+   "net_when_perfect_rupees": 191850,
+   "ring_accounts_reviewed": 5442,
+   "worst_case_review_loss_rupees": 1088400,
+   "breakeven_accuracy": 0.8237320837927232,
+   "curve": [
+    {
+     "accuracy": 1.0,
+     "net_rupees": 191850
+    },
+    {
+     "accuracy": 0.9,
+     "net_rupees": 83010
+    },
+    {
+     "accuracy": 0.8,
+     "net_rupees": -25830
+    },
+    {
+     "accuracy": 0.7,
+     "net_rupees": -134670
+    },
+    {
+     "accuracy": 0.6,
+     "net_rupees": -243510
+    },
+    {
+     "accuracy": 0.5,
+     "net_rupees": -352350
+    }
+   ]
+  }
+ }
+}
