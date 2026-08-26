@@ -12,6 +12,8 @@
 #   python -m detector.adapt --visibility-sweep        the same, at every level
 #                                                      of what it can see
 #   python -m detector.reassemble --seeds 700-749      rejoining split rings
+#   python -m detector.ablate                          what a caller with
+#                                                      fewer columns gets
 #
 # Everything runs at nice 10 so the machine stays usable, and every entry point
 # measures free memory before it starts and refuses to run if there is not

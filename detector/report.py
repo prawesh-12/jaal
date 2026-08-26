@@ -36,6 +36,13 @@ def section(title: str) -> str:
     return f"\n## {title}\n"
 
 
+def profiles_columns(row: dict) -> list:
+    """Columns a profile can send, worked back from what it is missing."""
+    from detector.profiles import ALL_COLUMNS
+    missing = set(row.get("missing_columns", ()))
+    return [c for c in ALL_COLUMNS if c not in missing]
+
+
 def build() -> str:
     out = ["# Measured results",
            "",
@@ -414,6 +421,41 @@ def build() -> str:
                    f"a rule that moves one thing a round never assembles all "
                    f"five.")
 
+    ab = load("field_ablation")
+    if ab and ab.get("profiles"):
+        rows = [r for r in ab["profiles"] if r.get("usable")]
+        full = next((r for r in rows if r["name"] == "full"), None)
+        base = full["pooled"]["net_vs_nothing_rupees"] if full else 0
+        out.append(section("What a caller with fewer columns gets"))
+        out.append(f"Each profile re-blocks, re-scores, re-clusters and refits "
+                   f"the model on the columns it can supply. Validation seeds "
+                   f"{ab['val_seeds'][0]}-{ab['val_seeds'][1]}, "
+                   f"{ab['n_accounts_per_world']:,} accounts per world. The "
+                   f"holdout is sealed and is not used here.\n")
+        out.append("| profile | columns | comparisons | rules | features | "
+                   "precision | recall | with review | net | of full |")
+        out.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+        for r in rows:
+            pooled = r["pooled"]
+            share = f"{pooled['net_vs_nothing_rupees'] / base:.0%}" if base else "n/a"
+            prec = ("n/a" if pooled["precision"] is None
+                    else f"{pooled['precision']:.4f}")
+            n_cols = len(profiles_columns(r))
+            out.append(f"| {r['name']} | {n_cols} | {r['n_comparisons']} | "
+                       f"{r['n_blocking_rules']} | {r['n_features']} | {prec} | "
+                       f"{pooled['recall']:.4f} | "
+                       f"{pooled['recall_including_review']:.4f} | "
+                       f"{rupees(pooled['net_vs_nothing_rupees'])} | {share} |")
+
+        out.append("\nRecall including review, per tier. Never averaged.\n")
+        tiers = list(rows[0]["tiers"]) if rows else []
+        out.append("| profile | " + " | ".join(tiers) + " |")
+        out.append("| --- |" + " --- |" * len(tiers))
+        for r in rows:
+            cells = " | ".join(f"{r['tiers'][t]['recall_including_review']:.4f}"
+                               if t in r["tiers"] else "-" for t in tiers)
+            out.append(f"| {r['name']} | {cells} |")
+
     ex = load("explanations")
     if ex:
         out.append(section("Review notes"))
@@ -427,7 +469,8 @@ def build() -> str:
     for f, what in (("pr_curve.png", "Precision-recall by tier"),
                     ("reliability.png", "Reliability diagram, before and after calibration"),
                     ("cost_curve.png", "Cost against blocking threshold"),
-                    ("detection_curve.png", "Where the detector stops working")):
+                    ("detection_curve.png", "Where the detector stops working"),
+                    ("field_ablation.png", "What a caller with fewer columns gets")):
         mark = "yes" if os.path.exists(os.path.join(RESULTS, f)) else "missing"
         out.append(f"- `results/{f}`, {what} ({mark})")
 
