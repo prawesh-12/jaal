@@ -165,6 +165,35 @@ the obvious tier and loses twelve million rupees doing it. Jaal catches half as
 many and turns a profit. That comparison is the entire argument of this project,
 and without a published baseline nobody, the author included, could have made it.
 
+## Where this sits next to Vulcan
+
+Razorpay shipped Vulcan on 18 August 2026: a transformer trained on roughly four
+billion payments, using about three thousand signals per transaction, covering
+routing, fraud detection, risk assessment and checkout personalisation.
+
+Jaal is not an alternative to that. It answers a question a payment model cannot
+be asked.
+
+A per-transaction scorer takes one payment and returns a judgement about it. That
+works whenever the payment carries the evidence. A stolen card, an odd amount, a
+device that has failed twenty times tonight, a shipping country the customer has
+never used: all of it sits inside the transaction, and three thousand signals
+will read it better than anything here does.
+
+Promo abuse of this kind has a different shape. Fifty accounts each place one
+order. Every one of those orders is a real first purchase as far as any single
+record can tell: the card works, the address is deliverable, the amount is
+ordinary, the coupon is used exactly as intended. There is no anomalous payment
+to find, because none of the payments are anomalous. What is wrong is that fifty
+of them share an operator, and that fact exists only in the comparison between
+records. It is not in any one of them, at any resolution.
+
+So the two run at different levels. Vulcan scores payments as they happen. Jaal
+scores the relationships between accounts, in a batch, after the fact, and hands
+a person a short list. A merchant would want both, and neither replaces the
+other. Nothing measured in this repository says anything about Vulcan's
+performance, and no claim is made against it.
+
 ## We let the operator fight back
 
 Sophistication had been a dial we set, which invites the fair objection that we
