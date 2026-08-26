@@ -226,6 +226,23 @@ The curve is not perfectly monotonic. 4 of 60 steps paid less with more capacity
 
 Blocking fell from 0.1354 to 0.0000. The share reaching a human fell from 0.9631 to 0.9283.
 
+## Rejoining split rings: measured and rejected
+
+Clusters sharing a pincode and an overlapping signup window were merged, gated so the joined group could not be less pure than its parts. Measured on validation seeds 700 to 749, 200 worlds.
+
+| | as is | reassembled |
+| --- | --- | --- |
+| clusters | 37,633 | 18,731 |
+| accounts blocked | 3,159 | 1,825 |
+| accounts reviewed | 14,230 | 18,576 |
+| recall | 0.1645 | 0.0950 |
+| recall incl. review | 0.8410 | 0.6379 |
+| net against doing nothing | +Rs.1,079,900 | -Rs.351,800 |
+
+47,212 merges proposed, 18,902 accepted, 11,566 rejected because the joined group would have been less pure, 16,744 rejected as too large.
+
+It made things worse by Rs.1,431,700. Every cost in this system scales with cluster size: reviewing costs Rs.150 an account and blocking needs a higher purity to pay for a bigger group. The gate protected the purity ratio and could not protect the economics. The code is kept and is off by default.
+
 ## Review notes
 
 1,334 notes for every cluster not simply allowed. Sources: live 40, template 1294. Notes quoting a number not from the pipeline: **0**.

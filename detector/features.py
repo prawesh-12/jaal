@@ -71,6 +71,13 @@ def _burstiness(ts: np.ndarray) -> float:
     return float((right - np.arange(len(s))).max() / len(s))
 
 
+def _diameter(sub: ig.Graph) -> float:
+    """Longest shortest path, or -1 when there is not one."""
+    if not sub.ecount() or not sub.is_connected():
+        return -1.0
+    return float(sub.diameter(unconn=False))
+
+
 def structural(graph: ig.Graph, rows: list[int], contributions: np.ndarray | None,
                ) -> dict:
     sub = graph.subgraph(rows)
@@ -92,7 +99,10 @@ def structural(graph: ig.Graph, rows: list[int], contributions: np.ndarray | Non
         "min_edge_bits": float(weights.min()),
         "weight_spread": float(weights.std()),
         # Rings hang off one shared asset, so they are star shaped and shallow.
-        "diameter": float(sub.diameter(unconn=False)) if sub.ecount() else -1.0,
+        # -1 means no usable diameter: either no edges at all, or the group is
+        # not connected, which igraph reports as infinite. Leiden never returns
+        # a disconnected community, so this only fires on a merged group.
+        "diameter": _diameter(sub),
         "degree_gini": _gini(degrees),
         "top_signal_share": top_share,
     }

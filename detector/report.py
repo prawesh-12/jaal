@@ -333,6 +333,42 @@ def build() -> str:
                    f"fell from {first['recall_including_review']:.4f} to "
                    f"{last['recall_including_review']:.4f}.")
 
+    rs = load("reassembly")
+    if rs:
+        out.append(section("Rejoining split rings: measured and rejected"))
+        a, b = rs["arms"]["as_is"], rs["arms"]["reassembled"]
+        out.append(f"Clusters sharing a pincode and an overlapping signup "
+                   f"window were merged, gated so the joined group could not "
+                   f"be less pure than its parts. Measured on validation "
+                   f"seeds {rs['seeds'][0]} to {rs['seeds'][1]}, "
+                   f"{rs['n_worlds']} worlds.\n")
+        out.append("| | as is | reassembled |")
+        out.append("| --- | --- | --- |")
+        out.append(f"| clusters | {a['n_clusters']:,} | {b['n_clusters']:,} |")
+        out.append(f"| accounts blocked | {a['accounts_blocked']:,} | "
+                   f"{b['accounts_blocked']:,} |")
+        out.append(f"| accounts reviewed | {a['accounts_reviewed']:,} | "
+                   f"{b['accounts_reviewed']:,} |")
+        out.append(f"| recall | {a['recall']:.4f} | {b['recall']:.4f} |")
+        out.append(f"| recall incl. review | "
+                   f"{a['recall_including_review']:.4f} | "
+                   f"{b['recall_including_review']:.4f} |")
+        out.append(f"| net against doing nothing | "
+                   f"{rupees(a['net_vs_nothing_rupees'])} | "
+                   f"{rupees(b['net_vs_nothing_rupees'])} |")
+        st = b["merge_stats"]
+        out.append(f"\n{st['proposed']:,} merges proposed, {st['accepted']:,} "
+                   f"accepted, {st['rejected_purity']:,} rejected because the "
+                   f"joined group would have been less pure, "
+                   f"{st['rejected_size']:,} rejected as too large.\n")
+        out.append(f"It made things worse by "
+                   f"Rs.{abs(rs['delta_net_rupees']):,}. Every cost in this "
+                   f"system scales with cluster size: reviewing costs "
+                   f"Rs.{config.COST_ANALYST_REVIEW} an account and blocking "
+                   f"needs a higher purity to pay for a bigger group. The gate "
+                   f"protected the purity ratio and could not protect the "
+                   f"economics. The code is kept and is off by default.")
+
     ex = load("explanations")
     if ex:
         out.append(section("Review notes"))

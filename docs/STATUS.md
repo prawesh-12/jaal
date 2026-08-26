@@ -33,7 +33,7 @@ A full account of everything built is in `docs/built_till_now.md`.
 | 4. Ninety-second version | done. `docs/PITCH.md`, and prepended to the README |
 | 5. Adversarial loop | done. Blocking driven to zero in two moves, review queue held at 0.93 |
 | 6. Vulcan positioning | done. README section, framed as complementary |
-| 7. Ring reassembly | not started |
+| 7. Ring reassembly | done. Measured, made things worse by Rs.1,431,700, kept and disabled |
 
 ## Definition of done
 
