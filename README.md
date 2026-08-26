@@ -396,7 +396,7 @@ twenty-four by permutation importance, and that is documented rather than hidden
 | `docs/03-glossary.md` | Every term in one line |
 | `docs/phases/` | One document per phase, with real numbers |
 | `docs/diagrams/` | Context, containers, pipeline, and one per stage |
-| `docs/DECISIONS.md` | 45 decisions, including the ones that were wrong |
+| `docs/DECISIONS.md` | 46 decisions, including the ones that were wrong |
 | `extras/plan.md` | The implementation plan this was built from |
 
 Ten places where measurement contradicted the plan are recorded in

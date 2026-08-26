@@ -202,7 +202,7 @@ function Baseline({ baseline, matrix }) {
   const worst = rows.reduce((a, r) => (r.base < a.base ? r : a), rows[0]);
 
   const grow = (w, i) => ({
-    className: "scene-grow block h-2",
+    className: "block h-2",
     style: { width: `${w * 100}%`, minWidth: 2, "--d": `${i * 60}ms` },
   });
 

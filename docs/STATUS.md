@@ -21,7 +21,7 @@ round tested a claim the round before had published, and withdrew it.
 | explanations | 1,334 review notes, 40 written by a language model, every number audited against the pipeline. |
 | interface | README opening in plain language, run.sh, a Flask service that answers what a caller with fewer columns would get, and a seven-view React front end on Tailwind, including a Using Jaal page covering integration, throughput and staffing: overview, cost, failures, the pipeline stage by stage, a filterable review queue, and the charts the pipeline drew. Neutral by default, colour reserved for state, and every mark colour passes a colour-vision check. |
 
-242 tests. 45 decisions recorded, including every wrong turn.
+242 tests. 46 decisions recorded, including every wrong turn.
 
 Full account: `docs/built_till_now.md`. Every measured number: `docs/METRICS.md`.
 

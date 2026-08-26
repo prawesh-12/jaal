@@ -939,3 +939,36 @@ batch job and assignment is not.
 Every figure on the page is read from a results file. 17 of them were checked
 against the rendered DOM before this was committed, on top of the 61 already
 checked across the other six pages.
+
+## D-046: Every bar on the site was invisible, and the contents list navigated away
+Date: 2026-08-27
+Phase: 9
+
+Three faults, reported from a running browser rather than found by reading.
+
+**The contents list bounced the reader to the overview.** The whole app routes
+on the hash, so an entry with `href="#what"` set a hash that is not a known tab
+key and the router fell back to the first tab. The entries now scroll to the
+section and never touch the hash. They keep their href, so an entry still reads
+and behaves as a link.
+
+**It did not follow the reader.** The sidebar only became sticky at the large
+breakpoint, so at any narrower window it scrolled away with the page. It sticks
+from the medium breakpoint up, and below that it becomes a scrolling row of
+section links pinned under the header, so the list is reachable at every width.
+The active entry is also refreshed on scroll now, not only when a section
+boundary crosses the observer, which used to leave it stale inside a long
+section.
+
+**Every bar on the site was rendering at zero width.** This was mine, from the
+round that moved animation into CSS. The grow utility set
+`transform-box: fill-box`, which an SVG rect needs because its
+`transform-origin` is otherwise read against user space. On an HTML element it
+collapses the box, so `scaleX(1)` scaled nothing and the bar never appeared.
+The tier table, the volume rail, the field weights and the profile comparison
+were all affected, and the pipeline scenes were not, because those are SVG.
+
+The fix is not a corrected animation. HTML bars are plain widths now, with a
+transition for when the value changes. A bar carries a value, and its length
+must not depend on an animation having run. That is the same rule the pipeline
+scenes already follow, and it should have been applied here at the same time.

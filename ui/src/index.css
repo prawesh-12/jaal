@@ -291,12 +291,19 @@
   animation-delay: var(--d, 0ms);
 }
 
+/*
+  SVG only. transform-origin is read against user space unless transform-box
+  says otherwise, so an SVG rect needs fill-box. HTML bars are not animated at
+  all: a bar carries a value, and its length must not depend on an animation
+  having run.
+*/
 @utility scene-grow {
   transform-box: fill-box;
   transform-origin: left center;
   animation: scene-grow var(--motion-standard) var(--ease-out) both;
   animation-delay: var(--d, 0ms);
 }
+
 
 /*
   Expand and collapse, done with grid rows so the height is animated by the

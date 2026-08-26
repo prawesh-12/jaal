@@ -54,7 +54,7 @@ export function ScaleRail({ stages, activeId, onSelect }) {
             </span>
             <span className="block h-2.5 w-full bg-raised">
               <span
-                className="scene-grow block h-full"
+                className="block h-full transition-[width] duration-500 ease-out"
                 style={{
                   width: `${width}%`,
                   background: on ? "var(--color-accent)" : "var(--color-fg-dim)",

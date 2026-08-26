@@ -119,12 +119,12 @@ export function Bar({ value, second, color, className, height = 6 }) {
     >
       {second != null && (
         <span
-          className="scene-grow absolute inset-y-0 left-0 block"
+          className="absolute inset-y-0 left-0 block transition-[width] duration-500 ease-out"
           style={{ width: clamp(second), background: color, opacity: 0.34 }}
         />
       )}
       <span
-        className="scene-grow absolute inset-y-0 left-0 block"
+        className="absolute inset-y-0 left-0 block transition-[width] duration-500 ease-out"
         style={{ width: clamp(value), background: color }}
       />
     </span>

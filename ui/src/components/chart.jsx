@@ -164,7 +164,7 @@ export function BarList({
               </span>
               <span className="block h-1.5 w-full bg-raised">
                 <span
-                  className="scene-grow block h-full"
+                  className="block h-full transition-[width] duration-500 ease-out"
                   style={{
                     width: `${(Math.abs(it.value) / top) * 100}%`,
                     background: it.color ?? color,
