@@ -168,3 +168,163 @@ show the same flat lines.
 **The detector never adapts back.** This is one-sided. A real deployment would
 retrain, and the interesting experiment, which is not run here, is what happens
 when both sides move.
+
+---
+
+# What happens when the operator can see the queue
+
+The result above rested on one restriction: the operator sees blocks and not
+reviews. The reading we published was that the queue is robust because it is
+**invisible**, not because it is hard to evade.
+
+That reading is now measured, and it is wrong.
+
+## What changed
+
+One setting. `q` is the chance the operator notices a cluster being reviewed,
+decided per review, because an operator notices a whole cluster being held
+rather than individual accounts. Blocks are always visible.
+
+| setting | q | what the operator sees |
+| --- | --- | --- |
+| blocks_only | 0.00 | a review is indistinguishable from being allowed |
+| partial_25 | 0.25 | one review in four is noticed |
+| partial_50 | 0.50 | half of reviews are noticed |
+| partial_75 | 0.75 | three reviews in four are noticed |
+| full | 1.00 | a review is as visible as a block |
+
+Everything else is identical: the same five parameters, the same selection rule,
+the same six rounds, the same 100 worlds a round. The trial settings come from
+their own random stream, seeded the same at every visibility level, so the
+operator starts from the same experiments and only its sight of them differs.
+
+## The sweep, one replicate each
+
+Blocked or reviewed, by round:
+
+| setting | q | r0 | r1 | r2 | r3 | r4 | r5 | fall |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| blocks_only | 0.00 | 0.9631 | 0.9557 | 0.9544 | 0.9460 | 0.9331 | 0.9283 | 0.0348 |
+| partial_25 | 0.25 | 0.9631 | 0.9557 | 0.9663 | 0.9349 | 0.9181 | 0.9042 | 0.0589 |
+| partial_50 | 0.50 | 0.9631 | 0.9557 | 0.9631 | 0.9390 | 0.8973 | 0.9042 | 0.0589 |
+| partial_75 | 0.75 | 0.9631 | 0.9557 | 0.9544 | 0.9390 | 0.9171 | 0.8665 | 0.0966 |
+| full | 1.00 | 0.9631 | 0.9557 | 0.9551 | 0.9301 | 0.9191 | 0.8918 | 0.0713 |
+
+Blocking goes to zero in every setting, as before.
+
+The trend is upward with q and it is not clean: `partial_75` eroded more than
+`full`, and `partial_25` and `partial_50` finished identically. On one replicate
+the spread between settings is about the size of the noise, so there is no
+threshold in q to report and it would have been wrong to claim one.
+
+## Three replicates of the two settings that decide it
+
+`blocks_only` and `full`, three replicates each, same 100 worlds a round.
+
+| setting | r0 | r1 | r2 | r3 | r4 | r5 | fall | sd at r5 | the three replicates |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| blocks_only | 0.9631 | 0.9507 | 0.9544 | 0.9481 | 0.9205 | **0.9222** | 0.0409 | 0.0094 | 0.9283, 0.9295, 0.9089 |
+| full | 0.9631 | 0.9507 | 0.9542 | 0.9258 | 0.9038 | **0.8867** | 0.0764 | 0.0065 | 0.8918, 0.8907, 0.8775 |
+
+The two do not overlap. The worst `blocks_only` replicate finished at 0.9089 and
+the best `full` replicate at 0.8918. Three replicates were enough to separate
+them and one was not.
+
+**So: the queue holds under full visibility.** It erodes about twice as fast,
+0.0764 against 0.0409 over five rounds, and it ends at 0.8867 rather than
+collapsing.
+
+## Visibility changes which knob the operator finds
+
+This is the part that is reproducible and large. Across three replicates,
+counting every move made:
+
+| setting | accounts per drop | signup window | device reuse | camouflage |
+| --- | --- | --- | --- | --- |
+| blocks_only | 1 | 5 | 0 | 0 |
+| full | **6** | 3 | 2 | 1 |
+
+The blocks-only operator goes for signup timing almost every time. The
+full-visibility operator goes for address rotation almost every time, and in two
+replicates it drove drop sharing all the way to one account per address, its
+evasive limit.
+
+So visibility does matter, and it matters in the direction we guessed. Address
+rotation is what the detection curve says defeats this system, and only the
+operator that can see reviews reliably finds it.
+
+It finds it, moves it to the limit, and the queue still holds at 0.8867.
+
+## Why it holds, measured rather than argued
+
+The first explanation was that the operator would need to move devices and
+addresses together, and that a rule changing one thing per round never does.
+That was tested and it is wrong.
+
+Eight fixed configurations, no adaptation, 100 worlds each, everything not named
+left at the ordinary settings:
+
+| configuration | blocked | blocked or reviewed | change |
+| --- | --- | --- | --- |
+| ordinary | 0.1354 | 0.9631 | |
+| addresses rotated only | 0.0000 | 0.9383 | -0.0248 |
+| devices rotated only | 0.1514 | 0.9568 | -0.0064 |
+| **both rotated** | 0.0000 | **0.9145** | -0.0486 |
+| signups spread only | 0.0000 | 0.9277 | -0.0354 |
+| values jittered only | 0.0000 | 0.9717 | +0.0085 |
+| camouflage only | 0.0000 | 0.9405 | -0.0226 |
+| **everything at its limit** | 0.0000 | **0.5701** | **-0.3930** |
+
+Devices and addresses both rotated costs the detector 4.9 points of recall, not
+a collapse. So that explanation fails.
+
+The five single-knob effects sum to **-0.0807**. All five together cost
+**-0.3930**, which is **4.9 times the sum of the parts**. The evasion is
+strongly superadditive. No knob and no pair gets you anywhere. Every knob at
+once gets you most of the way.
+
+`values jittered only` moves the wrong way, by +0.0085. Spreading order values
+on its own makes the operator very slightly easier to catch.
+
+The last row is the adaptive tier. It reads 0.5701 here and 0.5669 on the sealed
+holdout, so this is the same destination by another route.
+
+## What this actually means
+
+The destination exists and the operator does not reach it. It is not blocked
+from reaching it by the design of the queue or by what it can see. It fails to
+reach it because it changes one thing at a time and keeps it, and the payoff for
+any single change is small enough to look like noise while the payoff for all
+five is large.
+
+That is a **search failure by the attacker**, not a property of the defence.
+It is a much weaker guarantee than either of the readings we might have
+preferred:
+
+- It is not robust because it is invisible. Full visibility erodes it about
+  twice as fast and still leaves it at 0.8867, and blindness was never what was
+  protecting it.
+- It is not structurally robust either. A configuration that takes it to 0.5701
+  exists, is reachable with the five knobs the operator already has, and is the
+  tier we already report as the one where this system blocks nothing.
+
+An operator that changed several parameters at once, or ran a coarse grid rather
+than a greedy hill climb, would find it. Our operator does neither. It would take
+a slightly better attacker, not a fundamentally different one.
+
+## Known limitations of this experiment
+
+**Greedy hill climbing is a weak attacker.** One parameter per round, a fixed
+step of 30% of range, and no memory of what it tried before. A random search over
+the five-dimensional box would probably find the corner faster.
+
+**Six rounds is short.** The operator did reach the corner in no replicate. With
+twenty rounds and a rule that occasionally moves two things, it might.
+
+**The visibility model is a single number.** A real operator's signal is
+delayed, not just probabilistic. It learns weeks later, which changes which round
+the information arrives in, and none of that is modelled.
+
+**Only two settings got replicates.** `partial_25` through `partial_75` have one
+run each, which is why no threshold in q is claimed. The one-replicate ordering
+between them is not stable and is reported as noise rather than smoothed.

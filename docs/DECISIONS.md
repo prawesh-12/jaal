@@ -583,3 +583,77 @@ it correctly refused when free memory dipped under the floor while the desktop
 was busy. A test that fails when somebody opens a browser is testing the laptop,
 not the code. The logic is now checked against a stubbed reading, and one test
 still confirms the real reading is plausible.
+
+## D-036: The invisibility reading was published, then measured, then withdrawn
+Date: 2026-08-26
+
+Last round the adversarial loop gave the operator sight of blocks and not
+reviews, and we wrote that the review queue is robust because it is invisible.
+That claim was load bearing and it rested on a restriction we had imposed, so it
+needed testing rather than repeating.
+
+Review visibility is now a setting, `q`, the chance the operator notices a
+cluster being reviewed, decided per review because an operator notices a whole
+cluster being held rather than single accounts. Everything else is unchanged:
+the same five parameters, the same selection rule, six rounds, 100 worlds a
+round, and a separate random stream for detection so the trial settings are
+identical at every visibility level.
+
+**The queue holds under full visibility.** Blocked or reviewed falls from 0.9631
+to 0.8867 over five rounds at q = 1, against 0.9222 at q = 0. Seeing the queue
+roughly doubles the erosion and does not collapse it.
+
+**But the reading was still wrong.** Blindness was not what protected it. What
+visibility changes is which parameter the operator finds: counting every move
+across three replicates, the blind operator went for signup timing 5 times and
+address rotation once, while the seeing operator went for address rotation 6
+times and twice drove it to its evasive limit. Address rotation is what the
+detection curve says defeats this system, and only the seeing operator finds it.
+It finds it, pushes it to the limit, and the queue holds anyway.
+
+The README now leads with the corrected reading and says plainly that the
+earlier one was wrong.
+
+## D-037: The queue holds because evasion is superadditive, not because it is safe
+Date: 2026-08-26
+
+The first explanation offered for why the queue holds was that the operator
+would need to move devices and addresses together, and that a rule changing one
+thing a round never does. That was tested against eight fixed configurations and
+it is wrong: both rotated together costs only 4.9 points of recall.
+
+The measurement that does explain it. Each of the five parameters moved on its
+own costs the detector at most 3.5 points of blocked-or-reviewed recall, and
+jittering order values alone actually helps the detector by 0.9 points. The five
+single effects sum to -0.0807. All five at their limits together cost -0.3930,
+**4.9 times the sum of the parts**.
+
+That last configuration reads 0.5701, and the adaptive tier on the sealed
+holdout reads 0.5669. It is the same destination by another route.
+
+So the destination exists, it is reachable with knobs the operator already has,
+and the operator does not reach it. It changes one thing a round and keeps it,
+and the payoff for any one change is small enough to look like noise beside the
+payoff for all five.
+
+Recorded plainly because it is a weaker result than either alternative. This is a
+**search failure by the attacker**, not a property of the defence. A greedy hill
+climb misses a superadditive corner. An attacker moving two parameters at once,
+or running a coarse grid over the five, would find it. That is a slightly better
+attacker, not a fundamentally different one, and the submission should not claim
+otherwise.
+
+## D-038: Three replicates, because one was not enough
+Date: 2026-08-26
+
+The first sweep ran one replicate at each of five visibility levels. The ordering
+between them was not stable: `partial_75` eroded more than `full`, and
+`partial_25` and `partial_50` finished identically. On one run the spread between
+settings is about the size of the noise.
+
+Three replicates of the two settings that decide the question separate them
+cleanly: the worst blind replicate finished at 0.9089 and the best seeing
+replicate at 0.8918, so the two do not overlap. The middle three q values still
+have one run each, which is why **no threshold in q is claimed**. The
+one-replicate ordering between them is reported as noise rather than smoothed
+into a curve.

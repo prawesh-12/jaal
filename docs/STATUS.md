@@ -1,7 +1,8 @@
 # Status
 
 Last updated: 2026-08-26
-Finished. Every planned item is built, measured and committed.
+Finished. Every planned item is built, measured and committed. The last
+round tested a claim the round before had published, and withdrew it.
 
 ## What exists
 
@@ -16,11 +17,11 @@ Finished. Every planned item is built, measured and committed.
 | model | Calibrated forest, plus a second model predicting cluster purity because the cost model needs purity and not a class probability. |
 | decisions | Three actions priced in rupees. Sensitivity across seven cost ratios, reviewer accuracy, and a bounded analyst budget. |
 | holdout | Seeds 900 to 999, opened once, re-run twice since and identical each time. |
-| adversarial loop | An operator that adapts to its own outcomes and drives blocking to zero in two moves. |
+| adversarial loop | An operator that adapts to its own outcomes and drives blocking to zero in two moves. How much of the review queue it can see is a setting, swept from none to all. |
 | explanations | 1,334 review notes, 40 written by a language model, every number audited against the pipeline. |
 | interface | README opening in plain language, run.sh, a Flask service taking raw accounts, a React dashboard. |
 
-183 tests. 35 decisions recorded, including every wrong turn.
+202 tests. 38 decisions recorded, including every wrong turn.
 
 Full account: `docs/built_till_now.md`. Every measured number: `docs/METRICS.md`.
 
@@ -45,9 +46,15 @@ baseline on the same worlds loses **Rs.48,028,800**.
   even. The hardest tier needs 82%.
 - **80% of what the review queue adds** comes from the top 1.69 clusters per
   batch of 12,000 accounts.
-- **An adapting operator kills blocking in two moves** and barely dents the
-  review queue, and it does not converge on the weakness the detection curve
-  points at.
+- **An adapting operator kills blocking in two moves.** The review queue holds
+  at 0.9222 when it cannot see reviews and 0.8867 when it can, so seeing the
+  queue roughly doubles the erosion and does not collapse it.
+- **We published a claim last round and then disproved it.** We said the queue
+  is robust because it is invisible. It is not. It holds because evasion is
+  superadditive: any one of the operator's five behaviours changed alone costs
+  under 4 points of recall, all five together cost 39. A greedy operator that
+  changes one thing a round never assembles all five. That is a search failure
+  by the attacker, not a property of the defence.
 - **Rejoining split rings was tried and made things worse** by Rs.1,431,700. The
   code is kept and disabled.
 - **Zero false positives** across 3,849 clusters in 20 worlds containing no
@@ -65,6 +72,7 @@ baseline on the same worlds loses **Rs.48,028,800**.
 | failure catalogue with at least 4 entries | yes, 5 |
 | detection curve showing where the system stops working | yes, plus an adversarial loop |
 | review queue costed against accuracy and against capacity | yes |
+| adversarial loop run at every level of review visibility | yes, 3 replicates on the two that decide it |
 | docs complete | yes, 39 files |
 | README opens with a plain-language summary | yes, also `docs/PITCH.md` |
 | README numbers match results/ | yes, asserted by 10 tests |
@@ -74,5 +82,8 @@ baseline on the same worlds loses **Rs.48,028,800**.
 
 - Fuzzy string comparison. Every field comparison is exact or a numeric band.
 - A detector that adapts back. The adversarial loop is one-sided.
-- An operator patient enough to learn from the review queue. That is the way to
-  break this and it is not modelled.
+- An attacker that moves more than one parameter at a time, or searches a grid
+  instead of climbing greedily. That is what finds the corner at 0.5701, and it
+  is not modelled.
+- A delayed feedback model. Review visibility here is a probability, not a lag,
+  and a real operator learns weeks later.

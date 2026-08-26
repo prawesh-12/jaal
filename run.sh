@@ -9,6 +9,8 @@
 # them. Run them yourself when you want to:
 #
 #   python -m detector.adapt --rounds 5 --worlds 100   an operator that adapts
+#   python -m detector.adapt --visibility-sweep        the same, at every level
+#                                                      of what it can see
 #   python -m detector.reassemble --seeds 700-749      rejoining split rings
 #
 # Everything runs at nice 10 so the machine stays usable, and every entry point

@@ -199,30 +199,74 @@ performance, and no claim is made against it.
 Sophistication had been a dial we set, which invites the fair objection that we
 wrote the fraud so of course we catch it. So we built an operator that adapts.
 
-It starts at ordinary settings and sees exactly one thing: what share of its own
-accounts got blocked. Not our code, not our weights, not the review queue, which
-from its side is indistinguishable from being allowed. Each round it runs 100
-worlds with settings scattered around where it stands, correlates each of its own
-five behaviours against getting blocked, and changes the strongest one.
+It starts at ordinary settings, runs 100 worlds a round with settings scattered
+around where it stands, correlates each of its own five behaviours against
+getting caught, and changes the strongest one. It never sees our code, our
+weights or our thresholds.
 
-**In two moves it drove automatic blocking from 0.1354 to zero, and the share of
-its accounts reaching a human fell only from 0.9631 to 0.9283.**
+**How much it can see of the review queue is a setting**, because a real operator
+gets partial signal from a review: delayed orders, manual verification, held
+payouts, accounts that go quiet without ever being blocked. At q = 0 a review
+looks exactly like being allowed. At q = 1 it is as visible as a block.
 
-It did not converge on rotating delivery addresses, which is what the detection
-curve says actually defeats this system. It converged on spreading signups over
-time, because that is the one it could measure. Address rotation was the second
-strongest signal it found and it never picked it.
+Blocking goes to zero within two or three rounds whatever the operator can see.
+The queue does not. Three replicates each:
 
-The reading we take from that is uncomfortable and worth stating. The review
-queue is not adversarially robust because it is hard to evade. It is robust
-because it is **invisible**: an operator learns from feedback, and a queue gives
-none. A more patient operator, one that watched which accounts got closed weeks
-later rather than which got blocked at signup, would recover that signal. This
-loop does not model that operator and nothing here says the system would survive
-one.
+| what the operator can see | round 0 | round 5 | fall | replicates |
+| --- | --- | --- | --- | --- |
+| blocks only (q = 0.00) | 0.9631 | **0.9222** | 0.0409 | 0.9283, 0.9295, 0.9089 |
+| everything (q = 1.00) | 0.9631 | **0.8867** | 0.0764 | 0.8918, 0.8907, 0.8775 |
 
-Round by round, the method, and what it means: `docs/phases/phase-11-adversarial.md`.
-Chart: `results/adaptive_loop.png`.
+*(share of ring accounts blocked or reviewed; the two do not overlap across
+replicates)*
+
+**Seeing the queue roughly doubles how fast it erodes, and does not collapse
+it.** What visibility really changes is which knob the operator finds. Counting
+every move across three replicates, the blocks-only operator went for signup
+timing 5 times and address rotation once. The full-visibility operator went for
+address rotation 6 times, and twice drove it to one account per delivery address,
+its evasive limit. Address rotation is what our own detection curve says defeats
+this system, and only the operator that can see reviews reliably finds it.
+
+It finds it, pushes it to the limit, and the queue still holds.
+
+### Why it holds, and why that is a weaker result than it sounds
+
+Last round we wrote that the queue is robust because it is invisible. **That was
+wrong and this measurement is what showed it.** Blindness was not what protected
+it.
+
+Eight fixed configurations, no adaptation, 100 worlds each:
+
+| what the operator changes | blocked or reviewed | change |
+| --- | --- | --- |
+| nothing | 0.9631 | |
+| rotates every delivery address | 0.9383 | -0.0248 |
+| rotates every device | 0.9568 | -0.0064 |
+| both of those | 0.9145 | -0.0486 |
+| spreads signups over six weeks | 0.9277 | -0.0354 |
+| jitters order values | 0.9717 | +0.0085 |
+| camouflages some accounts | 0.9405 | -0.0226 |
+| **all five at once** | **0.5701** | **-0.3930** |
+
+The five changes made separately sum to -0.0807. Made together they cost
+**-0.3930**, nearly five times the sum of the parts. No single change and no pair
+gets the operator anywhere. All five at once gets it most of the way, and that
+last row is the same place as the `adaptive` tier in the results table above.
+
+So the destination exists, it is reachable with knobs the operator already has,
+and our operator does not reach it. It changes one thing at a time and keeps it,
+and the payoff for any one change looks like noise next to the payoff for all
+five.
+
+**That is a search failure by the attacker, not a property of our defence.** A
+slightly better attacker, one that moved two things at once or ran a coarse grid
+instead of a greedy climb, would find it. We report this as the weak guarantee it
+is rather than the strong one we would have preferred.
+
+Round by round, the sweep at every visibility level, and the method:
+`docs/phases/phase-11-adversarial.md`. Charts:
+`results/adaptive_visibility_replicates.png` and `results/adaptive_loop.png`.
 
 ## What this does not detect
 
@@ -253,7 +297,7 @@ Five more failure modes with worked examples are in `results/holdout.json` and
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ./run.sh              # full reproduction, about 30 minutes, no network needed
 ./run.sh quick        # smaller worlds, about 4 minutes
-.venv/bin/python -m pytest    # 140 tests
+.venv/bin/python -m pytest    # 202 tests
 ```
 
 `run.sh` will not re-open the holdout if `results/holdout.json` exists. A

@@ -369,6 +369,51 @@ def build() -> str:
                    f"protected the purity ratio and could not protect the "
                    f"economics. The code is kept and is off by default.")
 
+    vr = load("adaptive_visibility_replicates")
+    mech = load("adaptive_mechanism")
+    if vr:
+        from detector.adapt import _mean_curve
+        out.append(section("What happens when the operator can see the queue"))
+        out.append(f"`q` is the chance the operator notices a cluster being "
+                   f"reviewed. {vr['replicates']} replicates of each setting, "
+                   f"{vr['worlds_per_round']} worlds a round.\n")
+        out.append("| what the operator sees | round 0 | round 5 | fall | "
+                   "replicates |")
+        out.append("| --- | --- | --- | --- | --- |")
+        for label, runs in vr["runs"].items():
+            c = _mean_curve(runs, "recall_including_review")
+            finals = ", ".join(
+                f"{r['history'][-1]['recall_including_review']:.4f}"
+                for r in runs)
+            q = vr["visibility_levels"][label]
+            out.append(f"| {label} (q = {q:.2f}) | {c[0]:.4f} | {c[-1]:.4f} | "
+                       f"{c[0] - c[-1]:.4f} | {finals} |")
+        out.append("\nSeeing the queue roughly doubles how fast it erodes and "
+                   "does not collapse it. What it changes is which parameter "
+                   "the operator finds.")
+
+    if mech:
+        out.append(section("Why the queue holds"))
+        out.append(f"Fixed settings, no adaptation, {mech['n_worlds']} worlds "
+                   f"each.\n")
+        out.append("| what the operator changes | blocked | blocked or reviewed "
+                   "| change |")
+        out.append("| --- | --- | --- | --- |")
+        for label, c in mech["configs"].items():
+            out.append(f"| {label} | {c['recall_blocked']:.4f} | "
+                       f"{c['recall_including_review']:.4f} | "
+                       f"{c['change_vs_ordinary']:+.4f} |")
+        singles = [v["change_vs_ordinary"] for k, v in mech["configs"].items()
+                   if k not in ("ordinary", "both rotated",
+                                "everything at its limit")]
+        together = mech["configs"]["everything at its limit"]["change_vs_ordinary"]
+        out.append(f"\nThe five single changes sum to {sum(singles):.4f}. "
+                   f"Together they cost {together:.4f}, "
+                   f"{together / sum(singles):.1f} times the sum of the parts. "
+                   f"No one change and no pair gets the operator anywhere, and "
+                   f"a rule that moves one thing a round never assembles all "
+                   f"five.")
+
     ex = load("explanations")
     if ex:
         out.append(section("Review notes"))

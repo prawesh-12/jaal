@@ -1,0 +1,114 @@
+{
+ "n_worlds": 100,
+ "n_accounts": 12000,
+ "seeds": [
+  100,
+  199
+ ],
+ "configs": {
+  "ordinary": {
+   "settings": {
+    "device_reuse": 0.6,
+    "accounts_per_drop": 8.0,
+    "signup_window_days": 3.0,
+    "value_jitter": 200.0,
+    "camouflage": 0.0
+   },
+   "n_ring_accounts": 9600,
+   "recall_blocked": 0.1354,
+   "recall_including_review": 0.9631,
+   "change_vs_ordinary": 0.0
+  },
+  "addresses rotated only": {
+   "settings": {
+    "device_reuse": 0.6,
+    "accounts_per_drop": 1.0,
+    "signup_window_days": 3.0,
+    "value_jitter": 200.0,
+    "camouflage": 0.0
+   },
+   "n_ring_accounts": 9600,
+   "recall_blocked": 0.0,
+   "recall_including_review": 0.9383,
+   "change_vs_ordinary": -0.0248
+  },
+  "devices rotated only": {
+   "settings": {
+    "device_reuse": 0.0,
+    "accounts_per_drop": 8.0,
+    "signup_window_days": 3.0,
+    "value_jitter": 200.0,
+    "camouflage": 0.0
+   },
+   "n_ring_accounts": 9600,
+   "recall_blocked": 0.1514,
+   "recall_including_review": 0.9568,
+   "change_vs_ordinary": -0.0064
+  },
+  "both rotated": {
+   "settings": {
+    "device_reuse": 0.0,
+    "accounts_per_drop": 1.0,
+    "signup_window_days": 3.0,
+    "value_jitter": 200.0,
+    "camouflage": 0.0
+   },
+   "n_ring_accounts": 9600,
+   "recall_blocked": 0.0,
+   "recall_including_review": 0.9145,
+   "change_vs_ordinary": -0.0486
+  },
+  "signups spread only": {
+   "settings": {
+    "device_reuse": 0.6,
+    "accounts_per_drop": 8.0,
+    "signup_window_days": 45.0,
+    "value_jitter": 200.0,
+    "camouflage": 0.0
+   },
+   "n_ring_accounts": 9600,
+   "recall_blocked": 0.0,
+   "recall_including_review": 0.9277,
+   "change_vs_ordinary": -0.0354
+  },
+  "values jittered only": {
+   "settings": {
+    "device_reuse": 0.6,
+    "accounts_per_drop": 8.0,
+    "signup_window_days": 3.0,
+    "value_jitter": 1200.0,
+    "camouflage": 0.0
+   },
+   "n_ring_accounts": 9600,
+   "recall_blocked": 0.0,
+   "recall_including_review": 0.9717,
+   "change_vs_ordinary": 0.0085
+  },
+  "camouflage only": {
+   "settings": {
+    "device_reuse": 0.6,
+    "accounts_per_drop": 8.0,
+    "signup_window_days": 3.0,
+    "value_jitter": 200.0,
+    "camouflage": 0.5
+   },
+   "n_ring_accounts": 9600,
+   "recall_blocked": 0.0,
+   "recall_including_review": 0.9405,
+   "change_vs_ordinary": -0.0226
+  },
+  "everything at its limit": {
+   "settings": {
+    "device_reuse": 0.0,
+    "accounts_per_drop": 1.0,
+    "signup_window_days": 45.0,
+    "value_jitter": 1200.0,
+    "camouflage": 0.15
+   },
+   "n_ring_accounts": 9600,
+   "recall_blocked": 0.0,
+   "recall_including_review": 0.5701,
+   "change_vs_ordinary": -0.393
+  }
+ }
+}

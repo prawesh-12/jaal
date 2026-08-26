@@ -102,15 +102,51 @@ def test_the_capacity_figures_match_their_file(readme):
         assert f"{hit['budget_per_world']:.2f}" in readme
 
 
-def test_the_adversarial_figures_match_their_file(readme):
-    with open("results/adaptive_loop.json") as f:
-        al = json.load(f)
-    first, last = al["history"][0], al["history"][-1]
-    assert str(al["worlds_per_round"]) in readme
-    for value in (f"{first['recall_blocked']:.4f}",
-                  f"{first['recall_including_review']:.4f}",
-                  f"{last['recall_including_review']:.4f}"):
-        assert value in readme, value
+def test_the_adversarial_table_matches_its_file(readme):
+    """Every figure in the README adversarial table comes from the replicate run."""
+    with open("results/adaptive_visibility_replicates.json") as f:
+        rep = json.load(f)
+    from detector import adapt
+
+    assert str(rep["worlds_per_round"]) in readme
+    for label in ("blocks_only", "full"):
+        runs = rep["runs"][label]
+        curve = adapt._mean_curve(runs, "recall_including_review")
+        assert f"{curve[0]:.4f}" in readme, f"{label} round 0"
+        assert f"{curve[-1]:.4f}" in readme, f"{label} round 5"
+        assert f"{curve[0] - curve[-1]:.4f}" in readme, f"{label} fall"
+        for run in runs:
+            final = run["history"][-1]["recall_including_review"]
+            assert f"{final:.4f}" in readme, f"{label} replicate {final}"
+
+
+def test_the_readme_does_not_overlap_the_two_visibility_settings(readme):
+    """The claim that they separate has to hold in the file it came from."""
+    with open("results/adaptive_visibility_replicates.json") as f:
+        rep = json.load(f)
+    worst_blind = min(r["history"][-1]["recall_including_review"]
+                      for r in rep["runs"]["blocks_only"])
+    best_seeing = max(r["history"][-1]["recall_including_review"]
+                      for r in rep["runs"]["full"])
+    assert worst_blind > best_seeing
+    assert "do not overlap" in readme
+
+
+def test_the_mechanism_table_matches_its_file(readme):
+    with open("results/adaptive_mechanism.json") as f:
+        mech = json.load(f)
+    for label, block in mech["configs"].items():
+        assert f"{block['recall_including_review']:.4f}" in readme, label
+    singles = [v["change_vs_ordinary"] for k, v in mech["configs"].items()
+               if k not in ("ordinary", "both rotated", "everything at its limit")]
+    assert f"{sum(singles):.4f}" in readme
+    assert f"{mech['configs']['everything at its limit']['change_vs_ordinary']:.4f}" in readme
+
+
+def test_the_readme_says_the_old_reading_was_wrong(readme):
+    """The invisibility claim was published and then falsified. Say so."""
+    assert "was\nwrong" in readme or "was wrong" in readme
+    assert "search failure by the attacker" in readme
 
 
 def test_the_baseline_per_tier_figures_match(readme):

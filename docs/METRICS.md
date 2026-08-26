@@ -243,6 +243,34 @@ Clusters sharing a pincode and an overlapping signup window were merged, gated s
 
 It made things worse by Rs.1,431,700. Every cost in this system scales with cluster size: reviewing costs Rs.150 an account and blocking needs a higher purity to pay for a bigger group. The gate protected the purity ratio and could not protect the economics. The code is kept and is off by default.
 
+## What happens when the operator can see the queue
+
+`q` is the chance the operator notices a cluster being reviewed. 3 replicates of each setting, 100 worlds a round.
+
+| what the operator sees | round 0 | round 5 | fall | replicates |
+| --- | --- | --- | --- | --- |
+| blocks_only (q = 0.00) | 0.9631 | 0.9222 | 0.0409 | 0.9283, 0.9295, 0.9089 |
+| full (q = 1.00) | 0.9631 | 0.8867 | 0.0764 | 0.8918, 0.8907, 0.8775 |
+
+Seeing the queue roughly doubles how fast it erodes and does not collapse it. What it changes is which parameter the operator finds.
+
+## Why the queue holds
+
+Fixed settings, no adaptation, 100 worlds each.
+
+| what the operator changes | blocked | blocked or reviewed | change |
+| --- | --- | --- | --- |
+| ordinary | 0.1354 | 0.9631 | +0.0000 |
+| addresses rotated only | 0.0000 | 0.9383 | -0.0248 |
+| devices rotated only | 0.1514 | 0.9568 | -0.0064 |
+| both rotated | 0.0000 | 0.9145 | -0.0486 |
+| signups spread only | 0.0000 | 0.9277 | -0.0354 |
+| values jittered only | 0.0000 | 0.9717 | +0.0085 |
+| camouflage only | 0.0000 | 0.9405 | -0.0226 |
+| everything at its limit | 0.0000 | 0.5701 | -0.3930 |
+
+The five single changes sum to -0.0807. Together they cost -0.3930, 4.9 times the sum of the parts. No one change and no pair gets the operator anywhere, and a rule that moves one thing a round never assembles all five.
+
 ## Review notes
 
 1,334 notes for every cluster not simply allowed. Sources: live 40, template 1294. Notes quoting a number not from the pipeline: **0**.
