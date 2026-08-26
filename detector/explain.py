@@ -39,7 +39,8 @@ import config
 from detector.resources import announce, apply
 
 CACHE_DIR = config.CACHE_DIR
-MODEL = "gpt-oss:120b-cloud"
+MODEL = "minimax-m3:cloud"
+FALLBACK_MODEL = "gpt-oss:120b"     # used if the primary is unavailable
 HOST = "https://ollama.com"
 
 PROMPT_FIELDS = ("size", "signup_span_days", "coupon_rate", "repeat_rate",
@@ -110,8 +111,8 @@ def template_explanation(facts: dict, p: float, action: str,
     )
 
 
-def call_ollama(prompt: str, timeout: float = 60.0) -> str:
-    """Live call. Raises if anything at all goes wrong, so the caller falls back."""
+def call_ollama(prompt: str, timeout: float = 90.0) -> tuple[str, str]:
+    """Live call, primary model then fallback. Raises if both fail."""
     from ollama import Client
 
     key = os.environ.get("OLLAMA_API_KEY")
@@ -119,8 +120,16 @@ def call_ollama(prompt: str, timeout: float = 60.0) -> str:
         raise RuntimeError("OLLAMA_API_KEY is not set")
     client = Client(host=HOST, headers={"Authorization": f"Bearer {key}"},
                     timeout=timeout)
-    resp = client.chat(model=MODEL, messages=[{"role": "user", "content": prompt}])
-    return resp["message"]["content"].strip()
+
+    last = None
+    for model in (MODEL, FALLBACK_MODEL):
+        try:
+            resp = client.chat(model=model,
+                               messages=[{"role": "user", "content": prompt}])
+            return resp["message"]["content"].strip(), model
+        except Exception as exc:
+            last = exc
+    raise RuntimeError(f"both models failed, last error: {last}")
 
 
 def explain(facts: dict, p: float, action: str,
@@ -139,9 +148,9 @@ def explain(facts: dict, p: float, action: str,
     prompt = build_prompt(facts, p, action, top_signals)
     if live:
         try:
-            note = call_ollama(prompt)
+            note, used = call_ollama(prompt)
             record = {"key": key, "note": note, "source": "live",
-                      "model": MODEL, "action": action, "p": round(float(p), 3)}
+                      "model": used, "action": action, "p": round(float(p), 3)}
             os.makedirs(cache_dir, exist_ok=True)
             with open(path, "w") as f:
                 json.dump(record, f, indent=1)
