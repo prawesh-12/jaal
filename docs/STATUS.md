@@ -30,7 +30,7 @@ A full account of everything built is in `docs/built_till_now.md`.
 | 1. Review accuracy sensitivity | done. Break-even reviewer accuracy 0.5753 pooled |
 | 2. Undefined precision | done. Adaptive precision reads `n/a (no blocks)` everywhere |
 | 3. Bounded review capacity | done. 80% of what review adds needs 1.69 clusters per batch |
-| 4. Ninety-second version | not started |
+| 4. Ninety-second version | done. `docs/PITCH.md`, and prepended to the README |
 | 5. Adversarial loop | not started |
 | 6. Vulcan positioning | not started |
 | 7. Ring reassembly | not started |
