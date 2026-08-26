@@ -23,6 +23,18 @@ All 11 phases complete. Holdout opened once and reported.
 
 A full account of everything built is in `docs/built_till_now.md`.
 
+## Closing round, in progress
+
+| item | state |
+| ---- | ----- |
+| 1. Review accuracy sensitivity | done. Break-even reviewer accuracy 0.5753 pooled |
+| 2. Undefined precision | not started |
+| 3. Bounded review capacity | not started |
+| 4. Ninety-second version | not started |
+| 5. Adversarial loop | not started |
+| 6. Vulcan positioning | not started |
+| 7. Ring reassembly | not started |
+
 ## Definition of done
 
 | check | state |
