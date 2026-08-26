@@ -2,8 +2,14 @@
 #
 # Jaal, end to end. No network access required.
 #
-#   ./run.sh          full run, reproduces every published number (~30 minutes)
-#   ./run.sh quick     smaller worlds and fewer seeds, for a look around (~4 min)
+#   ./run.sh          full run, reproduces every published number (~35 minutes)
+#   ./run.sh quick     smaller worlds and fewer seeds, for a look around (~2 min)
+#
+# Two experiments are not in here because they take another 40 minutes between
+# them. Run them yourself when you want to:
+#
+#   python -m detector.adapt --rounds 5 --worlds 100   an operator that adapts
+#   python -m detector.reassemble --seeds 700-749      rejoining split rings
 #
 # Everything runs at nice 10 so the machine stays usable, and every entry point
 # measures free memory before it starts and refuses to run if there is not
@@ -101,15 +107,23 @@ else
       --accounts "$ACCOUNTS" --seeds "900-999"
 fi
 
+if [ -f results/holdout.json ] && [ -f results/features_holdout.csv ]; then
+  run "Review queue, accuracy and capacity"    -m detector.review
+fi
+
 if [ -f results/features_holdout.csv ]; then
   run "Review notes"                  -m detector.explain \
       --features results/features_holdout.csv --limit 40
 fi
+
+run "Every measured number, in one file"     -m detector.report \
+    --out docs/METRICS.md
 
 echo
 echo "=============================================================="
 echo "  done"
 echo "=============================================================="
 echo "results/       every number, as JSON"
+echo "docs/METRICS.md  the same numbers as one report"
 echo "results/*.png  PR curves, reliability diagram, cost curve, detection curve"
 echo "docs/          how it works, stage by stage"
