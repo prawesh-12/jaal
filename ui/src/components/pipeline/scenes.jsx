@@ -1,4 +1,4 @@
-import { count, dp2 } from "@/lib/format";
+import { count, dp2, rupees } from "@/lib/format";
 
 /*
   One SVG scene per pipeline stage. Each shows the same three things the
@@ -327,7 +327,7 @@ export function ScoreScene({ stage }) {
           <rect x="60" y={y - 5} width="86" height="10" rx="1" fill={INK}
                 opacity="0.35" className="scene-fade" style={at(i * 60)} />
           <path
-            d={`M 152 ${y} C 250 ${y}, 300 128, 396 128`}
+            d={`M 152 ${y} C 250 ${y}, 300 128, 392 128`}
             stroke={ACCENT} strokeWidth="1" fill="none" opacity="0.6"
             pathLength="1" className="scene-draw" style={at(120 + i * 70)}
           />
@@ -335,20 +335,23 @@ export function ScoreScene({ stage }) {
       ))}
 
       <g className="scene-fade" style={at(620)}>
-        <rect x="400" y="100" width="150" height="56" rx="3"
+        <rect x="396" y="106" width="170" height="44" rx="3"
               fill="var(--color-raised)" stroke="var(--color-line-loud)" strokeWidth="1" />
-        <Caption x={475} y={122} delay={620}>calibrated probability</Caption>
-        <Caption x={475} y={142} tone="var(--color-fg-2)" size={10.5} delay={680}>
-          {stage.process}
+        <Caption x={481} y={133} tone="var(--color-fg)" delay={620}>
+          calibrated probability
         </Caption>
       </g>
+      {/* Under the box, not inside it: the sentence is wider than the box. */}
+      <Caption x={481} y={176} tone="var(--color-fg-2)" size={10.5} delay={680}>
+        {stage.process}
+      </Caption>
 
-      <line x1="556" y1="128" x2="596" y2="128" stroke={LINE} strokeWidth="1"
+      <line x1="572" y1="128" x2="612" y2="128" stroke={LINE} strokeWidth="1"
             pathLength="1" className="scene-draw" style={at(760)} />
-      <path d="M596 124 L603 128 L596 132 Z" fill={LINE}
+      <path d="M612 124 L619 128 L612 132 Z" fill={LINE}
             className="scene-fade" style={at(900)} />
 
-      <Outcome x={636} label={stage.output.label} value={stage.output.display}
+      <Outcome x={652} label={stage.output.label} value={stage.output.display}
                delay={900} />
     </Scene>
   );
@@ -374,37 +377,42 @@ export function DecideScene({ stage }) {
         return (
           <g key={a.name}>
             <path
-              d={`M 158 128 C 240 128, 260 ${y[a.name]}, 340 ${y[a.name]}`}
+              d={`M 158 128 C 240 128, 260 ${y[a.name]}, 334 ${y[a.name]}`}
               stroke={on ? ACCENT : LINE} strokeWidth={on ? 1.4 : 1} fill="none"
               opacity={on ? 0.95 : 0.3} pathLength="1"
               className="scene-draw" style={at(120 + i * 90)}
             />
             <g className="scene-fade" style={at(500 + i * 90)}>
               <rect
-                x="344" y={y[a.name] - 20} width="200" height="40" rx="3"
+                x="338" y={y[a.name] - 20} width="210" height="40" rx="3"
                 fill={on ? "var(--color-active)" : "var(--color-surface)"}
                 stroke={on ? "var(--color-line-loud)" : "var(--color-line)"}
                 strokeWidth="1"
               />
-              <rect x="344" y={y[a.name] - 20} width="2" height="40"
+              <rect x="338" y={y[a.name] - 20} width="2" height="40"
                     fill={`var(--color-${a.tone})`} opacity={on ? 1 : 0.45} />
-              <text x={364} y={y[a.name] + 4} fontSize="12.5"
+              <text x={358} y={y[a.name] + 4} fontSize="12.5"
                     fill={on ? "var(--color-fg)" : "var(--color-fg-faint)"}
                     fontFamily="var(--font-sans)">
                 {a.name}
               </text>
-              <text x={528} y={y[a.name] + 4} textAnchor="end" fontSize="11.5"
+              <text x={530} y={y[a.name] + 4} textAnchor="end" fontSize="12.5"
                     fill={on ? "var(--color-fg-2)" : "var(--color-fg-faint)"}
-                    fontFamily="var(--font-sans)">
-                {a.what}
+                    fontFamily="var(--font-sans)"
+                    style={{ fontVariantNumeric: "tabular-nums lining-nums" }}>
+                {rupees(a.price)}
               </text>
             </g>
           </g>
         );
       })}
 
-      <Outcome x={588} label="cheapest action wins" value="one action"
-               sub="per cluster" delay={880} />
+      <Caption x={443} y={224} tone="var(--color-fg-faint)" size={10.5} delay={860}>
+        the price of getting this one wrong
+      </Caption>
+
+      <Outcome x={604} label="cheapest action wins" value={chosen}
+               sub="for this cluster" delay={880} />
     </Scene>
   );
 }

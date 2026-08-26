@@ -294,7 +294,7 @@ export default function Pipeline() {
     <div className="pt-14">
       <PageHeader
         title="How a cluster gets scored"
-        lede="Seven stages, each measured on its own. Step through them and the figures at every stage come from the same result files as the rest of the site."
+        lede="Seven stages, each measured on its own. The figures at every stage come from the same result files as the rest of the site."
         meta={<TierPicker value={tier} onChange={setTier} />}
       >
         <Metadata
@@ -310,7 +310,7 @@ export default function Pipeline() {
 
       <Section
         title="Run the pipeline"
-        lede="Play it through, or step a stage at a time. Selecting a stage shows what enters it, what it does, and what it hands on."
+        lede="It runs on its own, a stage at a time. Select a stage to sit on it, and the panel below shows what enters it, what it does, and what it hands on."
       >
         <PipelineVisualizer
           stages={stages}

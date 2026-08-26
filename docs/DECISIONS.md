@@ -879,3 +879,29 @@ input, so the 54,032 edges above the threshold appeared nowhere on the page.
 
 Data was not touched. 61 figures were read out of `results/` and checked against
 the rendered DOM of all six pages before this was committed.
+
+
+## D-044: The pipeline runs itself, and two scenes had overlapping text
+Date: 2026-08-26
+Phase: 9
+
+Two layout bugs, both found by looking at the running page rather than the
+code. In the decide scene the action name and its description were anchored
+from opposite ends of the same 200px box, so `block` and `an innocent account
+stopped` printed on top of each other. The box now holds the action and its
+price, which is the more useful pairing anyway, and the description stays in
+the detail panel where there is room for it. In the score scene the sentence
+naming the model was centred inside a box far narrower than the sentence, so it
+overran both edges. It sits under the box now.
+
+The transport controls are gone. Play, pause, previous, next, replay and the
+manual/auto switch have been replaced by the thing they were controlling: the
+run advances on its own, a stage every 4.2 seconds, and loops. The stage rail
+stays, because a reader who wants to sit on one stage should be able to, and
+selecting a stage carries the run on from there rather than fighting the click.
+The bar along the top of the current stage runs for exactly as long as that
+stage holds, so the rail doubles as the clock.
+
+Under reduced motion the advance stops entirely. The rail still selects a
+stage, every scene still holds its finished state, and the page stays complete
+with nothing moving on its own.

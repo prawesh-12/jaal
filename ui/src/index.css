@@ -317,6 +317,20 @@
   opacity: 1;
 }
 
+/*
+  The bar under the current pipeline stage, which runs for exactly as long as
+  that stage holds. It is the only thing on the site that moves on its own, and
+  it stops under reduced motion.
+*/
+@keyframes stage-clock {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@utility stage-clock {
+  animation: stage-clock 4200ms linear both;
+}
+
 @keyframes enter {
   from { opacity: 0; }
   to { opacity: 1; }
