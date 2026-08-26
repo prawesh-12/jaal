@@ -183,6 +183,34 @@ Every rupee above assumes a person resolves each reviewed cluster correctly. 26,
 
 `never` means the tier stays ahead even if the reviewer resolves nothing at all, because blocking alone already pays for the queue.
 
+## How many clusters can one person get through?
+
+The queue holds 1,074 clusters across 400 batches, which is 2.69 per batch of 12,000 accounts. Blocking alone already nets Rs.1,440,000 with no analyst at all, so review adds Rs.813,050 on top.
+
+Clusters are opened best first, ranked by expected value: predicted purity times accounts times the coupon, minus analyst time on every account. A cluster that does not fit the budget falls back to whichever of blocking and allowing is cheaper.
+
+| clusters per batch | total | net | share of what review adds | recall incl. review |
+| --- | --- | --- | --- | --- |
+| 0.00 | 0 | Rs.1,440,000 | 0.0000 | 0.1953 |
+| 0.23 | 92 | Rs.1,540,900 | 0.1241 | 0.2825 |
+| 0.50 | 201 | Rs.1,688,300 | 0.3054 | 0.3839 |
+| 0.78 | 310 | Rs.1,823,550 | 0.4717 | 0.4753 |
+| 1.05 | 419 | Rs.1,936,750 | 0.6110 | 0.5567 |
+| 1.32 | 528 | Rs.2,004,300 | 0.6940 | 0.6217 |
+| 1.59 | 638 | Rs.2,067,200 | 0.7714 | 0.6817 |
+| 1.87 | 747 | Rs.2,149,450 | 0.8726 | 0.7347 |
+| 2.14 | 856 | Rs.2,203,450 | 0.9390 | 0.7794 |
+| 2.41 | 965 | Rs.2,244,250 | 0.9892 | 0.8215 |
+| 2.69 | 1,074 | Rs.2,253,050 | 1.0000 | 0.8585 |
+| 2.69 | 1,074 | Rs.2,253,050 | 1.0000 | 0.8585 |
+
+- 50% of what review adds needs **0.87 clusters per batch** (347 in total)
+- 80% of what review adds needs **1.69 clusters per batch** (674 in total)
+- 90% of what review adds needs **2.00 clusters per batch** (801 in total)
+- 95% of what review adds needs **2.23 clusters per batch** (892 in total)
+
+The curve is not perfectly monotonic. 4 of 60 steps paid less with more capacity, the worst by Rs.9,950. A cluster pushed out of the queue falls back to blocking, and blocking a genuinely pure cluster costs nothing while reviewing it costs Rs.150 an account. The best budget measured is 2.60 clusters per batch at Rs.2,256,850, which is Rs.3,800 above an unlimited queue.
+
 ## Review notes
 
 1,334 notes for every cluster not simply allowed. Sources: live 40, template 1294. Notes quoting a number not from the pipeline: **0**.

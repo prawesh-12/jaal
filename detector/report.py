@@ -263,6 +263,53 @@ def build() -> str:
                    "resolves nothing at all, because blocking alone already pays "
                    "for the queue.")
 
+    rc = load("review_capacity")
+    if rc:
+        out.append(section("How many clusters can one person get through?"))
+        out.append(f"The queue holds {rc['n_reviewable_clusters']:,} clusters "
+                   f"across {rc['n_worlds']} batches, which is "
+                   f"{rc['n_reviewable_clusters'] / rc['n_worlds']:.2f} per "
+                   f"batch of 12,000 accounts. Blocking alone already nets "
+                   f"Rs.{rc['net_with_no_review_rupees']:,} with no analyst at "
+                   f"all, so review adds "
+                   f"Rs.{rc['review_attributable_benefit_rupees']:,} on top.\n")
+        out.append("Clusters are opened best first, ranked by expected value: "
+                   "predicted purity times accounts times the coupon, minus "
+                   "analyst time on every account. A cluster that does not fit "
+                   "the budget falls back to whichever of blocking and allowing "
+                   "is cheaper.\n")
+        out.append("| clusters per batch | total | net | share of what review adds | recall incl. review |")
+        out.append("| --- | --- | --- | --- | --- |")
+        step = max(1, len(rc["curve"]) // 10)
+        for r in rc["curve"][::step] + [rc["curve"][-1]]:
+            out.append(f"| {r['budget_per_world']:.2f} | "
+                       f"{r['budget_clusters']:,} | "
+                       f"Rs.{r['net_rupees']:,} | "
+                       f"{r['share_of_review_benefit']:.4f} | "
+                       f"{r['recall_including_review']:.4f} |")
+        out.append("")
+        for share in (50, 80, 90, 95):
+            hit = rc[f"reaches_{share}_percent"]
+            if hit:
+                out.append(f"- {share}% of what review adds needs "
+                           f"**{hit['budget_per_world']:.2f} clusters per "
+                           f"batch** ({hit['budget_clusters']:,} in total)")
+        dips = rc["steps_where_more_capacity_paid_less"]
+        best = rc["best_budget"]
+        if dips:
+            out.append(f"\nThe curve is not perfectly monotonic. "
+                       f"{len(dips)} of {len(rc['curve']) - 1} steps paid less "
+                       f"with more capacity, the worst by "
+                       f"Rs.{abs(min(d['rupees'] for d in dips)):,}. A cluster "
+                       f"pushed out of the queue falls back to blocking, and "
+                       f"blocking a genuinely pure cluster costs nothing while "
+                       f"reviewing it costs Rs.{config.COST_ANALYST_REVIEW} an "
+                       f"account. The best budget measured is "
+                       f"{best['budget_per_world']:.2f} clusters per batch at "
+                       f"Rs.{best['net_rupees']:,}, which is "
+                       f"Rs.{best['net_rupees'] - rc['net_with_unlimited_review_rupees']:,} "
+                       f"above an unlimited queue.")
+
     ex = load("explanations")
     if ex:
         out.append(section("Review notes"))

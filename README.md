@@ -105,6 +105,18 @@ blocking alone carries the easy tier whatever the reviewer does, while the
 hardest tier needs an 82% accurate reviewer, because every rupee it earns comes
 from the queue.
 
+### And if there are only so many analysts
+
+The queue holds 2.69 clusters per batch of 12,000 accounts. Ranked best first by
+expected value of review, **80% of everything the queue adds comes from the top
+1.69 clusters per batch**, and 95% from the top 2.23. Blocking alone, with no
+analyst at all, already nets Rs.1,440,000 of the Rs.2,253,050 total.
+
+The curve is in `results/review_capacity.png`. It is not perfectly monotonic: 4
+of 60 steps paid slightly less with more capacity, worst case Rs.9,950, because
+a cluster pushed out of the queue falls back to blocking, and blocking a
+genuinely pure cluster costs nothing while reviewing it costs Rs.150 an account.
+
 ## Baseline comparison
 
 A rules-only detector, published before the model existed: exact matching on

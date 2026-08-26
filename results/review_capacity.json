@@ -1,0 +1,657 @@
+{
+ "n_reviewable_clusters": 1074,
+ "n_worlds": 400,
+ "best_budget": {
+  "budget_clusters": 1038,
+  "budget_per_world": 2.595,
+  "net_rupees": 2256850,
+  "accounts_reviewed": 28313,
+  "recall_including_review": 0.8488,
+  "share_of_full_benefit": 1.00169,
+  "share_of_review_benefit": 1.00467
+ },
+ "steps_where_more_capacity_paid_less": [
+  {
+   "from": 0,
+   "to": 1,
+   "rupees": -7350
+  },
+  {
+   "from": 437,
+   "to": 456,
+   "rupees": -9950
+  },
+  {
+   "from": 1038,
+   "to": 1056,
+   "rupees": -1350
+  },
+  {
+   "from": 1056,
+   "to": 1074,
+   "rupees": -2450
+  }
+ ],
+ "net_with_unlimited_review_rupees": 2253050,
+ "net_with_no_review_rupees": 1440000,
+ "review_attributable_benefit_rupees": 813050,
+ "curve": [
+  {
+   "budget_clusters": 0,
+   "budget_per_world": 0.0,
+   "net_rupees": 1440000,
+   "accounts_reviewed": 0,
+   "recall_including_review": 0.1953,
+   "share_of_full_benefit": 0.63913,
+   "share_of_review_benefit": 0.0
+  },
+  {
+   "budget_clusters": 1,
+   "budget_per_world": 0.003,
+   "net_rupees": 1432650,
+   "accounts_reviewed": 49,
+   "recall_including_review": 0.1953,
+   "share_of_full_benefit": 0.63587,
+   "share_of_review_benefit": -0.00904
+  },
+  {
+   "budget_clusters": 19,
+   "budget_per_world": 0.048,
+   "net_rupees": 1451200,
+   "accounts_reviewed": 860,
+   "recall_including_review": 0.2116,
+   "share_of_full_benefit": 0.6441,
+   "share_of_review_benefit": 0.01378
+  },
+  {
+   "budget_clusters": 37,
+   "budget_per_world": 0.092,
+   "net_rupees": 1462450,
+   "accounts_reviewed": 1657,
+   "recall_including_review": 0.2286,
+   "share_of_full_benefit": 0.6491,
+   "share_of_review_benefit": 0.02761
+  },
+  {
+   "budget_clusters": 56,
+   "budget_per_world": 0.14,
+   "net_rupees": 1482750,
+   "accounts_reviewed": 2479,
+   "recall_including_review": 0.2473,
+   "share_of_full_benefit": 0.65811,
+   "share_of_review_benefit": 0.05258
+  },
+  {
+   "budget_clusters": 74,
+   "budget_per_world": 0.185,
+   "net_rupees": 1500550,
+   "accounts_reviewed": 3239,
+   "recall_including_review": 0.2645,
+   "share_of_full_benefit": 0.66601,
+   "share_of_review_benefit": 0.07447
+  },
+  {
+   "budget_clusters": 92,
+   "budget_per_world": 0.23,
+   "net_rupees": 1540900,
+   "accounts_reviewed": 3990,
+   "recall_including_review": 0.2825,
+   "share_of_full_benefit": 0.68392,
+   "share_of_review_benefit": 0.1241
+  },
+  {
+   "budget_clusters": 110,
+   "budget_per_world": 0.275,
+   "net_rupees": 1550750,
+   "accounts_reviewed": 4727,
+   "recall_including_review": 0.2982,
+   "share_of_full_benefit": 0.68829,
+   "share_of_review_benefit": 0.13622
+  },
+  {
+   "budget_clusters": 128,
+   "budget_per_world": 0.32,
+   "net_rupees": 1580400,
+   "accounts_reviewed": 5444,
+   "recall_including_review": 0.316,
+   "share_of_full_benefit": 0.70145,
+   "share_of_review_benefit": 0.17268
+  },
+  {
+   "budget_clusters": 146,
+   "budget_per_world": 0.365,
+   "net_rupees": 1602800,
+   "accounts_reviewed": 6128,
+   "recall_including_review": 0.3323,
+   "share_of_full_benefit": 0.71139,
+   "share_of_review_benefit": 0.20023
+  },
+  {
+   "budget_clusters": 165,
+   "budget_per_world": 0.412,
+   "net_rupees": 1633550,
+   "accounts_reviewed": 6847,
+   "recall_including_review": 0.3503,
+   "share_of_full_benefit": 0.72504,
+   "share_of_review_benefit": 0.23805
+  },
+  {
+   "budget_clusters": 183,
+   "budget_per_world": 0.458,
+   "net_rupees": 1661700,
+   "accounts_reviewed": 7538,
+   "recall_including_review": 0.3675,
+   "share_of_full_benefit": 0.73753,
+   "share_of_review_benefit": 0.27268
+  },
+  {
+   "budget_clusters": 201,
+   "budget_per_world": 0.502,
+   "net_rupees": 1688300,
+   "accounts_reviewed": 8202,
+   "recall_including_review": 0.3839,
+   "share_of_full_benefit": 0.74934,
+   "share_of_review_benefit": 0.30539
+  },
+  {
+   "budget_clusters": 219,
+   "budget_per_world": 0.547,
+   "net_rupees": 1707900,
+   "accounts_reviewed": 8834,
+   "recall_including_review": 0.3988,
+   "share_of_full_benefit": 0.75804,
+   "share_of_review_benefit": 0.3295
+  },
+  {
+   "budget_clusters": 237,
+   "budget_per_world": 0.593,
+   "net_rupees": 1728300,
+   "accounts_reviewed": 9470,
+   "recall_including_review": 0.4139,
+   "share_of_full_benefit": 0.76709,
+   "share_of_review_benefit": 0.35459
+  },
+  {
+   "budget_clusters": 256,
+   "budget_per_world": 0.64,
+   "net_rupees": 1754750,
+   "accounts_reviewed": 10135,
+   "recall_including_review": 0.4303,
+   "share_of_full_benefit": 0.77883,
+   "share_of_review_benefit": 0.38712
+  },
+  {
+   "budget_clusters": 274,
+   "budget_per_world": 0.685,
+   "net_rupees": 1778700,
+   "accounts_reviewed": 10746,
+   "recall_including_review": 0.4454,
+   "share_of_full_benefit": 0.78946,
+   "share_of_review_benefit": 0.41658
+  },
+  {
+   "budget_clusters": 292,
+   "budget_per_world": 0.73,
+   "net_rupees": 1801500,
+   "accounts_reviewed": 11378,
+   "recall_including_review": 0.4607,
+   "share_of_full_benefit": 0.79958,
+   "share_of_review_benefit": 0.44462
+  },
+  {
+   "budget_clusters": 310,
+   "budget_per_world": 0.775,
+   "net_rupees": 1823550,
+   "accounts_reviewed": 11979,
+   "recall_including_review": 0.4753,
+   "share_of_full_benefit": 0.80937,
+   "share_of_review_benefit": 0.47174
+  },
+  {
+   "budget_clusters": 328,
+   "budget_per_world": 0.82,
+   "net_rupees": 1839400,
+   "accounts_reviewed": 12544,
+   "recall_including_review": 0.4884,
+   "share_of_full_benefit": 0.8164,
+   "share_of_review_benefit": 0.49124
+  },
+  {
+   "budget_clusters": 347,
+   "budget_per_world": 0.868,
+   "net_rupees": 1862400,
+   "accounts_reviewed": 13180,
+   "recall_including_review": 0.5038,
+   "share_of_full_benefit": 0.82661,
+   "share_of_review_benefit": 0.51953
+  },
+  {
+   "budget_clusters": 365,
+   "budget_per_world": 0.912,
+   "net_rupees": 1878700,
+   "accounts_reviewed": 13694,
+   "recall_including_review": 0.516,
+   "share_of_full_benefit": 0.83385,
+   "share_of_review_benefit": 0.53957
+  },
+  {
+   "budget_clusters": 383,
+   "budget_per_world": 0.958,
+   "net_rupees": 1898200,
+   "accounts_reviewed": 14256,
+   "recall_including_review": 0.5295,
+   "share_of_full_benefit": 0.8425,
+   "share_of_review_benefit": 0.56356
+  },
+  {
+   "budget_clusters": 401,
+   "budget_per_world": 1.002,
+   "net_rupees": 1917050,
+   "accounts_reviewed": 14837,
+   "recall_including_review": 0.5433,
+   "share_of_full_benefit": 0.85087,
+   "share_of_review_benefit": 0.58674
+  },
+  {
+   "budget_clusters": 419,
+   "budget_per_world": 1.048,
+   "net_rupees": 1936750,
+   "accounts_reviewed": 15391,
+   "recall_including_review": 0.5567,
+   "share_of_full_benefit": 0.85961,
+   "share_of_review_benefit": 0.61097
+  },
+  {
+   "budget_clusters": 437,
+   "budget_per_world": 1.093,
+   "net_rupees": 1954700,
+   "accounts_reviewed": 15858,
+   "recall_including_review": 0.5682,
+   "share_of_full_benefit": 0.86758,
+   "share_of_review_benefit": 0.63305
+  },
+  {
+   "budget_clusters": 456,
+   "budget_per_world": 1.14,
+   "net_rupees": 1944750,
+   "accounts_reviewed": 16383,
+   "recall_including_review": 0.5771,
+   "share_of_full_benefit": 0.86316,
+   "share_of_review_benefit": 0.62081
+  },
+  {
+   "budget_clusters": 474,
+   "budget_per_world": 1.185,
+   "net_rupees": 1961800,
+   "accounts_reviewed": 16892,
+   "recall_including_review": 0.5893,
+   "share_of_full_benefit": 0.87073,
+   "share_of_review_benefit": 0.64178
+  },
+  {
+   "budget_clusters": 492,
+   "budget_per_world": 1.23,
+   "net_rupees": 1979400,
+   "accounts_reviewed": 17388,
+   "recall_including_review": 0.6012,
+   "share_of_full_benefit": 0.87854,
+   "share_of_review_benefit": 0.66343
+  },
+  {
+   "budget_clusters": 510,
+   "budget_per_world": 1.275,
+   "net_rupees": 1995650,
+   "accounts_reviewed": 17825,
+   "recall_including_review": 0.6119,
+   "share_of_full_benefit": 0.88575,
+   "share_of_review_benefit": 0.68341
+  },
+  {
+   "budget_clusters": 528,
+   "budget_per_world": 1.32,
+   "net_rupees": 2004300,
+   "accounts_reviewed": 18270,
+   "recall_including_review": 0.6217,
+   "share_of_full_benefit": 0.88959,
+   "share_of_review_benefit": 0.69405
+  },
+  {
+   "budget_clusters": 547,
+   "budget_per_world": 1.367,
+   "net_rupees": 2015150,
+   "accounts_reviewed": 18751,
+   "recall_including_review": 0.6325,
+   "share_of_full_benefit": 0.89441,
+   "share_of_review_benefit": 0.7074
+  },
+  {
+   "budget_clusters": 565,
+   "budget_per_world": 1.413,
+   "net_rupees": 2029650,
+   "accounts_reviewed": 19189,
+   "recall_including_review": 0.643,
+   "share_of_full_benefit": 0.90085,
+   "share_of_review_benefit": 0.72523
+  },
+  {
+   "budget_clusters": 583,
+   "budget_per_world": 1.458,
+   "net_rupees": 2032550,
+   "accounts_reviewed": 19635,
+   "recall_including_review": 0.6521,
+   "share_of_full_benefit": 0.90213,
+   "share_of_review_benefit": 0.7288
+  },
+  {
+   "budget_clusters": 601,
+   "budget_per_world": 1.502,
+   "net_rupees": 2045550,
+   "accounts_reviewed": 20063,
+   "recall_including_review": 0.6621,
+   "share_of_full_benefit": 0.9079,
+   "share_of_review_benefit": 0.74479
+  },
+  {
+   "budget_clusters": 619,
+   "budget_per_world": 1.548,
+   "net_rupees": 2053650,
+   "accounts_reviewed": 20481,
+   "recall_including_review": 0.6713,
+   "share_of_full_benefit": 0.9115,
+   "share_of_review_benefit": 0.75475
+  },
+  {
+   "budget_clusters": 638,
+   "budget_per_world": 1.595,
+   "net_rupees": 2067200,
+   "accounts_reviewed": 20920,
+   "recall_including_review": 0.6817,
+   "share_of_full_benefit": 0.91751,
+   "share_of_review_benefit": 0.77142
+  },
+  {
+   "budget_clusters": 656,
+   "budget_per_world": 1.64,
+   "net_rupees": 2080000,
+   "accounts_reviewed": 21296,
+   "recall_including_review": 0.6907,
+   "share_of_full_benefit": 0.92319,
+   "share_of_review_benefit": 0.78716
+  },
+  {
+   "budget_clusters": 674,
+   "budget_per_world": 1.685,
+   "net_rupees": 2103950,
+   "accounts_reviewed": 21655,
+   "recall_including_review": 0.6989,
+   "share_of_full_benefit": 0.93382,
+   "share_of_review_benefit": 0.81662
+  },
+  {
+   "budget_clusters": 692,
+   "budget_per_world": 1.73,
+   "net_rupees": 2115700,
+   "accounts_reviewed": 22062,
+   "recall_including_review": 0.7083,
+   "share_of_full_benefit": 0.93904,
+   "share_of_review_benefit": 0.83107
+  },
+  {
+   "budget_clusters": 710,
+   "budget_per_world": 1.775,
+   "net_rupees": 2127100,
+   "accounts_reviewed": 22454,
+   "recall_including_review": 0.7175,
+   "share_of_full_benefit": 0.9441,
+   "share_of_review_benefit": 0.84509
+  },
+  {
+   "budget_clusters": 728,
+   "budget_per_world": 1.82,
+   "net_rupees": 2137850,
+   "accounts_reviewed": 22849,
+   "recall_including_review": 0.7266,
+   "share_of_full_benefit": 0.94887,
+   "share_of_review_benefit": 0.85831
+  },
+  {
+   "budget_clusters": 747,
+   "budget_per_world": 1.867,
+   "net_rupees": 2149450,
+   "accounts_reviewed": 23189,
+   "recall_including_review": 0.7347,
+   "share_of_full_benefit": 0.95402,
+   "share_of_review_benefit": 0.87258
+  },
+  {
+   "budget_clusters": 765,
+   "budget_per_world": 1.913,
+   "net_rupees": 2160200,
+   "accounts_reviewed": 23484,
+   "recall_including_review": 0.7419,
+   "share_of_full_benefit": 0.95879,
+   "share_of_review_benefit": 0.8858
+  },
+  {
+   "budget_clusters": 783,
+   "budget_per_world": 1.958,
+   "net_rupees": 2168150,
+   "accounts_reviewed": 23855,
+   "recall_including_review": 0.7502,
+   "share_of_full_benefit": 0.96232,
+   "share_of_review_benefit": 0.89558
+  },
+  {
+   "budget_clusters": 801,
+   "budget_per_world": 2.002,
+   "net_rupees": 2178400,
+   "accounts_reviewed": 24188,
+   "recall_including_review": 0.758,
+   "share_of_full_benefit": 0.96687,
+   "share_of_review_benefit": 0.90819
+  },
+  {
+   "budget_clusters": 819,
+   "budget_per_world": 2.047,
+   "net_rupees": 2185900,
+   "accounts_reviewed": 24526,
+   "recall_including_review": 0.7656,
+   "share_of_full_benefit": 0.9702,
+   "share_of_review_benefit": 0.91741
+  },
+  {
+   "budget_clusters": 838,
+   "budget_per_world": 2.095,
+   "net_rupees": 2196250,
+   "accounts_reviewed": 24809,
+   "recall_including_review": 0.7725,
+   "share_of_full_benefit": 0.97479,
+   "share_of_review_benefit": 0.93014
+  },
+  {
+   "budget_clusters": 856,
+   "budget_per_world": 2.14,
+   "net_rupees": 2203450,
+   "accounts_reviewed": 25117,
+   "recall_including_review": 0.7794,
+   "share_of_full_benefit": 0.97799,
+   "share_of_review_benefit": 0.939
+  },
+  {
+   "budget_clusters": 874,
+   "budget_per_world": 2.185,
+   "net_rupees": 2210500,
+   "accounts_reviewed": 25406,
+   "recall_including_review": 0.786,
+   "share_of_full_benefit": 0.98111,
+   "share_of_review_benefit": 0.94767
+  },
+  {
+   "budget_clusters": 892,
+   "budget_per_world": 2.23,
+   "net_rupees": 2217700,
+   "accounts_reviewed": 25698,
+   "recall_including_review": 0.7926,
+   "share_of_full_benefit": 0.98431,
+   "share_of_review_benefit": 0.95652
+  },
+  {
+   "budget_clusters": 910,
+   "budget_per_world": 2.275,
+   "net_rupees": 2224050,
+   "accounts_reviewed": 25989,
+   "recall_including_review": 0.7991,
+   "share_of_full_benefit": 0.98713,
+   "share_of_review_benefit": 0.96433
+  },
+  {
+   "budget_clusters": 929,
+   "budget_per_world": 2.322,
+   "net_rupees": 2232500,
+   "accounts_reviewed": 26298,
+   "recall_including_review": 0.8063,
+   "share_of_full_benefit": 0.99088,
+   "share_of_review_benefit": 0.97472
+  },
+  {
+   "budget_clusters": 947,
+   "budget_per_world": 2.368,
+   "net_rupees": 2238250,
+   "accounts_reviewed": 26693,
+   "recall_including_review": 0.8147,
+   "share_of_full_benefit": 0.99343,
+   "share_of_review_benefit": 0.9818
+  },
+  {
+   "budget_clusters": 965,
+   "budget_per_world": 2.413,
+   "net_rupees": 2244250,
+   "accounts_reviewed": 27001,
+   "recall_including_review": 0.8215,
+   "share_of_full_benefit": 0.99609,
+   "share_of_review_benefit": 0.98918
+  },
+  {
+   "budget_clusters": 983,
+   "budget_per_world": 2.458,
+   "net_rupees": 2249000,
+   "accounts_reviewed": 27328,
+   "recall_including_review": 0.8285,
+   "share_of_full_benefit": 0.9982,
+   "share_of_review_benefit": 0.99502
+  },
+  {
+   "budget_clusters": 1001,
+   "budget_per_world": 2.502,
+   "net_rupees": 2251900,
+   "accounts_reviewed": 27618,
+   "recall_including_review": 0.8346,
+   "share_of_full_benefit": 0.99949,
+   "share_of_review_benefit": 0.99859
+  },
+  {
+   "budget_clusters": 1019,
+   "budget_per_world": 2.547,
+   "net_rupees": 2254500,
+   "accounts_reviewed": 27958,
+   "recall_including_review": 0.8416,
+   "share_of_full_benefit": 1.00064,
+   "share_of_review_benefit": 1.00178
+  },
+  {
+   "budget_clusters": 1038,
+   "budget_per_world": 2.595,
+   "net_rupees": 2256850,
+   "accounts_reviewed": 28313,
+   "recall_including_review": 0.8488,
+   "share_of_full_benefit": 1.00169,
+   "share_of_review_benefit": 1.00467
+  },
+  {
+   "budget_clusters": 1056,
+   "budget_per_world": 2.64,
+   "net_rupees": 2255500,
+   "accounts_reviewed": 28554,
+   "recall_including_review": 0.8533,
+   "share_of_full_benefit": 1.00109,
+   "share_of_review_benefit": 1.00301
+  },
+  {
+   "budget_clusters": 1074,
+   "budget_per_world": 2.685,
+   "net_rupees": 2253050,
+   "accounts_reviewed": 28833,
+   "recall_including_review": 0.8585,
+   "share_of_full_benefit": 1.0,
+   "share_of_review_benefit": 1.0
+  }
+ ],
+ "reaches_50_percent": {
+  "budget_clusters": 347,
+  "budget_per_world": 0.868,
+  "net_rupees": 1862400,
+  "accounts_reviewed": 13180,
+  "recall_including_review": 0.5038,
+  "share_of_full_benefit": 0.82661,
+  "share_of_review_benefit": 0.51953
+ },
+ "reaches_80_percent": {
+  "budget_clusters": 674,
+  "budget_per_world": 1.685,
+  "net_rupees": 2103950,
+  "accounts_reviewed": 21655,
+  "recall_including_review": 0.6989,
+  "share_of_full_benefit": 0.93382,
+  "share_of_review_benefit": 0.81662
+ },
+ "reaches_90_percent": {
+  "budget_clusters": 801,
+  "budget_per_world": 2.002,
+  "net_rupees": 2178400,
+  "accounts_reviewed": 24188,
+  "recall_including_review": 0.758,
+  "share_of_full_benefit": 0.96687,
+  "share_of_review_benefit": 0.90819
+ },
+ "reaches_95_percent": {
+  "budget_clusters": 892,
+  "budget_per_world": 2.23,
+  "net_rupees": 2217700,
+  "accounts_reviewed": 25698,
+  "recall_including_review": 0.7926,
+  "share_of_full_benefit": 0.98431,
+  "share_of_review_benefit": 0.95652
+ },
+ "ev_top": [
+  {
+   "rank": 1,
+   "ev_rupees": 2347,
+   "size": 49,
+   "predicted_purity": 0.9895
+  },
+  {
+   "rank": 2,
+   "ev_rupees": 2249,
+   "size": 48,
+   "predicted_purity": 0.9843
+  },
+  {
+   "rank": 3,
+   "ev_rupees": 2164,
+   "size": 47,
+   "predicted_purity": 0.9802
+  },
+  {
+   "rank": 4,
+   "ev_rupees": 2149,
+   "size": 45,
+   "predicted_purity": 0.9887
+  },
+  {
+   "rank": 5,
+   "ev_rupees": 2119,
+   "size": 46,
+   "predicted_purity": 0.9803
+  }
+ ]
+}
