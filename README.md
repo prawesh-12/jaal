@@ -297,7 +297,7 @@ Five more failure modes with worked examples are in `results/holdout.json` and
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ./run.sh              # full reproduction, about 30 minutes, no network needed
 ./run.sh quick        # smaller worlds, about 4 minutes
-.venv/bin/python -m pytest    # 202 tests
+.venv/bin/python -m pytest    # 239 tests
 ```
 
 `run.sh` will not re-open the holdout if `results/holdout.json` exists. A
@@ -306,9 +306,22 @@ holdout opened twice is not a holdout.
 Optional, and not needed for any number above:
 
 ```bash
-.venv/bin/python -m api.app          # Flask, two endpoints, 127.0.0.1:5001
+.venv/bin/python -m api.app          # Flask service, 127.0.0.1:5001
 cd ui && npm install && npm run dev  # React dashboard, 127.0.0.1:5173
 ```
+
+To see what Jaal would give a caller who cannot send every column, without
+sending any account data:
+
+```bash
+curl -s localhost:5001/v1/coverage -X POST -H 'content-type: application/json' \
+  -d '{"columns": ["account_id","device_id","card_bin","ip_prefix","n_orders",
+                   "first_order_value","total_order_value","days_to_second_order"]}'
+```
+
+`docs/INTEGRATION.md` is the contract behind that: the twelve columns, which
+five can arrive as a salted hash, what each is worth in bits, and what a
+narrower column set is measured to reach.
 
 ## Method
 
@@ -372,6 +385,7 @@ twenty-four by permutation importance, and that is documented rather than hidden
 
 | Path | What is in it |
 | ---- | ------------- |
+| `docs/INTEGRATION.md` | What to send, what it is worth, and what fewer columns cost |
 | `docs/PITCH.md` | The opening above, on its own, for reading aloud |
 | `docs/VIDEO_SCRIPT.md` | Five minute script with timestamps |
 | `docs/phases/phase-11-adversarial.md` | The operator that adapts, round by round |
@@ -382,7 +396,7 @@ twenty-four by permutation importance, and that is documented rather than hidden
 | `docs/03-glossary.md` | Every term in one line |
 | `docs/phases/` | One document per phase, with real numbers |
 | `docs/diagrams/` | Context, containers, pipeline, and one per stage |
-| `docs/DECISIONS.md` | 22 decisions, including the ones that were wrong |
+| `docs/DECISIONS.md` | 41 decisions, including the ones that were wrong |
 | `extras/plan.md` | The implementation plan this was built from |
 
 Ten places where measurement contradicted the plan are recorded in

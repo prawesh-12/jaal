@@ -93,11 +93,22 @@ def filter_by_size(clusters: list[list[int]], min_size: int = MIN_CLUSTER_SIZE
 def cluster_world(world: World, params: dict,
                   threshold: float = EDGE_THRESHOLD_BITS,
                   resolution: float = RESOLUTION,
-                  min_size: int = MIN_CLUSTER_SIZE
+                  min_size: int = MIN_CLUSTER_SIZE,
+                  rules=None, comparisons=None
                   ) -> tuple[list[list[int]], ig.Graph, np.ndarray]:
-    """Blocking, scoring and clustering for one world. The usual entry point."""
-    pairs, _ = candidate_pairs(world.accounts)
-    bits, contributions = link.score_pairs(world.accounts, pairs, params)
+    """Blocking, scoring and clustering for one world. The usual entry point.
+
+    `rules` and `comparisons` narrow the pipeline to the fields a caller can
+    actually supply. Left alone, both use everything.
+    """
+    from detector.blocking import BLOCKING_RULES
+
+    rules = BLOCKING_RULES if rules is None else rules
+    comparisons = link.SCORED_COMPARISONS if comparisons is None else comparisons
+
+    pairs, _ = candidate_pairs(world.accounts, rules)
+    bits, contributions = link.score_pairs(world.accounts, pairs, params,
+                                           comparisons=comparisons)
     graph = build_graph(pairs, bits, len(world.accounts), threshold)
 
     # Keep the contribution row per edge, so we can say why a pair matched.

@@ -697,7 +697,7 @@ What the redesign actually changed, beyond looks:
   headless screenshot.
 
 
-## D-039: Rebuild the dashboard as a product page, and validate the chart palette
+## D-040: Rebuild the dashboard as a product page, and validate the chart palette
 Date: 2026-08-26
 Phase: 9
 
@@ -747,3 +747,48 @@ you just wrote.
 
 Separately, `results/explanations.json` was found holding 40 notes instead of
 the committed 1,334, left behind by a partial run. Restored from the commit.
+
+## D-041: An integration contract, and a column set you can ask about before writing code
+Date: 2026-08-26
+Phase: 9
+
+The project could say what it detects and could not say what it needs. That is
+the gap between a detector and something a merchant can integrate, so this round
+closed it.
+
+**Profiles are column sets, not field sets.** The first version of
+`detector/profiles.py` narrowed blocking and pair scoring for each profile and
+left the feature extractor alone. That was wrong and the first ablation run was
+killed ten minutes in because of it. A caller who cannot send `address_id` does
+not merely lose the address comparison, they also lose
+`distinct_address_ratio`. Profiles are now keyed on the twelve account columns,
+and `FEATURE_COLUMNS` records which column every feature reads, so dropping a
+column drops the features that read it. `tests/test_profiles.py` asserts a
+profile never keeps a feature or a comparison whose column it does not have.
+
+That correction surfaced the sharpest result before any run finished. An
+aggregator with no coupon flag loses `total_discount`, which has the highest
+correlation with the label of any feature at 0.3923. Losing the promo flag is
+not only a linkage problem, it takes out the economics.
+
+**Hashing is now asserted rather than claimed.** Device, address, pincode, card
+BIN and IP prefix are only ever tested for equality. `tests/test_hashing.py`
+runs a real world through both paths and checks that blocking produces the same
+candidate pairs, that pair scores and the per-field breakdown are identical
+arrays, that clustering returns the same clusters, and that every feature comes
+out equal column for column. Two salts give different digests, so tenants
+cannot be joined. This is worth a test rather than a paragraph because it is the
+difference between an integration that needs a data protection review and one
+that needs a different data protection review.
+
+**`POST /v1/coverage` answers the question before the work.** Send column names,
+no account data, and get back the profile you match, the comparisons and
+features you lose, and what a model fitted for that profile actually reached.
+`GET /` now lists the routes, because a bare host returning a 404 is the first
+thing an integrator sees.
+
+Two 500s were found by probing rather than by reading. A batch holding a dict
+and a list raised `TypeError` out of the DataFrame constructor, which escaped a
+handler catching only `ValueError`. A column list containing `null` reached
+`sorted()` and raised `TypeError` there. Both return 400 now and both have a
+test.

@@ -169,13 +169,14 @@ def cluster_features(accounts: pd.DataFrame, graph: ig.Graph, rows: list[int],
     return {k: f[k] for k in FEATURE_NAMES}
 
 
-def dominant_signal(graph: ig.Graph, rows: list[int]) -> str:
+def dominant_signal(graph: ig.Graph, rows: list[int], comparisons=None) -> str:
     """Which comparison carried most weight here. Feeds the review note."""
+    comparisons = link.SCORED_COMPARISONS if comparisons is None else comparisons
     sub = graph.subgraph(rows)
     if not sub.ecount() or "contributions" not in graph.es.attributes():
         return "unknown"
     per_field = np.abs(np.asarray(sub.es["contributions"], dtype=float)).sum(axis=0)
-    return link.SCORED_COMPARISONS[int(per_field.argmax())]
+    return comparisons[int(per_field.argmax())]
 
 
 def label_cluster(truth: pd.DataFrame, rows: list[int]) -> dict:
@@ -196,8 +197,10 @@ def label_cluster(truth: pd.DataFrame, rows: list[int]) -> dict:
     }
 
 
-def world_rows(world: World, params: dict) -> list[dict]:
-    clusters, graph, contributions = cluster.cluster_world(world, params)
+def world_rows(world: World, params: dict, rules=None,
+               comparisons=None) -> list[dict]:
+    clusters, graph, contributions = cluster.cluster_world(
+        world, params, rules=rules, comparisons=comparisons)
     keep = np.asarray(graph.es["weight"]) >= 0
     del keep
 
@@ -218,21 +221,22 @@ def world_rows(world: World, params: dict) -> list[dict]:
             "world_accounts": world_accounts,
             "world_ring_accounts": world_ring_accounts,
             **f,
-            "dominant_signal": dominant_signal(graph, members),
+            "dominant_signal": dominant_signal(graph, members, comparisons),
             **label_cluster(world.truth, members),
         })
     return rows
 
 
 def build_table(seeds, tiers, n_accounts: int, params: dict,
-                verbose: bool = True) -> pd.DataFrame:
+                verbose: bool = True, rules=None,
+                comparisons=None) -> pd.DataFrame:
     """One world at a time. Never hold 400 of them in memory at once."""
     priors = load_priors()
     rows: list[dict] = []
     for tier in tiers:
         for i, seed in enumerate(seeds):
             world = generate(seed, tier, n_accounts, priors)
-            rows.extend(world_rows(world, params))
+            rows.extend(world_rows(world, params, rules, comparisons))
             del world
             if verbose and (i + 1) % 25 == 0:
                 print(f"  {tier}: {i + 1}/{len(seeds)} worlds, "

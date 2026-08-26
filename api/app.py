@@ -21,11 +21,12 @@ import pandas as pd
 from flask import Flask, jsonify, request
 
 import config
-from detector import decide, explain
+from detector import decide, explain, profiles
 from detector.features import FEATURE_NAMES
 from detector.pipeline import REQUIRED_COLUMNS, Detector
 
 MAX_ACCOUNTS_PER_SCAN = 20_000
+ABLATION_PATH = "results/field_ablation.json"
 
 app = Flask(__name__)
 _detector = None
@@ -37,6 +38,102 @@ def detector() -> Detector:
     if _detector is None:
         _detector = Detector.load()
     return _detector
+
+
+@app.get("/")
+def index():
+    """Every route, so the bare host is not a 404."""
+    return jsonify({
+        "service": "jaal",
+        "what": "finds groups of accounts run by one person farming a "
+                "first-order promo discount",
+        "data": "synthetic, defence only",
+        "endpoints": {
+            "GET /health": "is the model loaded",
+            "GET /v1/schema": "what to send and what a decision costs",
+            "GET /v1/profiles": "column sets, and what each one is measured to reach",
+            "POST /v1/coverage": "send your column names, get what you would get",
+            "POST /v1/scan": "a batch of accounts in, priced decisions out",
+            "POST /v1/score": "one cluster whose features you already computed",
+            "GET /features": "the cluster features the model reads",
+            "GET /runs/<id>": "a saved result file, for example /runs/holdout",
+        },
+    })
+
+
+def _measured() -> dict:
+    """Ablation results, keyed by profile. Empty until the study has been run."""
+    if not os.path.exists(ABLATION_PATH):
+        return {}
+    with open(ABLATION_PATH) as f:
+        report = json.load(f)
+    out = {}
+    for row in report.get("profiles", []):
+        if not row.get("usable"):
+            continue
+        pooled = row["pooled"]
+        out[row["name"]] = {
+            "precision": pooled["precision"],
+            "recall_blocked": pooled["recall"],
+            "recall_including_review": pooled["recall_including_review"],
+            "review_rate": pooled["review_rate"],
+            "net_vs_nothing_rupees": pooled["net_vs_nothing_rupees"],
+            "recall_including_review_by_tier": {
+                t: r["recall_including_review"] for t, r in row["tiers"].items()},
+            "measured_on": f"validation seeds {report['val_seeds'][0]}"
+                           f"-{report['val_seeds'][1]}",
+        }
+    return out
+
+
+@app.get("/v1/profiles")
+def profile_list():
+    """What each column set gives up, and what it is measured to reach."""
+    measured = _measured()
+    return jsonify({
+        "all_columns": list(profiles.ALL_COLUMNS),
+        "hashable_columns": list(profiles.HASHABLE_COLUMNS),
+        "measured": bool(measured),
+        "profiles": [{
+            "name": p.name,
+            "description": p.description,
+            "columns": list(p.columns),
+            "columns_missing": list(p.missing_columns),
+            "comparisons_kept": list(p.comparisons),
+            "comparisons_lost": list(p.missing_comparisons),
+            "blocking_rules_kept": [n for n, _ in p.rules],
+            "features_kept": len(p.features),
+            "features_lost": list(p.missing_features),
+            "results": measured.get(p.name),
+        } for p in profiles.PROFILES],
+    })
+
+
+@app.post("/v1/coverage")
+def coverage():
+    """Send the column names you have. Get back what you would actually get.
+
+    This is the question to answer before writing an integration, so it costs
+    nothing to ask and needs no account data.
+    """
+    payload = request.get_json(silent=True) or {}
+    columns = payload.get("columns")
+    if not isinstance(columns, list) or not columns:
+        return jsonify({"error": "send {\"columns\": [\"account_id\", ...]}",
+                        "all_columns": list(profiles.ALL_COLUMNS)}), 400
+    if not all(isinstance(c, str) for c in columns):
+        return jsonify({"error": "every entry in columns must be a string",
+                        "all_columns": list(profiles.ALL_COLUMNS)}), 400
+
+    report = profiles.coverage(columns)
+    report["results"] = _measured().get(report["profile"])
+    report["can_scan"] = report["profile"] == profiles.FULL.name
+    if not report["can_scan"]:
+        report["note"] = ("/v1/scan needs every column, because the shipped "
+                          "model was fitted on all of them. The numbers under "
+                          "results are what a model fitted for this profile "
+                          "reached on validation seeds.")
+    return jsonify(report)
 
 
 @app.get("/health")
@@ -54,6 +151,8 @@ def schema():
         "scan": {"required_columns": list(REQUIRED_COLUMNS),
                  "max_accounts": MAX_ACCOUNTS_PER_SCAN},
         "score": {"required_features": detector().model["features"]},
+        "hashable_columns": list(profiles.HASHABLE_COLUMNS),
+        "profiles": [p.name for p in profiles.PROFILES],
         "actions": list(decide.ACTIONS),
         "costs_rupees": {"blocked_innocent": config.COST_BLOCKED_INNOCENT,
                          "missed_abuser": config.COST_MISSED_ABUSER,
@@ -74,13 +173,22 @@ def scan():
                         "sent": len(accounts),
                         "max_accounts": MAX_ACCOUNTS_PER_SCAN}), 413
 
+    # Building the frame and scanning it fail for different reasons, and a
+    # malformed record must not come back as a 500.
     try:
         frame = pd.DataFrame(accounts)
+    except (TypeError, ValueError) as exc:
+        return jsonify({"error": f"accounts is not a list of records: {exc}",
+                        "required_columns": list(REQUIRED_COLUMNS)}), 400
+
+    try:
         result = detector().scan(frame,
                                  explain_notes=payload.get("explain", True),
                                  live=payload.get("live", False))
     except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
+        return jsonify({"error": str(exc),
+                        "closest_profile": profiles.coverage(list(frame.columns)),
+                        "hint": "POST /v1/coverage to see what this costs"}), 400
 
     if not payload.get("include_allowed", False):
         result["clusters"] = [c for c in result["clusters"]
