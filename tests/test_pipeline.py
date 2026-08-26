@@ -1,6 +1,5 @@
 """The batch entry point and the HTTP service over it."""
 
-import pandas as pd
 import pytest
 
 from detector.generate_accounts import generate

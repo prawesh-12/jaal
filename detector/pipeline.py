@@ -21,7 +21,6 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-import config
 from detector import cluster as clustering
 from detector import decide, explain, features, link
 from detector.blocking import candidate_pairs

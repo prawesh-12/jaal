@@ -92,14 +92,10 @@ export function Funnel({ steps }) {
 }
 
 /* One labelled box in a small schematic. */
-export function Box({ children, tone, className, dashed = false }) {
+export function Box({ children, tone, className }) {
   return (
     <div
-      className={cn(
-        "rounded-md border px-3 py-2 text-center text-[12px]",
-        dashed ? "border-dashed" : "",
-        className
-      )}
+      className={cn("rounded-md border px-3 py-2 text-center text-[12px]", className)}
       style={tone ? { borderColor: `color-mix(in oklch, ${tone} 45%, transparent)`,
                       background: `color-mix(in oklch, ${tone} 10%, transparent)` } : undefined}
     >
@@ -108,26 +104,12 @@ export function Box({ children, tone, className, dashed = false }) {
   );
 }
 
-export function Arrow({ vertical = false, animated = true }) {
-  if (vertical) {
-    return (
-      <svg width="12" height="26" viewBox="0 0 12 26" aria-hidden="true" className="mx-auto">
-        <line x1="6" y1="1" x2="6" y2="18" stroke="var(--color-border)" strokeWidth="1.5" />
-        {animated && (
-          <line x1="6" y1="1" x2="6" y2="18" stroke="var(--color-mark-2)"
-                strokeWidth="1.5" strokeLinecap="round" className="flow-line" />
-        )}
-        <path d="M2.5 18 L6 24 L9.5 18 Z" fill="var(--color-border)" />
-      </svg>
-    );
-  }
+export function Arrow() {
   return (
     <svg width="26" height="12" viewBox="0 0 26 12" aria-hidden="true">
       <line x1="1" y1="6" x2="18" y2="6" stroke="var(--color-border)" strokeWidth="1.5" />
-      {animated && (
-        <line x1="1" y1="6" x2="18" y2="6" stroke="var(--color-mark-2)"
-              strokeWidth="1.5" strokeLinecap="round" className="flow-line" />
-      )}
+      <line x1="1" y1="6" x2="18" y2="6" stroke="var(--color-mark-2)"
+            strokeWidth="1.5" strokeLinecap="round" className="flow-line" />
       <path d="M18 2.5 L24 6 L18 9.5 Z" fill="var(--color-border)" />
     </svg>
   );

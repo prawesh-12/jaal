@@ -9,7 +9,6 @@ import pytest
 import config
 from detector import cluster, link
 from detector import generate_accounts as gen
-from detector.blocking import candidate_pairs
 
 SMALL = 4000
 

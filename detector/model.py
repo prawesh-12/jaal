@@ -33,7 +33,7 @@ from sklearn.preprocessing import StandardScaler
 
 import config
 from detector.features import FEATURE_NAMES
-from detector.resources import announce, apply, budget
+from detector.resources import announce, apply
 
 RANDOM_STATE = 42
 CALIBRATION_FRACTION = 0.25     # share of training seeds held back to calibrate

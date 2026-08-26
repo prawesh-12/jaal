@@ -9,7 +9,7 @@ import { Empty, PageHead, SectionHead, Skeleton, TierDot, TierName } from "@/com
 import { BarList } from "@/components/chart";
 import { Arrow, Box, Connector, Funnel, Stage } from "@/components/flow";
 import { useJson } from "@/lib/useJson";
-import { MARK, TIERS, TIER_COLOR, count, dp2, dp4, pct, rupees } from "@/lib/format";
+import { MARK, TIERS, count, dp2, dp4, pct, rupees } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /*

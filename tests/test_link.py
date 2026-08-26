@@ -3,10 +3,8 @@
 import json
 
 import numpy as np
-import pandas as pd
 import pytest
 
-import config
 from detector import blocking, link
 from detector import generate_accounts as gen
 
