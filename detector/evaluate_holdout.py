@@ -38,8 +38,9 @@ STRESS_SEEDS = 20          # rings-free worlds for the false positive test
 
 
 def _load_model(path: str) -> dict:
+    import gzip
     import pickle
-    with open(path, "rb") as f:
+    with gzip.open(path, "rb") as f:
         return pickle.load(f)
 
 

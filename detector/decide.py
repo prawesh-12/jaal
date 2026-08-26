@@ -23,6 +23,7 @@ is correct.
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import pickle
 
@@ -236,7 +237,7 @@ def main() -> None:
     args = p_arg.parse_args()
 
     announce(apply())
-    with open(args.model, "rb") as f:
+    with gzip.open(args.model, "rb") as f:
         fitted = pickle.load(f)
     table = pd.read_csv(args.val)
     n = table["size"].to_numpy()

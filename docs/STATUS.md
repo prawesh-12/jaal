@@ -19,7 +19,23 @@ All 11 phases complete. Holdout opened once and reported.
 | 9 interface | README, run.sh, Flask API, React dashboard |
 | 10 submission | Clean-checkout check, secret scan, final checklist |
 
-122 tests pass. 25 decisions recorded, including the wrong turns.
+122 tests pass. 27 decisions recorded, including the wrong turns.
+
+## Definition of done
+
+| check | state |
+| ----- | ----- |
+| `./run.sh` works offline from a clean checkout | yes, verified in a fresh clone under `unshare -rn`, 67s in quick mode |
+| precision and recall per tier on sealed holdout seeds | yes, `results/holdout.json` |
+| false-positive cost in rupees, with a cost curve | yes, `results/cost_curve.png` |
+| rules-only baseline published and compared against | yes, re-run on the same holdout worlds |
+| every flagged cluster carries a human-readable reason | yes, all 1,334 committed |
+| failure catalogue with at least 4 entries | yes, 5 |
+| detection curve showing where the system stops working | yes, both panels |
+| docs complete: overview, architecture, data model, phases, diagrams | yes, 33 files |
+| README states defence-only and synthetic in the first 200 words | yes, asserted by a test |
+| no API key anywhere in git history | yes, scanned |
+| commit history reads as incremental work, no dump commit | 13 commits, see D-027 |
 
 ## Blocked or uncertain
 

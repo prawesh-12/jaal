@@ -20,6 +20,7 @@ bearing.
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import pickle
 
@@ -326,7 +327,9 @@ def main() -> None:
     for i in order[:15]:
         print(f"  {MODEL_FEATURES[i]:<24} {imp.importances_mean[i]:>8.5f}")
 
-    with open(args.model_out, "wb") as f:
+    # gzip, because an uncompressed forest pair is 16 MB and this file is
+    # committed so the API works without retraining. Stdlib only.
+    with gzip.open(args.model_out, "wb") as f:
         pickle.dump({"forest": fitted["forest"],
                      "purity": fitted["purity"],
                      "calibrator": fitted["calibrators"][chosen],

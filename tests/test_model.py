@@ -1,5 +1,6 @@
 """Model and calibration. The split and the probabilities are what get checked."""
 
+import gzip
 import json
 import pickle
 
@@ -19,7 +20,7 @@ def report():
 
 @pytest.fixture(scope="module")
 def fitted():
-    with open("results/model.pkl", "rb") as f:
+    with gzip.open("results/model.pkl", "rb") as f:
         return pickle.load(f)
 
 

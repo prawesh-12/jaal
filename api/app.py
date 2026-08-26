@@ -12,6 +12,7 @@ computing a feature here, it belongs in `detector/features.py`.
 
 from __future__ import annotations
 
+import gzip
 import json
 import os
 import pickle
@@ -34,7 +35,7 @@ _model = None
 def model() -> dict:
     global _model
     if _model is None:
-        with open(MODEL_PATH, "rb") as f:
+        with gzip.open(MODEL_PATH, "rb") as f:
             _model = pickle.load(f)
     return _model
 

@@ -214,12 +214,13 @@ def main() -> None:
     p_arg.add_argument("--out", default="results/explanations.json")
     args = p_arg.parse_args()
 
+    import gzip
     import pickle
 
     from detector import decide
 
     announce(apply())
-    with open(args.model, "rb") as f:
+    with gzip.open(args.model, "rb") as f:
         fitted = pickle.load(f)
     table = pd.read_csv(args.features)
 
