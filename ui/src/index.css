@@ -1,155 +1,177 @@
 @import "tailwindcss";
 
 /*
-  Dark only. This is a risk console, read next to a terminal, and a light
-  theme would mean a second palette to keep honest.
+  Jaal's design tokens. Everything visual is defined once, here, and shared by
+  every view. Nothing in a view should invent a colour, a radius or a shadow.
 
-  Token names follow shadcn/ui so the components read the way that library
-  expects: background / card / muted / border, and a -foreground for text.
+  The interface is deliberately close to neutral. Colour is reserved for state
+  that a reader has to act on, so a figure being positive is not on its own a
+  reason to paint anything.
 */
 @theme {
-  --color-background: oklch(0.152 0.006 265);
-  --color-card: oklch(0.191 0.008 265);
-  --color-elevated: oklch(0.224 0.009 265);
-  --color-muted: oklch(0.238 0.009 265);
+  /* Surfaces. Four steps, and the difference between them is small on purpose. */
+  --color-base: #0b0c0d;
+  --color-surface: #101214;
+  --color-raised: #151719;
+  --color-sunken: #08090a;
 
-  --color-border: oklch(0.272 0.011 265);
-  --color-border-subtle: oklch(0.229 0.009 265);
+  /* Structure. Hairlines carry the layout, not boxes. */
+  --color-line: #1d2023;
+  --color-line-strong: #292c30;
 
-  --color-foreground: oklch(0.972 0.003 265);
-  --color-muted-foreground: oklch(0.724 0.014 265);
-  --color-subtle: oklch(0.582 0.015 265);
+  /* Text. Three steps is enough; a fourth always becomes decoration. */
+  --color-fg: #f1f1ef;
+  --color-fg-muted: #a4a5a3;
+  --color-fg-faint: #6f716f;
+
+  /* The only non-semantic accent: near-white, for selection and focus. */
+  --color-accent: #d9dde2;
 
   /*
-    Two colour families, because marks and text have different jobs.
-
-    Mark colours are what a chart draws with. They were checked with the
-    dataviz palette validator against this surface: every adjacent pair stays
-    apart under simulated protanopia and deuteranopia, which the earlier
-    green/cyan and amber/red pairs did not. Lightness carries the tier
-    ordering so the ramp still reads in greyscale.
+    State. Desaturated on purpose: these have to read as a status marker beside
+    text, never as a fill behind it. Checked with the palette validator against
+    the surface above, so adjacent pairs stay apart under simulated protanopia
+    and deuteranopia.
   */
-  --color-mark-1: oklch(0.665 0.16 152);
-  --color-mark-2: oklch(0.635 0.16 255);
-  --color-mark-3: oklch(0.665 0.15 80);
-  --color-mark-4: oklch(0.535 0.19 25);
+  --color-ok: #549b69;
+  --color-warn: #ba8a36;
+  --color-bad: #a7423e;
+  --color-info: #5382be;
 
-  --color-tier-obvious: oklch(0.665 0.16 152);
-  --color-tier-moderate: oklch(0.635 0.16 255);
-  --color-tier-sophisticated: oklch(0.665 0.15 80);
-  --color-tier-adaptive: oklch(0.535 0.19 25);
+  /*
+    Tier ramp, easiest to hardest. Deliberately the same four values as the
+    state colours: a tier is a severity, so it should not get its own hues.
+  */
+  --color-tier-obvious: #549b69;
+  --color-tier-moderate: #5382be;
+  --color-tier-sophisticated: #ba8a36;
+  --color-tier-adaptive: #a7423e;
 
-  /* Text versions of the same four, lifted until they clear 4.5:1 on the card. */
-  --color-primary: oklch(0.720 0.145 255);
-  --color-positive: oklch(0.780 0.150 152);
-  --color-negative: oklch(0.700 0.190 25);
-  --color-caution: oklch(0.820 0.130 80);
+  /* Mukta is loaded devanagari-only and is here for exactly one glyph:
+     Geist has no rupee sign, and without this every figure on the page
+     falls back to whatever font the operating system happens to have. */
+  --font-sans: "Geist Variable", "Mukta", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Small radii only. Nothing here is a rounded dashboard widget. */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 
-  --radius-panel: 0.75rem;
+  /* Spacing scale, 4px base. Sections use 64, groups 32, rows 16. */
+  --spacing-section: 4rem;
+  --spacing-group: 2rem;
+
+  --shell-max: 1400px;
 }
 
 @layer base {
   * {
-    border-color: var(--color-border-subtle);
+    border-color: var(--color-line);
   }
 
   html {
     color-scheme: dark;
-    scroll-behavior: smooth;
   }
 
   body {
     margin: 0;
-    background: var(--color-background);
-    color: var(--color-foreground);
+    background: var(--color-base);
+    color: var(--color-fg);
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+    font-synthesis-weight: none;
+  }
+
+  /*
+    A single hairline grid, almost at the threshold of visible. It gives the
+    page a sense of being ruled rather than floating. No perspective, no glow.
+  */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      linear-gradient(to right, #ffffff05 1px, transparent 1px),
+      linear-gradient(to bottom, #ffffff04 1px, transparent 1px);
+    background-size: 120px 120px;
+    mask-image: linear-gradient(to bottom, #000 0, #0006 240px, transparent 640px);
   }
 
   ::selection {
-    background: color-mix(in oklch, var(--color-primary) 32%, transparent);
-    color: var(--color-foreground);
+    background: var(--color-accent);
+    color: var(--color-base);
   }
 
   :focus-visible {
-    outline: 2px solid color-mix(in oklch, var(--color-primary) 70%, transparent);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+    border-radius: 2px;
   }
 
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: var(--color-sunken); }
   ::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border: 3px solid var(--color-background);
-    border-radius: 999px;
+    background: var(--color-line-strong);
+    border: 3px solid var(--color-sunken);
   }
-  ::-webkit-scrollbar-thumb:hover { background: var(--color-elevated); }
+  ::-webkit-scrollbar-thumb:hover { background: #33373b; }
 }
 
-/* Figures line up in columns when they are tabular and monospaced. */
-@utility num {
+/*
+  Figures. Tabular so decimal columns line up down a table, and lining so they
+  sit on the same baseline as the text beside them.
+*/
+@utility tnum {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1, "zero" 1;
+  letter-spacing: -0.01em;
+}
+
+/* Identifiers and raw system values only. Never a whole paragraph. */
+@utility ident {
   font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "zero" 1;
-  letter-spacing: -0.02em;
+  font-size: 0.9em;
+  letter-spacing: -0.01em;
 }
 
-/* Small caption above or beside a value. Sentence case on purpose. */
+/* Column headers and field labels. */
 @utility label {
-  font-size: 0.75rem;
-  line-height: 1.1rem;
+  font-size: 11px;
+  line-height: 1rem;
   font-weight: 500;
-  color: var(--color-subtle);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-fg-faint);
 }
 
-@utility panel {
-  border-radius: var(--radius-panel);
-  border: 1px solid var(--color-border);
-  background: var(--color-card);
+@utility shell {
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding-inline: 20px;
 }
 
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
+@media (min-width: 768px) {
+  .shell { padding-inline: 40px; }
 }
 
-@utility fade-up {
-  animation: fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+@media (min-width: 1440px) {
+  .shell { padding-inline: 56px; }
 }
 
-/* Data moving through the pipeline diagram. Purely decorative, so it stops
-   the moment the reader has asked for less motion. */
-@keyframes flow-dash {
-  to { stroke-dashoffset: -24; }
+@keyframes enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes flow-pulse {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 1; }
-}
-
-@keyframes grow-x {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
-@utility flow-line {
-  stroke-dasharray: 3 9;
-  animation: flow-dash 1.1s linear infinite;
-}
-
-@utility flow-blip {
-  animation: flow-pulse 2.2s ease-in-out infinite;
-}
-
-@utility grow-x {
-  transform-origin: left;
-  animation: grow-x 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+@utility enter {
+  animation: enter 0.18s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {

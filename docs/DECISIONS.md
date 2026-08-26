@@ -792,3 +792,46 @@ and a list raised `TypeError` out of the DataFrame constructor, which escaped a
 handler catching only `ValueError`. A column list containing `null` reached
 `sorted()` and raised `TypeError` there. Both return 400 now and both have a
 test.
+
+## D-042: Rebuild the interface as technical software, not a dashboard
+Date: 2026-08-26
+Phase: 9
+
+The page read as a generic analytics dashboard: a near-black background with one
+bright accent, a card around every section, a pill around every piece of
+metadata, and the same tier colour repeated three times in a row on top of a
+label that already said the tier name.
+
+**Colour is now reserved for state.** Three neutrals carry the layout, four
+desaturated tones carry status, and nothing is coloured for being positive. The
+net figure is set in plain foreground, not green. The four state tones double as
+the tier ramp, because a tier is a severity and should not get its own hues.
+They were run through the palette validator against the surface colour: the
+first, more muted set failed both the chroma floor and the normal-vision
+separation between red and amber, so the shipped set is the most restrained one
+that passes.
+
+**Containers follow a rule rather than a habit.** Grouping is done with rules,
+headings and space. A bordered panel is used only where the content is a
+discrete object a reader works one at a time, which turned out to be two places
+in the whole interface: a failure catalogue entry and a queued review note. A
+panel never contains another panel, which is what removes the card-in-card
+nesting by construction.
+
+**One encoding per fact.** The tier table used to carry a coloured dot, the tier
+name, and two separate progress bars. It now carries the name, one status
+marker, and a single two-segment bar whose first segment is what the system
+blocks alone and whose continuation is what it reaches with a human. The gap
+between them is the thing two adjacent numbers cannot show. The sensitivity
+table lost its bar column entirely: six of its seven thresholds are 1.00, so the
+bar repeated the number and nothing else.
+
+**Fonts.** Geist Sans and Geist Mono, with mono reserved for identifiers. While
+setting this up it turned out that neither Geist nor the previous Inter contains
+U+20B9, so every rupee figure on the page had been drawn by whatever the
+operating system happened to substitute, measured by comparing glyph advance
+against a forced fallback. Mukta is now loaded devanagari-only, purely to supply
+that one glyph, which is the subset Google ships it in.
+
+Data was not touched. 58 figures were pulled straight out of `results/` and
+checked against the rendered DOM of all six pages before this was committed.

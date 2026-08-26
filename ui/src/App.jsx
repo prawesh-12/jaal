@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { ShieldHalf } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mark } from "@/components/mark";
 import { useJson } from "@/lib/useJson";
@@ -23,14 +22,14 @@ const TABS = [
 const KEYS = TABS.map(([k]) => k);
 const ALIASES = { results: "overview" };
 
-function Header({ holdout }) {
+function TopNav({ holdout }) {
   const net = holdout?.pooled?.net_vs_nothing_rupees;
   return (
-    <header className="sticky top-0 z-40 border-b border-border-subtle bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-6">
-        <a href="#overview" className="flex shrink-0 items-center gap-2.5">
-          <Mark size={22} />
-          <span className="text-[15px] font-semibold tracking-tight">Jaal</span>
+    <header className="sticky top-0 z-40 border-b border-line bg-base/90 backdrop-blur-sm">
+      <div className="shell flex h-[52px] items-center gap-8">
+        <a href="#overview" className="flex shrink-0 items-center gap-2.5 text-fg">
+          <Mark />
+          <span className="text-[14px] font-medium tracking-[-0.01em]">Jaal</span>
         </a>
 
         <TabsList aria-label="Sections">
@@ -42,11 +41,11 @@ function Header({ holdout }) {
         </TabsList>
 
         {holdout && (
-          <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
-            <span className="num text-[12px] text-subtle">
+          <div className="ml-auto hidden shrink-0 items-baseline gap-5 lg:flex">
+            <span className="tnum text-[12.5px] text-fg-faint">
               {count(holdout.n_seeds)} worlds · {count(holdout.n_clusters)} clusters
             </span>
-            <span className="num rounded-md border border-positive/25 bg-positive/10 px-2 py-1 text-[12px] font-medium text-positive">
+            <span className="tnum text-[12.5px] text-fg-muted">
               {compactRupees(net)} net
             </span>
           </div>
@@ -56,65 +55,61 @@ function Header({ holdout }) {
   );
 }
 
-/* Short enough to sit on every tab without becoming furniture nobody reads. */
-function DefenceStrip() {
+/* One line, on every page, because the reader should never have to go looking. */
+function DefenceLine() {
   return (
-    <div className="border-b border-border-subtle bg-card/60">
-      <div className="mx-auto flex max-w-6xl items-center gap-2.5 px-6 py-2 text-[12px] text-subtle">
-        <ShieldHalf size={13} className="shrink-0" />
-        <p>
-          Defence only. Every account record on this page is synthetic, produced by a
-          test fixture. No real identifiers, no payment rails, no evasion guidance.
-        </p>
-      </div>
+    <div className="border-b border-line bg-sunken">
+      <p className="shell py-2 text-[12.5px] text-fg-faint">
+        Defence only. Every account record here is synthetic, produced by a test
+        fixture. No real identifiers, no payment rails, no evasion guidance.
+      </p>
     </div>
   );
 }
 
 function Footer() {
+  const columns = [
+    ["What this page is", [
+      "It computes nothing.",
+      "Every figure is read from a JSON file the pipeline wrote.",
+      "Where a figure disagrees with the pipeline, the pipeline is right.",
+    ]],
+    ["Reproducing it", [
+      "./run.sh rebuilds every number offline.",
+      "Seeds are fixed, so a rerun is byte for byte identical.",
+      "Seeds 900 to 999 were sealed and opened once.",
+    ]],
+  ];
+
   return (
-    <footer className="mt-24 border-t border-border-subtle bg-card/40">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="grid gap-10 md:grid-cols-[1.6fr_1fr_1fr]">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <Mark size={20} />
-              <span className="text-[14px] font-semibold tracking-tight">Jaal</span>
-            </div>
-            <p className="mt-3 max-w-[52ch] text-[12.5px] leading-[1.7] text-muted-foreground">
-              Jaal detects groups of accounts run by one person farming a merchant's
-              first-order promo discount. The data is synthetic because real promo
-              abuse is unlabelled, and there is no other way to measure a detector
-              against a known answer.
-            </p>
+    <footer className="mt-24 border-t border-line">
+      <div className="shell grid gap-12 py-14 md:grid-cols-[1.5fr_1fr_1fr]">
+        <div>
+          <div className="flex items-center gap-2.5 text-fg">
+            <Mark size={16} />
+            <span className="text-[13.5px] font-medium">Jaal</span>
           </div>
-
-          <div>
-            <h3 className="text-[12.5px] font-semibold text-foreground">What this page is</h3>
-            <ul className="mt-3 space-y-2 text-[12.5px] leading-relaxed text-muted-foreground">
-              <li>It computes nothing.</li>
-              <li>Every figure is read from a JSON file the pipeline wrote.</li>
-              <li>Where a figure disagrees with the pipeline, the pipeline is right.</li>
+          <p className="mt-4 max-w-[50ch] text-[13px] leading-[1.7] text-fg-muted">
+            Jaal detects groups of accounts run by one person farming a merchant's
+            first-order promo discount. The data is synthetic because real promo
+            abuse is unlabelled, and there is no other way to measure a detector
+            against a known answer.
+          </p>
+        </div>
+        {columns.map(([heading, lines]) => (
+          <div key={heading}>
+            <h3 className="label">{heading}</h3>
+            <ul className="mt-4 space-y-2.5 text-[13px] leading-[1.55] text-fg-muted">
+              {lines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
             </ul>
           </div>
-
-          <div>
-            <h3 className="text-[12.5px] font-semibold text-foreground">Reproducing it</h3>
-            <ul className="mt-3 space-y-2 text-[12.5px] leading-relaxed text-muted-foreground">
-              <li>
-                <span className="num text-foreground">./run.sh</span> rebuilds every
-                number offline.
-              </li>
-              <li>Seeds are fixed, so a rerun is byte for byte identical.</li>
-              <li>Seeds 900 to 999 were sealed and opened once.</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle pt-6 text-[12px] text-subtle">
-          <span>Razorpay Buildathon 2026 · Track 02, AI Risk Manager</span>
-          <span>Synthetic data throughout. Nothing here describes a real merchant.</span>
-        </div>
+        ))}
+      </div>
+      <div className="shell flex flex-wrap items-center justify-between gap-3 border-t border-line py-5 text-[12.5px] text-fg-faint">
+        <span>Razorpay Buildathon 2026 · Track 02, AI Risk Manager</span>
+        <span>Synthetic data throughout. Nothing here describes a real merchant.</span>
       </div>
     </footer>
   );
@@ -149,11 +144,11 @@ export default function App() {
   const explanations = useJson("explanations");
 
   return (
-    <Tabs value={tab} onValueChange={setTab} className="flex min-h-screen flex-col">
-      <Header holdout={holdout.data} />
-      <DefenceStrip />
+    <Tabs value={tab} onValueChange={setTab} className="relative z-10 flex min-h-screen flex-col">
+      <TopNav holdout={holdout.data} />
+      <DefenceLine />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
+      <main className="shell flex-1 pb-20">
         <TabsContent value="overview">
           <Overview
             holdout={holdout.data}

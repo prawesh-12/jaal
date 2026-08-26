@@ -2,38 +2,49 @@ import { cn } from "@/lib/utils";
 
 /*
   Recharts defaults collide labels with legends and draw a tick per point.
-  Everything here exists to stop that: the legend is our own row under the
-  title, the axis title sits in the frame rather than inside the SVG, and
-  tick density is capped by the caller.
+  Everything here exists to stop that: the legend is our own row above the
+  plot, axis titles sit in the frame rather than inside the SVG, and tick
+  density is capped by the caller.
+
+  A chart is a section of a report, so it gets rules and space, not a card.
 */
 
 export const axisProps = {
-  stroke: "var(--color-border)",
-  tick: { fill: "var(--color-subtle)", fontSize: 11, fontFamily: "var(--font-mono)" },
+  stroke: "var(--color-line-strong)",
+  tick: { fill: "var(--color-fg-faint)", fontSize: 11 },
   tickLine: false,
-  axisLine: { stroke: "var(--color-border)" },
+  axisLine: { stroke: "var(--color-line-strong)" },
 };
 
 export const gridProps = {
-  stroke: "var(--color-border-subtle)",
+  stroke: "var(--color-line)",
   strokeDasharray: "0",
   vertical: false,
 };
 
-export function ChartFrame({ title, description, legend, xLabel, yLabel, children, className }) {
+export function ChartFrame({
+  title, description, legend, xLabel, yLabel, footer, children, className,
+}) {
   return (
-    <figure className={cn("panel m-0", className)}>
-      <figcaption className="border-b border-border-subtle px-5 py-4">
-        <h3 className="text-[14.5px] font-semibold tracking-tight text-foreground">{title}</h3>
-        {description && (
-          <p className="mt-1.5 max-w-[72ch] text-[13px] leading-[1.6] text-muted-foreground">
-            {description}
-          </p>
-        )}
-        {legend && <div className="mt-3">{legend}</div>}
-      </figcaption>
+    <figure className={cn("m-0", className)}>
+      {(title || description || legend) && (
+        <figcaption className="mb-6 flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
+          <div className="min-w-0">
+            {title && (
+              <h3 className="text-[15px] font-medium tracking-[-0.01em] text-fg">{title}</h3>
+            )}
+            {description && (
+              <p className={cn("max-w-[74ch] text-[13.5px] leading-[1.6] text-fg-muted",
+                               title && "mt-2")}>
+                {description}
+              </p>
+            )}
+          </div>
+          {legend}
+        </figcaption>
+      )}
 
-      <div className="flex gap-1 px-4 pt-5 pb-1">
+      <div className="flex gap-2 border-t border-line pt-6">
         {yLabel && (
           <div className="flex w-5 shrink-0 items-center justify-center">
             <span className="label [writing-mode:vertical-rl] rotate-180 whitespace-nowrap">
@@ -44,22 +55,28 @@ export function ChartFrame({ title, description, legend, xLabel, yLabel, childre
         <div className="min-w-0 flex-1">{children}</div>
       </div>
 
-      {xLabel && <div className="label px-5 pb-4 text-center">{xLabel}</div>}
+      {xLabel && <div className="label mt-2 text-center">{xLabel}</div>}
+      {footer && (
+        <p className="mt-6 border-t border-line pt-4 text-[12.5px] text-fg-faint">
+          {footer}
+        </p>
+      )}
     </figure>
   );
 }
 
-export function LegendChips({ items }) {
+export function Legend({ items }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
       {items.map((it) => (
-        <span
-          key={it.label}
-          className="inline-flex items-center gap-2 text-[12px] text-muted-foreground"
-        >
+        <span key={it.label} className="inline-flex items-center gap-2.5 text-[12.5px] text-fg-muted">
           <span
-            className="inline-block h-[3px] w-4 rounded-full"
-            style={{ background: it.color }}
+            className="inline-block h-px w-5 shrink-0"
+            style={{
+              background: it.dashed
+                ? `repeating-linear-gradient(to right, ${it.color} 0 4px, transparent 4px 8px)`
+                : it.color,
+            }}
           />
           {it.label}
         </span>
@@ -71,25 +88,22 @@ export function LegendChips({ items }) {
 export function ChartTooltip({ active, payload, label, labelPrefix = "", format }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="min-w-44 rounded-md border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
-      <div className="label mb-1.5">
+    <div className="min-w-44 rounded-sm border border-line-strong bg-raised px-3 py-2.5">
+      <div className="label mb-2">
         {labelPrefix}
         {label}
       </div>
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {payload.map((p) => (
-          <div
-            key={p.dataKey}
-            className="flex items-center justify-between gap-4 text-[12px]"
-          >
-            <span className="inline-flex items-center gap-2 text-muted-foreground">
+          <div key={p.dataKey} className="flex items-center justify-between gap-5 text-[12.5px]">
+            <span className="inline-flex items-center gap-2 text-fg-muted">
               <span
-                className="inline-block size-1.5 rounded-[2px]"
+                className="inline-block size-[7px] rounded-[1px]"
                 style={{ background: p.color || p.stroke }}
               />
               {p.name}
             </span>
-            <span className="num text-foreground">{format ? format(p.value, p) : p.value}</span>
+            <span className="tnum text-fg">{format ? format(p.value, p) : p.value}</span>
           </div>
         ))}
       </div>
@@ -98,32 +112,32 @@ export function ChartTooltip({ active, payload, label, labelPrefix = "", format 
 }
 
 /*
-  A ranked list of magnitudes. A plain bar chart is the right form and an HTML
-  row is easier to read than an SVG one, because the label can sit outside the
-  plot where it never collides.
+  A ranked list of magnitudes. An HTML row beats an SVG bar chart here because
+  the label sits outside the plot where it can never collide.
 */
-export function BarList({ items, max, format, color = "var(--color-mark-2)" }) {
+export function BarList({ items, max, format, color = "var(--color-fg-faint)" }) {
   const top = max ?? Math.max(...items.map((i) => Math.abs(i.value)));
   return (
-    <div className="space-y-2">
+    <div className="border-t border-line">
       {items.map((it) => (
-        <div key={it.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-          <div className="min-w-0">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="truncate text-[12.5px] text-muted-foreground">{it.label}</span>
-            </div>
-            <div className="mt-1 h-1.5 w-full rounded-full bg-elevated">
-              <div
-                className="h-full rounded-full"
+        <div
+          key={it.label}
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 border-b border-line py-2.5"
+        >
+          <div className="grid min-w-0 grid-cols-[minmax(0,190px)_minmax(0,1fr)] items-center gap-4">
+            <span className="truncate text-[13px] text-fg-muted">{it.label}</span>
+            <span className="block h-1.5 w-full bg-raised">
+              <span
+                className="block h-full"
                 style={{
                   width: `${(Math.abs(it.value) / top) * 100}%`,
                   background: it.color ?? color,
-                  minWidth: 2,
+                  minWidth: 1,
                 }}
               />
-            </div>
+            </span>
           </div>
-          <span className="num w-20 text-right text-[12.5px] text-foreground">
+          <span className="tnum w-24 text-right text-[13px] text-fg">
             {format ? format(it.value) : it.value}
           </span>
         </div>
@@ -131,7 +145,3 @@ export function BarList({ items, max, format, color = "var(--color-mark-2)" }) {
     </div>
   );
 }
-
-/* Keep every nth tick so the axis stays readable at any point count. */
-export const everyNth = (data, key, n) =>
-  data.filter((_, i) => i % n === 0).map((d) => d[key]);

@@ -1,15 +1,21 @@
 import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { SearchInput } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Stat, StatRow } from "@/components/stat";
-import { Empty, PageHead, Skeleton, TierDot } from "@/components/bits";
-import { TIERS, TIER_COLOR, count, pct } from "@/lib/format";
+import { Search } from "lucide-react";
+import { Panel } from "@/components/ui/panel";
+import { Metric, MetricRow } from "@/components/metric";
+import {
+  Empty, Metadata, PageHeader, Section, Skeleton, Status,
+} from "@/components/section";
+import { TIERS, count, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const PAGE = 24;
+
+const TIER_TONE = {
+  obvious: "ok",
+  moderate: "info",
+  sophisticated: "warn",
+  adaptive: "bad",
+};
 
 /*
   Notes arrive as one string: a paragraph, then a heading, then dashed bullets.
@@ -32,48 +38,40 @@ function parseNote(text) {
   return { lead: lead.join(" "), heading, bullets };
 }
 
-function NoteCard({ n }) {
+/* One queued cluster, which is a discrete object an analyst works. Panel earned. */
+function NoteEntry({ n }) {
   const { lead, heading, bullets } = parseNote(n.note);
-
   return (
-    <Card>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-t-panel border-b border-border-subtle bg-muted/30 px-4 py-2.5">
-        <span className="inline-flex items-center gap-2 text-[12.5px] text-foreground">
-          <TierDot tier={n.tier} />
+    <Panel>
+      <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2 border-b border-line px-5 py-3">
+        <span className="inline-flex items-center gap-2.5 text-[13px] text-fg">
+          <Status tone={TIER_TONE[n.tier]} />
           {n.tier}
         </span>
-        <span className="num text-[12px] text-subtle">
+        <span className="ident text-[12.5px] text-fg-faint">
           seed {n.seed} · cluster {n.cluster_id}
         </span>
-        <span className="num text-[12px] text-muted-foreground">{n.size} accounts</span>
-
-        <span className="ml-auto flex flex-wrap items-center gap-2">
-          <Badge tone={n.p >= 0.99 ? "negative" : "caution"}>
-            p <span className="num">{n.p.toFixed(2)}</span>
-          </Badge>
-          <Badge tone={n.action === "block" ? "negative" : "caution"}>{n.action}</Badge>
-          <Badge tone={n.source === "live" ? "primary" : "neutral"}>
+        <span className="tnum text-[12.5px] text-fg-muted">{n.size} accounts</span>
+        <span className="ml-auto flex flex-wrap items-baseline gap-x-5 text-[12.5px]">
+          <span className="text-fg-faint">
+            p <span className="tnum text-fg-muted">{n.p.toFixed(2)}</span>
+          </span>
+          <span className={n.action === "block" ? "text-bad" : "text-warn"}>{n.action}</span>
+          <span className="ident text-fg-faint">
             {n.source === "live" ? n.model : "template"}
-          </Badge>
+          </span>
         </span>
       </div>
 
-      <div className="px-4 py-4">
-        <p className="text-[13px] leading-[1.65] text-foreground">{lead}</p>
-
+      <div className="px-5 py-5">
+        <p className="max-w-[92ch] text-[14px] leading-[1.65] text-fg">{lead}</p>
         {bullets.length > 0 && (
-          <div className="mt-3.5 rounded-md border border-border-subtle bg-background/40 p-3.5">
-            {heading && <div className="label mb-2">{heading}</div>}
-            <ul className="space-y-2">
+          <div className="mt-5 border-t border-line pt-4">
+            {heading && <div className="label mb-3">{heading}</div>}
+            <ul className="space-y-2.5">
               {bullets.map((b, i) => (
-                <li
-                  key={i}
-                  className="flex gap-2.5 text-[12.5px] leading-relaxed text-muted-foreground"
-                >
-                  <span
-                    className="mt-[7px] size-1 shrink-0 rounded-full"
-                    style={{ background: TIER_COLOR[n.tier] }}
-                  />
+                <li key={i} className="flex gap-3 text-[13px] leading-[1.6] text-fg-muted">
+                  <span className="tnum shrink-0 text-fg-faint">{i + 1}</span>
                   <span>{b}</span>
                 </li>
               ))}
@@ -81,14 +79,14 @@ function NoteCard({ n }) {
           </div>
         )}
       </div>
-    </Card>
+    </Panel>
   );
 }
 
-/* One segmented control per filter, so the choices read as a set. */
-function Segmented({ options, value, onChange }) {
+/* A segmented control drawn with rules rather than fills. */
+function Segmented({ options, value, onChange, label }) {
   return (
-    <div className="flex items-center gap-0.5 rounded-md border border-border-subtle bg-card p-0.5">
+    <div role="group" aria-label={label} className="flex items-center border border-line">
       {options.map((o) => {
         const key = typeof o === "string" ? o : o.value;
         return (
@@ -96,11 +94,12 @@ function Segmented({ options, value, onChange }) {
             key={key}
             type="button"
             onClick={() => onChange(key)}
+            aria-pressed={value === key}
             className={cn(
-              "inline-flex h-7 items-center gap-2 rounded-[5px] px-2.5 text-[12.5px] transition-colors",
+              "inline-flex h-8 items-center gap-2 border-l border-line px-3 text-[12.5px] transition-colors first:border-l-0",
               value === key
-                ? "bg-elevated text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-raised text-fg"
+                : "text-fg-faint hover:text-fg-muted"
             )}
           >
             {typeof o === "string" ? o : o.label}
@@ -130,7 +129,7 @@ export default function Queue({ explanations, loading }) {
     );
   }, [notes, tier, action, q]);
 
-  if (loading) return <Skeleton className="h-96 w-full" />;
+  if (loading) return <Skeleton className="mt-16 h-96 w-full" />;
   if (!explanations) return <Empty>No results/explanations.json yet. Run ./run.sh.</Empty>;
 
   const set = (fn) => (v) => {
@@ -144,7 +143,7 @@ export default function Queue({ explanations, loading }) {
       value: t,
       label: (
         <span className="inline-flex items-center gap-2">
-          <TierDot tier={t} />
+          <Status tone={TIER_TONE[t]} />
           {t}
         </span>
       ),
@@ -152,75 +151,91 @@ export default function Queue({ explanations, loading }) {
   ];
 
   return (
-    <div className="space-y-10">
-      <PageHead
+    <div className="pt-14">
+      <PageHeader
         title="Review queue"
         lede={`${count(explanations.n_notes)} clusters the system did not simply allow, ordered worst first by rupees extracted. Every number inside a note is checked against the pipeline before it is shown. The language model, where one was used, only writes the sentence around those numbers.`}
-      />
+      >
+        <Metadata
+          className="mt-8"
+          items={[
+            ["Served from cache", pct(explanations.served_from_cache / explanations.n_notes, 0)],
+            ["Failed the audit", explanations.notes_with_unverified_numbers],
+          ]}
+        />
+      </PageHeader>
 
-      <StatRow>
-        <Stat
-          label="Blocked outright"
-          value={count(notes.filter((n) => n.action === "block").length)}
-          tone="negative"
-          sub="no human asked"
-        />
-        <Stat
-          label="Sent to a human"
-          value={count(notes.filter((n) => n.action === "review").length)}
-          tone="caution"
-          sub="the queue an analyst works through"
-        />
-        <Stat
-          label="Written by a model"
-          value={count(explanations.sources.live ?? 0)}
-          sub={`${count(explanations.sources.template ?? 0)} came from the template fallback`}
-        />
-        <Stat
-          label="Numbers that failed the audit"
-          value={count(explanations.notes_with_unverified_numbers)}
-          tone={explanations.notes_with_unverified_numbers === 0 ? "positive" : "negative"}
-          sub={`served from cache, ${pct(explanations.served_from_cache / explanations.n_notes, 0)} offline`}
-        />
-      </StatRow>
-
-      <div className="sticky top-14 z-30 -mx-2 rounded-panel border border-border-subtle bg-background/90 px-3 py-3 backdrop-blur-md">
-        <div className="flex flex-wrap items-center gap-2">
-          <Segmented options={tierOptions} value={tier} onChange={set(setTier)} />
-          <Separator vertical className="mx-1" />
-          <Segmented options={["all", "block", "review"]} value={action} onChange={set(setAction)} />
-          <SearchInput
-            className="ml-auto min-w-56 flex-1 sm:flex-none"
-            value={q}
-            onChange={(e) => set(setQ)(e.target.value)}
-            placeholder="search notes or a seed"
+      <Section title="Queue composition">
+        <MetricRow>
+          <Metric
+            label="Blocked outright"
+            value={count(notes.filter((n) => n.action === "block").length)}
+            note="No human asked"
           />
-        </div>
-        <div className="mt-2.5 border-t border-border-subtle pt-2 text-[12px] text-subtle">
-          showing{" "}
-          <span className="num text-muted-foreground">
-            {count(Math.min(shown, filtered.length))}
-          </span>{" "}
-          of <span className="num text-muted-foreground">{count(filtered.length)}</span>{" "}
-          matching notes
-        </div>
-      </div>
+          <Metric
+            label="Sent to a human"
+            value={count(notes.filter((n) => n.action === "review").length)}
+            note="The queue an analyst works through"
+          />
+          <Metric
+            label="Written by a model"
+            value={count(explanations.sources.live ?? 0)}
+            note={`${count(explanations.sources.template ?? 0)} came from the template fallback`}
+          />
+          <Metric
+            label="Numbers that failed the audit"
+            value={count(explanations.notes_with_unverified_numbers)}
+            note="Every figure in a note is checked against the pipeline"
+          />
+        </MetricRow>
+      </Section>
 
-      {filtered.length === 0 ? (
-        <Empty>Nothing matches that filter.</Empty>
-      ) : (
-        <div className="space-y-3">
-          {filtered.slice(0, shown).map((n, i) => (
-            <NoteCard key={`${n.seed}-${n.tier}-${n.cluster_id}-${i}`} n={n} />
-          ))}
+      <Section title="Notes">
+        <div className="sticky top-[52px] z-30 -mx-1 border-y border-line bg-base/95 px-1 py-3 backdrop-blur-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <Segmented label="Tier" options={tierOptions} value={tier} onChange={set(setTier)} />
+            <Segmented
+              label="Action"
+              options={["all", "block", "review"]}
+              value={action}
+              onChange={set(setAction)}
+            />
+            <label className="ml-auto flex h-8 min-w-56 flex-1 items-center gap-2 border border-line px-3 focus-within:border-line-strong sm:flex-none">
+              <Search size={13} className="shrink-0 text-fg-faint" />
+              <input
+                value={q}
+                onChange={(e) => set(setQ)(e.target.value)}
+                placeholder="search notes or a seed"
+                className="w-full bg-transparent text-[12.5px] text-fg outline-none placeholder:text-fg-faint"
+              />
+            </label>
+          </div>
+          <div className="mt-3 text-[12.5px] text-fg-faint">
+            Showing <span className="tnum text-fg-muted">{count(Math.min(shown, filtered.length))}</span>{" "}
+            of <span className="tnum text-fg-muted">{count(filtered.length)}</span> matching notes
+          </div>
         </div>
-      )}
 
-      {shown < filtered.length && (
-        <Button size="wide" onClick={() => setShown((s) => s + PAGE)}>
-          Show {Math.min(PAGE, filtered.length - shown)} more
-        </Button>
-      )}
+        {filtered.length === 0 ? (
+          <Empty>Nothing matches that filter.</Empty>
+        ) : (
+          <div className="mt-8 space-y-3">
+            {filtered.slice(0, shown).map((n, i) => (
+              <NoteEntry key={`${n.seed}-${n.tier}-${n.cluster_id}-${i}`} n={n} />
+            ))}
+          </div>
+        )}
+
+        {shown < filtered.length && (
+          <button
+            type="button"
+            onClick={() => setShown((s) => s + PAGE)}
+            className="mt-3 h-11 w-full border border-line text-[13px] text-fg-muted transition-colors hover:border-line-strong hover:text-fg"
+          >
+            Show {Math.min(PAGE, filtered.length - shown)} more
+          </button>
+        )}
+      </Section>
     </div>
   );
 }

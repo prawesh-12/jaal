@@ -30,12 +30,14 @@ export const TIER_COLOR = {
 };
 
 /*
-  The only four hues anything on this page is allowed to draw with. They come
-  from one validated set, so a chart never invents a fifth colour.
+  The only four hues anything is allowed to draw with. They were checked with
+  the palette validator against the surface colour, so adjacent pairs stay
+  apart under simulated protanopia and deuteranopia.
 */
 export const MARK = {
-  green: "var(--color-mark-1)",
-  blue: "var(--color-mark-2)",
-  amber: "var(--color-mark-3)",
-  red: "var(--color-mark-4)",
+  ok: "var(--color-ok)",
+  info: "var(--color-info)",
+  warn: "var(--color-warn)",
+  bad: "var(--color-bad)",
+  neutral: "var(--color-fg-faint)",
 };

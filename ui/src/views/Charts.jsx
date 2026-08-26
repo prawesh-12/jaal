@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { PageHead } from "@/components/bits";
+import { Metadata, PageHeader, Section } from "@/components/section";
 
 /*
-  These are matplotlib output, drawn on a white canvas during the run. Framing
-  them as paper rather than forcing them into the dark palette keeps it obvious
-  that the page did not draw them.
-*/
-/*
-  Paired into groups, because a plain masonry grid fills one column before the
-  other and a reader ends up jumping between unrelated charts.
+  These are matplotlib output, drawn on a white canvas during the run. They are
+  framed as paper on purpose: it should stay obvious that this page did not
+  draw them.
+
+  Paired into groups, because a masonry grid fills one column before the other
+  and a reader ends up jumping between unrelated charts.
 */
 const GROUPS = [
   ["Is the model any good", [
@@ -29,6 +27,9 @@ const GROUPS = [
     ["adaptive_visibility.png", "How much of the review queue the operator can see", "Swept from none to all."],
     ["adaptive_visibility_replicates.png", "The same sweep, repeated", "Spread across replicates, so the gap can be judged against the noise."],
   ]],
+  ["What fewer columns cost", [
+    ["field_ablation.png", "What a caller with fewer columns gets", "Six column profiles, each re-blocked, re-scored, re-clustered and refitted."],
+  ]],
 ];
 
 function Lightbox({ chart, onClose }) {
@@ -44,16 +45,16 @@ function Lightbox({ chart, onClose }) {
       aria-modal="true"
       aria-label={chart.title}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-base/92 p-6"
     >
-      <div className="max-h-full w-full max-w-5xl overflow-auto rounded-panel bg-white p-3">
+      <div className="max-h-full w-full max-w-5xl overflow-auto border border-line-strong bg-white p-3">
         <img src={`/data/${chart.file}`} alt={chart.title} className="w-full" />
       </div>
       <button
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute top-5 right-5 rounded-md border border-border bg-card p-2 text-muted-foreground hover:text-foreground"
+        className="absolute top-5 right-5 border border-line-strong bg-raised p-2 text-fg-muted hover:text-fg"
       >
         <X size={16} />
       </button>
@@ -63,41 +64,39 @@ function Lightbox({ chart, onClose }) {
 
 export default function Charts() {
   const [open, setOpen] = useState(null);
+  const total = GROUPS.reduce((n, [, c]) => n + c.length, 0);
 
   return (
-    <div className="space-y-10">
-      <PageHead
+    <div className="pt-14">
+      <PageHeader
         title="Charts the pipeline drew"
         lede="Written to results/ by the pipeline itself, not by this page. If a number here disagrees with a number elsewhere on the site, the pipeline is the one to trust."
-        right={<Badge tone="outline">matplotlib, during the run</Badge>}
-      />
+      >
+        <Metadata
+          className="mt-8"
+          items={[["Figures", total], ["Drawn by", "matplotlib, during the run"]]}
+        />
+      </PageHeader>
 
       {GROUPS.map(([heading, charts]) => (
-        <section key={heading}>
-          <h2 className="mb-4 text-[15px] font-semibold tracking-tight text-foreground">
-            {heading}
-          </h2>
-          <div className="grid items-start gap-4 lg:grid-cols-2">
+        <Section key={heading} title={heading}>
+          <div className="grid items-start gap-x-8 gap-y-12 lg:grid-cols-2">
             {charts.map(([file, title, note]) => (
-              <figure key={file} className="panel m-0 overflow-hidden">
-                <figcaption className="border-b border-border-subtle px-4 py-3.5">
-                  <h3 className="text-[13.5px] font-semibold tracking-tight text-foreground">
-                    {title}
-                  </h3>
-                  <p className="mt-1 text-[12px] text-muted-foreground">{note}</p>
-                </figcaption>
+              <figure key={file} className="m-0">
+                <h3 className="text-[14px] font-medium tracking-[-0.01em] text-fg">{title}</h3>
+                <p className="mt-2 text-[13px] leading-[1.6] text-fg-muted">{note}</p>
                 <button
                   type="button"
                   onClick={() => setOpen({ file, title })}
                   aria-label={`Open ${title} full size`}
-                  className="block w-full cursor-zoom-in bg-white p-2"
+                  className="mt-5 block w-full cursor-zoom-in border border-line bg-white p-2 transition-colors hover:border-line-strong"
                 >
                   <img src={`/data/${file}`} alt={title} className="w-full" loading="lazy" />
                 </button>
               </figure>
             ))}
           </div>
-        </section>
+        </Section>
       ))}
 
       {open && <Lightbox chart={open} onClose={() => setOpen(null)} />}
