@@ -477,9 +477,89 @@ def build() -> str:
     return "\n".join(out) + "\n"
 
 
+START = "<!-- ABLATION:start -->"
+END = "<!-- ABLATION:end -->"
+
+
+def ablation_section(report: dict) -> str:
+    """The integration doc's ablation block, built from the results file.
+
+    Generated rather than typed, so a number in the contract cannot drift from
+    the run that produced it.
+    """
+    rows = [r for r in report["profiles"] if r.get("usable")]
+    if not rows:
+        return "TODO: not yet measured."
+    full = next((r for r in rows if r["name"] == "full"), None)
+    base = full["pooled"]["net_vs_nothing_rupees"] if full else 0
+
+    out = [
+        f"Each profile re-blocks, re-scores, re-clusters and refits the model "
+        f"on the columns it can supply. Nothing is shared between them. "
+        f"Measured on validation seeds "
+        f"{report['val_seeds'][0]}-{report['val_seeds'][1]}, "
+        f"{report['n_accounts_per_world']:,} accounts per world. The holdout "
+        f"is sealed and is not used here.",
+        "",
+        "| profile | columns | comparisons | rules | features | precision | "
+        "recall | with review | net | of full |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for r in rows:
+        pooled = r["pooled"]
+        share = f"{pooled['net_vs_nothing_rupees'] / base:.0%}" if base else "n/a"
+        prec = ("n/a" if pooled["precision"] is None
+                else f"{pooled['precision']:.4f}")
+        out.append(
+            f"| `{r['name']}` | {len(profiles_columns(r))} | "
+            f"{r['n_comparisons']} | {r['n_blocking_rules']} | "
+            f"{r['n_features']} | {prec} | {pooled['recall']:.4f} | "
+            f"{pooled['recall_including_review']:.4f} | "
+            f"{rupees(pooled['net_vs_nothing_rupees'])} | {share} |")
+
+    tiers = list(rows[0]["tiers"])
+    out += ["", "Recall including review, per tier. Never averaged.", "",
+            "| profile | " + " | ".join(tiers) + " |",
+            "| --- |" + " --- |" * len(tiers)]
+    for r in rows:
+        cells = " | ".join(f"{r['tiers'][t]['recall_including_review']:.4f}"
+                           if t in r["tiers"] else "-" for t in tiers)
+        out.append(f"| `{r['name']}` | {cells} |")
+
+    out += ["", "What each profile gives up:", ""]
+    for r in rows:
+        if r["name"] == "full":
+            continue
+        if not r["missing_columns"]:
+            out.append(f"- **`{r['name']}`** sends every column, so it should "
+                       f"reproduce `full` exactly. That is the control.")
+            continue
+        missing = ", ".join(f"`{c}`" for c in r["missing_columns"])
+        lost = ", ".join(f"`{c}`" for c in r["missing_comparisons"]) or "none"
+        total_features = r["n_features"] + len(r["missing_features"])
+        out.append(f"- **`{r['name']}`** cannot send {missing}. "
+                   f"Comparisons lost: {lost}. Features lost: "
+                   f"{len(r['missing_features'])} of {total_features}.")
+    return "\n".join(out)
+
+
+def write_integration(path: str, report: dict) -> None:
+    with open(path) as f:
+        doc = f.read()
+    if START not in doc or END not in doc:
+        raise SystemExit(f"{path} has no {START} / {END} markers")
+    head, rest = doc.split(START, 1)
+    _, tail = rest.split(END, 1)
+    with open(path, "w") as f:
+        f.write(head + START + "\n" + ablation_section(report) + "\n" + END + tail)
+    print(f"filled the ablation section in {path}")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--out", default=None)
+    p.add_argument("--integration", default=None,
+                   help="also fill the ablation block in this file")
     args = p.parse_args()
     text = build()
     print(text)
@@ -487,6 +567,12 @@ def main() -> None:
         with open(args.out, "w") as f:
             f.write(text)
         print(f"wrote {args.out}")
+    if args.integration:
+        ablation = load("field_ablation")
+        if not ablation:
+            raise SystemExit("no results/field_ablation.json. "
+                             "Run python -m detector.ablate first.")
+        write_integration(args.integration, ablation)
 
 
 if __name__ == "__main__":

@@ -141,12 +141,55 @@ not in scoring.
 
 ## What happens when you cannot send a column
 
-TODO: not yet measured. `python -m detector.ablate` is running now. It rebuilds
-the whole pipeline once per column set, on validation seeds, and writes
-`results/field_ablation.json`. This section is filled from that file and from
-nowhere else.
+<!-- ABLATION:start -->
+Each profile re-blocks, re-scores, re-clusters and refits the model on the columns it can supply. Nothing is shared between them. Measured on validation seeds 700-759, 12,000 accounts per world. The holdout is sealed and is not used here.
 
-<!-- ABLATION -->
+| profile | columns | comparisons | rules | features | precision | recall | with review | net | of full |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `full` | 12 | 9 | 6 | 24 | 0.9997 | 0.1681 | 0.8445 | +Rs.1,317,750 | 100% |
+| `aggregator_strict` | 8 | 4 | 1 | 14 | 1.0000 | 0.3648 | 0.4062 | +Rs.1,726,850 | 131% |
+| `aggregator` | 10 | 7 | 5 | 19 | 0.9989 | 0.1174 | 0.7242 | +Rs.979,150 | 74% |
+| `aggregator_plus_address` | 11 | 8 | 6 | 20 | 0.9987 | 0.1940 | 0.7967 | +Rs.1,288,750 | 98% |
+| `sdk_payload` | 12 | 9 | 6 | 24 | 0.9997 | 0.1681 | 0.8445 | +Rs.1,317,750 | 100% |
+| `no_device` | 11 | 8 | 5 | 23 | 1.0000 | 0.1534 | 0.8211 | +Rs.1,233,350 | 94% |
+
+Recall including review, per tier. Never averaged.
+
+| profile | obvious | moderate | sophisticated | adaptive |
+| --- | --- | --- | --- | --- |
+| `full` | 0.9934 | 0.9483 | 0.8783 | 0.5582 |
+| `aggregator_strict` | 1.0000 | 0.5773 | 0.0474 | 0.0000 |
+| `aggregator` | 0.9941 | 0.8196 | 0.6554 | 0.4276 |
+| `aggregator_plus_address` | 0.9929 | 0.9155 | 0.8181 | 0.4604 |
+| `sdk_payload` | 0.9934 | 0.9483 | 0.8783 | 0.5582 |
+| `no_device` | 0.9906 | 0.9259 | 0.8564 | 0.5116 |
+
+What each profile gives up:
+
+- **`aggregator_strict`** cannot send `address_id`, `pincode`, `signup_ts`, `coupon_used`. Comparisons lost: `address`, `pincode`, `signup_gap`, `hour_of_day`, `coupon_used`. Features lost: 10 of 24.
+- **`aggregator`** cannot send `address_id`, `coupon_used`. Comparisons lost: `address`, `coupon_used`. Features lost: 5 of 24.
+- **`aggregator_plus_address`** cannot send `coupon_used`. Comparisons lost: `coupon_used`. Features lost: 4 of 24.
+- **`sdk_payload`** sends every column, so it should reproduce `full` exactly. That is the control.
+- **`no_device`** cannot send `device_id`. Comparisons lost: `device`. Features lost: 1 of 24.
+<!-- ABLATION:end -->
+
+**Read net together with recall, not on its own.** `aggregator_strict` posts the
+highest net figure in that table and is the worst detector in it. It reaches
+0.0000 on the adaptive tier and lets 13,682 ring accounts through, against 3,582
+for the full column set. It scores well because it only ever finds easy rings,
+blocks them at precision 1.0000, and almost never pays for a review. Net rewards
+giving up when a miss is priced at Rs.200. The per-tier table underneath is the
+one to read.
+
+**What the two enrichment fields are worth.** The aggregator's own columns reach
+74% of the full net. A hashed delivery address takes that to 98%. The coupon flag
+takes it to 100%. That is the whole case for a three-field payload rather than a
+schema migration.
+
+**Losing the device costs 6%.** Device agreement is the strongest single signal
+at 14.83 bits, and dropping the column entirely still holds 94% of net and takes
+recall including review from 0.8445 to 0.8211, because the pincode blocking rules
+carry the load. This system does not depend on fingerprinting.
 
 ---
 

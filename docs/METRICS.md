@@ -271,6 +271,30 @@ Fixed settings, no adaptation, 100 worlds each.
 
 The five single changes sum to -0.0807. Together they cost -0.3930, 4.9 times the sum of the parts. No one change and no pair gets the operator anywhere, and a rule that moves one thing a round never assembles all five.
 
+## What a caller with fewer columns gets
+
+Each profile re-blocks, re-scores, re-clusters and refits the model on the columns it can supply. Validation seeds 700-759, 12,000 accounts per world. The holdout is sealed and is not used here.
+
+| profile | columns | comparisons | rules | features | precision | recall | with review | net | of full |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| full | 12 | 9 | 6 | 24 | 0.9997 | 0.1681 | 0.8445 | +Rs.1,317,750 | 100% |
+| aggregator_strict | 8 | 4 | 1 | 14 | 1.0000 | 0.3648 | 0.4062 | +Rs.1,726,850 | 131% |
+| aggregator | 10 | 7 | 5 | 19 | 0.9989 | 0.1174 | 0.7242 | +Rs.979,150 | 74% |
+| aggregator_plus_address | 11 | 8 | 6 | 20 | 0.9987 | 0.1940 | 0.7967 | +Rs.1,288,750 | 98% |
+| sdk_payload | 12 | 9 | 6 | 24 | 0.9997 | 0.1681 | 0.8445 | +Rs.1,317,750 | 100% |
+| no_device | 11 | 8 | 5 | 23 | 1.0000 | 0.1534 | 0.8211 | +Rs.1,233,350 | 94% |
+
+Recall including review, per tier. Never averaged.
+
+| profile | obvious | moderate | sophisticated | adaptive |
+| --- | --- | --- | --- | --- |
+| full | 0.9934 | 0.9483 | 0.8783 | 0.5582 |
+| aggregator_strict | 1.0000 | 0.5773 | 0.0474 | 0.0000 |
+| aggregator | 0.9941 | 0.8196 | 0.6554 | 0.4276 |
+| aggregator_plus_address | 0.9929 | 0.9155 | 0.8181 | 0.4604 |
+| sdk_payload | 0.9934 | 0.9483 | 0.8783 | 0.5582 |
+| no_device | 0.9906 | 0.9259 | 0.8564 | 0.5116 |
+
 ## Review notes
 
 1,334 notes for every cluster not simply allowed. Sources: live 40, template 1294. Notes quoting a number not from the pipeline: **0**.
@@ -281,3 +305,4 @@ The five single changes sum to -0.0807. Together they cost -0.3930, 4.9 times th
 - `results/reliability.png`, Reliability diagram, before and after calibration (yes)
 - `results/cost_curve.png`, Cost against blocking threshold (yes)
 - `results/detection_curve.png`, Where the detector stops working (yes)
+- `results/field_ablation.png`, What a caller with fewer columns gets (yes)
