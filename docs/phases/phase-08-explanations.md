@@ -35,10 +35,13 @@ See `docs/diagrams/seq-explain-cache.md` for the sequence.
 ## Results
 
 ```
-$ python -m detector.explain --features results/features_holdout.csv --limit 2000
+$ python -m detector.explain --features results/features_holdout.csv --limit 40 --live
+writing 40 review notes (live)
+sources: live 40, template 0
 
+$ python -m detector.explain --features results/features_holdout.csv --limit 2000
 writing 1334 review notes (cache or template)
-sources: cache 0, live 0, template 1334
+sources: live 40, template 1294 (1334 served from cache)
 notes containing a number not in the feature dict: 0
 ```
 
@@ -81,12 +84,12 @@ audit exists to catch: a real number, in the wrong place.
 
 ## Known limitations
 
-**No live language model output exists in this repository.** `OLLAMA_API_KEY` is
-not set on the machine this was built on and no Ollama server is running, so all
-1,334 committed cache entries are template notes and are labelled `"source":
-"template"`. The live path is implemented and wrapped in try/except, so setting
-the key and re-running with `--live` fills the cache with written notes. Marking
-them as templates rather than pretending otherwise is the point.
+**Most committed notes are templates, not model output.** 40 of the 1,334 cache
+entries were written by `minimax-m3:cloud` and are labelled `"source": "live"`.
+The other 1,294 are templates. One live call takes about 15 seconds, so writing
+all 1,334 would take five and a half hours, and the 40 chosen are the highest
+value clusters, which are the ones a person opens first. Every entry records
+which model wrote it, or `null` for a template.
 
 **The evidence bullets are coarse.** They report the dominant comparison and the
 average, minimum and spread of edge weights inside the cluster. The full

@@ -129,7 +129,7 @@ Five more failure modes with worked examples are in `results/holdout.json` and
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ./run.sh              # full reproduction, about 30 minutes, no network needed
 ./run.sh quick        # smaller worlds, about 4 minutes
-.venv/bin/python -m pytest    # 122 tests
+.venv/bin/python -m pytest    # 140 tests
 ```
 
 `run.sh` will not re-open the holdout if `results/holdout.json` exists. A

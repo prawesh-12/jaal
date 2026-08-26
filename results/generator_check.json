@@ -63,7 +63,7 @@
  "timing": {
   "worlds": 100,
   "accounts_each": 12000,
-  "seconds": 5.1,
+  "seconds": 5.32,
   "under_60s": true
  }
 }

@@ -1,8 +1,8 @@
 {
  "key": "4d07b37579ede91a",
- "note": "51 accounts created over 596.0 days, 100% of them in one pincode. 100% used the first-order coupon and 0% ever ordered again, extracting Rs.10,200 in discounts. Calibrated probability 0.82. Recommended: review.\nStrongest linking evidence:\n  - pincode agreement, average edge: +22.2 bits\n  - weakest link inside the cluster: +14.2 bits\n  - spread of edge strength: +7.7 bits",
- "source": "template",
- "model": null,
+ "note": "A cluster of 51 accounts exhibits a coordinated coupon-abuse pattern, with 100% coupon usage paired with 0% repeat orders and Rs.10,200 in total discount extracted. A calibrated ring probability of 0.82 supports the recommended action of review.\n\n- 100% of the cluster's accounts fall within a single pincode, indicating geographic concentration.\n- 100% coupon usage combined with 0% repeat orders is consistent with one-time extraction rather than genuine customer activity.\n- Distinct card BINs per account average just 0.14, pointing to heavily shared payment instruments across the cluster.",
+ "source": "live",
+ "model": "minimax-m3:cloud",
  "action": "review",
  "p": 0.818
 }

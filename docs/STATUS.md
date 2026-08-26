@@ -19,7 +19,7 @@ All 11 phases complete. Holdout opened once and reported.
 | 9 interface | README, run.sh, Flask API, React dashboard |
 | 10 submission | Clean-checkout check, secret scan, final checklist |
 
-122 tests pass. 27 decisions recorded, including the wrong turns.
+140 tests pass. 27 decisions recorded, including the wrong turns.
 
 ## Definition of done
 
@@ -39,11 +39,11 @@ All 11 phases complete. Holdout opened once and reported.
 
 ## Blocked or uncertain
 
-- **No live LLM output.** `OLLAMA_API_KEY` is not set on this machine and no
-  Ollama server is running, so all 40 committed explanations are template notes,
-  labelled as such. The live path is implemented and one command fills the cache
-  if a key is provided. This is the third item on the cut list in CLAUDE.md and
-  the template fallback is what that item says to keep.
+- **Most review notes are templates.** 40 of 1,334 were written by
+  `minimax-m3:cloud`, the rest are templates. One live call takes about 15
+  seconds, so writing all of them would take five and a half hours. The 40
+  chosen are the highest value clusters. Nothing depends on the model: pull the
+  network and every score, action and rupee figure is unchanged.
 
 ## Headline numbers, sealed holdout, seeds 900-999
 

@@ -1,8 +1,8 @@
 {
  "key": "84233f44e0225e35",
- "note": "48 accounts created over 19.8 days, 100% of them in one pincode. 100% used the first-order coupon and 0% ever ordered again, extracting Rs.9,600 in discounts. Calibrated probability 1.00. Recommended: review.\nStrongest linking evidence:\n  - pincode agreement, average edge: +18.5 bits\n  - weakest link inside the cluster: +14.0 bits\n  - spread of edge strength: +6.1 bits",
- "source": "template",
- "model": null,
+ "note": "A 48-account cluster formed over a 19.8-day signup window and extracted Rs.9,600 in discounts, with 100% coupon usage and 0% repeat orders across the group. The calibrated ring probability is 1.00, and the recommended action is manual review.\n\nStrongest signals:\n- 100% of accounts fall within a single pincode.\n- 100% coupon usage paired with 0% repeat orders.\n- Distinct card BINs per account average just 0.10.",
+ "source": "live",
+ "model": "minimax-m3:cloud",
  "action": "review",
  "p": 1.0
 }

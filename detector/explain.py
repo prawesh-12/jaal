@@ -124,7 +124,7 @@ def explain(facts: dict, p: float, action: str,
     if os.path.exists(path):
         with open(path) as f:
             cached = json.load(f)
-        cached["source"] = "cache"
+        cached["from_cache"] = True
         return cached
 
     prompt = build_prompt(facts, p, action, top_signals)
@@ -132,7 +132,8 @@ def explain(facts: dict, p: float, action: str,
         try:
             note, used = call_ollama(prompt)
             record = {"key": key, "note": note, "source": "live",
-                      "model": used, "action": action, "p": round(float(p), 3)}
+                      "from_cache": False, "model": used, "action": action,
+                      "p": round(float(p), 3)}
             os.makedirs(cache_dir, exist_ok=True)
             with open(path, "w") as f:
                 json.dump(record, f, indent=1)
@@ -143,8 +144,8 @@ def explain(facts: dict, p: float, action: str,
 
     record = {"key": key,
               "note": template_explanation(facts, p, action, top_signals),
-              "source": "template", "model": None, "action": action,
-              "p": round(float(p), 3)}
+              "source": "template", "from_cache": False, "model": None,
+              "action": action, "p": round(float(p), 3)}
     os.makedirs(cache_dir, exist_ok=True)
     with open(path, "w") as f:
         json.dump(record, f, indent=1)
@@ -168,7 +169,7 @@ def top_signals(row) -> list[tuple[str, float]]:
 def numbers_in(text: str) -> set[str]:
     """Every numeric token in a note, for the invented-number check."""
     import re
-    return set(re.findall(r"\d[\d,]*\.?\d*", text.replace("Rs.", "")))
+    return set(re.findall(r"\d[\d,]*(?:\.\d+)?", text.replace("Rs.", "")))
 
 
 def audit_note(note: str, facts: dict, p: float,
@@ -221,7 +222,8 @@ def main() -> None:
 
     print(f"\nwriting {len(interesting)} review notes "
           f"({'live' if args.live else 'cache or template'})")
-    notes, sources = [], {"cache": 0, "live": 0, "template": 0}
+    notes, sources = [], {"live": 0, "template": 0}
+    from_cache = 0
     flagged_numbers = 0
     for _, row in interesting.iterrows():
         facts = {k: float(row[k]) for k in PROMPT_FIELDS}
@@ -229,15 +231,19 @@ def main() -> None:
         rec = explain(facts, float(row["p"]), str(row["action"]), signals,
                       live=args.live)
         sources[rec["source"]] += 1
+        from_cache += bool(rec.get("from_cache"))
         stray = audit_note(rec["note"], facts, float(row["p"]), signals)
         flagged_numbers += bool(stray)
         notes.append({"seed": int(row["seed"]), "tier": row["tier"],
                       "cluster_id": int(row["cluster_id"]),
                       "size": int(row["size"]), "p": round(float(row["p"]), 3),
                       "action": row["action"], "source": rec["source"],
+                      "from_cache": bool(rec.get("from_cache")),
+                      "model": rec.get("model"),
                       "note": rec["note"], "unverified_numbers": stray})
 
-    print(f"sources: " + ", ".join(f"{k} {v}" for k, v in sources.items()))
+    print(f"sources: " + ", ".join(f"{k} {v}" for k, v in sources.items())
+          + f" ({from_cache} served from cache)")
     print(f"notes containing a number not in the feature dict: {flagged_numbers}")
     print(f"\nexample note ({notes[0]['tier']} tier, seed {notes[0]['seed']}, "
           f"cluster {notes[0]['cluster_id']}):\n")
@@ -245,6 +251,7 @@ def main() -> None:
 
     with open(args.out, "w") as f:
         json.dump({"n_notes": len(notes), "sources": sources,
+                   "served_from_cache": from_cache,
                    "notes_with_unverified_numbers": flagged_numbers,
                    "live_attempted": args.live, "notes": notes}, f, indent=1)
         f.write("\n")

@@ -83,3 +83,24 @@ def test_every_flagged_cluster_has_a_reason():
     actions = {n["action"] for n in report["notes"]}
     assert actions <= {"block", "review"}, "an allowed cluster got a note"
     assert "block" in actions and "review" in actions
+
+
+def test_a_cache_hit_still_says_where_the_note_came_from(tmp_path):
+    """A note written by the model and then cached is still a model note."""
+    first = explain.explain(FACTS, 0.83, "review", SIGNALS, live=False,
+                            cache_dir=str(tmp_path))
+    assert first["source"] == "template"
+    assert first["from_cache"] is False
+
+    second = explain.explain(FACTS, 0.83, "review", SIGNALS, live=False,
+                             cache_dir=str(tmp_path))
+    assert second["source"] == "template"
+    assert second["from_cache"] is True
+    assert second["note"] == first["note"]
+
+
+def test_a_sentence_ending_period_is_not_part_of_a_number():
+    """Rs.10,800. at the end of a sentence is the number 10,800."""
+    found = explain.numbers_in("extracted Rs.10,800. Confidence 1.00.")
+    assert "10,800" in found
+    assert "10,800." not in found

@@ -83,7 +83,7 @@ def determinism(n_accounts: int) -> dict:
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     add_common_args(p)
-    p.add_argument("--out", default="results/phase0_check.json")
+    p.add_argument("--out", default="results/generator_check.json")
     args = p.parse_args()
 
     announce(apply())

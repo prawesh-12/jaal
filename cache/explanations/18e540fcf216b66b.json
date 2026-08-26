@@ -1,8 +1,8 @@
 {
  "key": "18e540fcf216b66b",
- "note": "47 accounts created over 5.4 days, 100% of them in one pincode. 100% used the first-order coupon and 0% ever ordered again, extracting Rs.9,400 in discounts. Calibrated probability 1.00. Recommended: review.\nStrongest linking evidence:\n  - device agreement, average edge: +46.1 bits\n  - weakest link inside the cluster: +16.1 bits\n  - spread of edge strength: +8.7 bits",
- "source": "template",
- "model": null,
+ "note": "This cluster of 47 accounts formed over a 5.4-day signup span and shows a consistent coupon-extraction pattern: 100% used coupons, 96% ordered near the coupon minimum, 0% placed repeat orders, and 100% of accounts are concentrated in a single pincode. Device agreement is the strongest linking signal with an average edge of +46.1 bits, supporting a calibrated ring probability of 1.00 and a recommended action of review.\n\n- Device agreement as the strongest linking signal: average edge +46.1 bits, weakest internal link +16.1 bits, spread of edge strength +8.7 bits\n- Universal coupon usage: 100% of accounts, 96% of orders near the coupon minimum, 0% repeat orders, total discount extracted Rs.9,400\n- Full concentration in one pincode (largest share 100%) with 0.02 distinct card BINs per account",
+ "source": "live",
+ "model": "minimax-m3:cloud",
  "action": "review",
  "p": 1.0
 }

@@ -1,8 +1,8 @@
 {
  "key": "3fdf17976a5a32e3",
- "note": "48 accounts created over 418.0 days, 100% of them in one pincode. 100% used the first-order coupon and 0% ever ordered again, extracting Rs.9,600 in discounts. Calibrated probability 1.00. Recommended: review.\nStrongest linking evidence:\n  - device agreement, average edge: +43.3 bits\n  - weakest link inside the cluster: +14.9 bits\n  - spread of edge strength: +11.9 bits",
- "source": "template",
- "model": null,
+ "note": "48-account cluster spanning 418.0 days of signups carries a calibrated 1.00 probability of being a fraud ring and is flagged for review. Every account used a coupon, 90% ordered at values near the coupon minimum, repeat orders were 0%, and the ring extracted Rs.9,600 in total discounts.\n\nStrongest signals:\n- Device agreement linking the cluster at an average edge strength of +43.3 bits, with the weakest in-cluster link still at +14.9 bits.\n- 100% coupon usage combined with 90% of orders near the coupon minimum and 0% repeat orders.\n- Only 0.06 distinct card BINs per account, with the full cluster concentrated in a single pincode.",
+ "source": "live",
+ "model": "minimax-m3:cloud",
  "action": "review",
  "p": 1.0
 }

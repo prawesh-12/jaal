@@ -138,7 +138,7 @@ regresses.
 
 ## Results
 
-Real numbers, from `results/phase0_check.json`.
+Real numbers, from `results/generator_check.json`.
 
 ```
 $ python -m detector.check_generator --accounts 12000 --seeds 0-9

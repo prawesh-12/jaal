@@ -1,8 +1,8 @@
 {
  "key": "21308dbe31320c45",
- "note": "48 accounts created over 21.1 days, 100% of them in one pincode. 100% used the first-order coupon and 0% ever ordered again, extracting Rs.9,600 in discounts. Calibrated probability 1.00. Recommended: review.\nStrongest linking evidence:\n  - address agreement, average edge: +20.5 bits\n  - weakest link inside the cluster: +14.4 bits\n  - spread of edge strength: +7.3 bits",
- "source": "template",
- "model": null,
+ "note": "cluster of 48 accounts opened over 21.1 days triggered the ring-detection model at a calibrated probability of 1.00, and the recommended action is review. Every account in the cluster used a coupon, none placed repeat orders, Rs.9,600 in discounts was extracted, and the network is tightly bound by address agreement with an average edge strength of +20.5 bits (weakest internal link +14.4 bits).\n\nThree strongest signals:\n- 100% coupon usage combined with 0% repeat orders.\n- 100% share concentrated in a single pincode, with only 0.10 distinct card BINs per account.\n- Address agreement across the cluster, backed by an average edge strength of +20.5 bits and a weakest link of +14.4 bits.",
+ "source": "live",
+ "model": "minimax-m3:cloud",
  "action": "review",
  "p": 1.0
 }

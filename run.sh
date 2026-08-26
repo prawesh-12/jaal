@@ -25,11 +25,11 @@ export MKL_NUM_THREADS="$OMP_NUM_THREADS"
 if [ "$MODE" = "quick" ]; then
   ACCOUNTS=4000
   GEN_SEEDS="0-4"; TRAIN_SEEDS="0-9"; VAL_SEEDS="700-709"
-  LINK_SEEDS="0-4"; EVAL_SEEDS="700-702"
+  LINK_SEEDS="0-4"; EVAL_SEEDS="700-702"; BASELINE_SEEDS="700-709"
 else
   ACCOUNTS=12000
   GEN_SEEDS="0-9"; TRAIN_SEEDS="0-59"; VAL_SEEDS="700-759"
-  LINK_SEEDS="0-19"; EVAL_SEEDS="700-709"
+  LINK_SEEDS="0-19"; EVAL_SEEDS="700-709"; BASELINE_SEEDS="700-799"
 fi
 
 run() {
@@ -62,7 +62,7 @@ run "Generator check list"            -m detector.check_generator \
     --accounts "$ACCOUNTS" --seeds "$GEN_SEEDS"
 
 run "Rules-only baseline"             -m detector.baseline \
-    --accounts "$ACCOUNTS" --seeds "$VAL_SEEDS" --out results/baseline.json
+    --accounts "$ACCOUNTS" --seeds "$BASELINE_SEEDS" --out results/baseline.json
 
 run "Blocking, recall and reduction"  -m detector.blocking \
     --accounts "$ACCOUNTS" --seeds "$GEN_SEEDS" --out results/blocking.json

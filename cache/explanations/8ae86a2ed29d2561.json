@@ -1,8 +1,8 @@
 {
  "key": "8ae86a2ed29d2561",
- "note": "50 accounts created over 209.8 days, 96% of them in one pincode. 100% used the first-order coupon and 0% ever ordered again, extracting Rs.10,000 in discounts. Calibrated probability 1.00. Recommended: review.\nStrongest linking evidence:\n  - address agreement, average edge: +21.9 bits\n  - weakest link inside the cluster: +14.2 bits\n  - spread of edge strength: +6.9 bits",
- "source": "template",
- "model": null,
+ "note": "The cluster of 50 accounts spans 209.8 days of activity and carries a calibrated ring probability of 1.00, warranting immediate review. Behavior is uniformly coupon-driven\u2014100% coupon usage against 0% repeat orders\u2014while address agreement ties the accounts together with an average edge of +21.9 bits and a weakest internal link of +14.2 bits.\n\nThree strongest signals:\n- Calibrated ring probability of 1.00\n- Address agreement (average edge +21.9 bits; weakest link +14.2 bits)\n- 100% coupon usage paired with 0% repeat orders",
+ "source": "live",
+ "model": "minimax-m3:cloud",
  "action": "review",
  "p": 1.0
 }

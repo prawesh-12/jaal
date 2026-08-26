@@ -121,7 +121,7 @@ attribute a ring shares.
 Two things worth stating plainly. This makes the generator harder, not easier.
 And it was changed before any model existed, so it is not a result being tuned
 into shape. Address reuse inside rings now falls 907, 843, 655, 0 across the
-tiers, measured over 10 worlds in `results/phase0_check.json`.
+tiers, measured over 10 worlds in `results/generator_check.json`.
 
 ## D-010: The baseline does not link on IP prefix
 Date: 2026-08-26

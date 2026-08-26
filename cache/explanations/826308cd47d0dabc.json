@@ -1,8 +1,8 @@
 {
  "key": "826308cd47d0dabc",
- "note": "48 accounts created over 2.5 days, 100% of them in one pincode. 100% used the first-order coupon and 0% ever ordered again, extracting Rs.9,600 in discounts. Calibrated probability 1.00. Recommended: review.\nStrongest linking evidence:\n  - pincode agreement, average edge: +33.2 bits\n  - weakest link inside the cluster: +15.0 bits\n  - spread of edge strength: +9.8 bits",
- "source": "template",
- "model": null,
+ "note": "A cluster of 48 accounts opened within a 2.5-day span shows 100% coupon usage, 0% repeat orders, and a calibrated ring probability of 1.00, warranting review. The graph is densely linked, with an average edge of +33.2 bits and even the weakest internal link at +15.0 bits, indicating strong pairwise agreement beyond chance.\n\nStrongest linking signals:\n- 100% of accounts share the single largest pincode\n- 0.04 distinct card BINs per account, indicating near-shared payment instruments\n- Average pairwise edge strength of +33.2 bits, with a tight spread of +9.8 bits",
+ "source": "live",
+ "model": "minimax-m3:cloud",
  "action": "review",
  "p": 1.0
 }
