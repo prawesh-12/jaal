@@ -3,19 +3,12 @@ import { Search } from "lucide-react";
 import { Panel } from "@/components/ui/panel";
 import { Metric, MetricRow } from "@/components/metric";
 import {
-  Empty, Metadata, PageHeader, Section, Skeleton, Status,
+  Empty, Metadata, PageHeader, Section, Skeleton, Status, TierLegend, TIER_TONE,
 } from "@/components/section";
-import { TIERS, count, pct } from "@/lib/format";
+import { TIERS, count, pct, rupees } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const PAGE = 24;
-
-const TIER_TONE = {
-  obvious: "ok",
-  moderate: "info",
-  sophisticated: "warn",
-  adaptive: "bad",
-};
 
 /*
   Notes arrive as one string: a paragraph, then a heading, then dashed bullets.
@@ -56,7 +49,15 @@ function NoteEntry({ n }) {
           <span className="text-fg-faint">
             p <span className="tnum text-fg-muted">{n.p.toFixed(2)}</span>
           </span>
-          <span className={n.action === "block" ? "text-bad" : "text-warn"}>{n.action}</span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-2",
+              n.action === "block" ? "text-bad" : "text-warn"
+            )}
+          >
+            <Status tone={n.action === "block" ? "bad" : "warn"} />
+            {n.action}
+          </span>
           <span className="ident text-fg-faint">
             {n.source === "live" ? n.model : "template"}
           </span>
@@ -190,7 +191,11 @@ export default function Queue({ explanations, loading }) {
         </MetricRow>
       </Section>
 
-      <Section title="Notes">
+      <Section
+        title="Notes"
+        lede="Ordered worst first by rupees extracted, so the top of this list is the work to do first."
+        meta={<TierLegend />}
+      >
         <div className="sticky top-[52px] z-30 -mx-1 border-y border-line bg-base/95 px-1 py-3 backdrop-blur-sm">
           <div className="flex flex-wrap items-center gap-3">
             <Segmented label="Tier" options={tierOptions} value={tier} onChange={set(setTier)} />
@@ -221,7 +226,11 @@ export default function Queue({ explanations, loading }) {
         ) : (
           <div className="mt-8 space-y-3">
             {filtered.slice(0, shown).map((n, i) => (
-              <NoteEntry key={`${n.seed}-${n.tier}-${n.cluster_id}-${i}`} n={n} />
+              <NoteEntry
+                key={`${n.seed}-${n.tier}-${n.cluster_id}-${i}`}
+                n={n}
+                rank={i + 1}
+              />
             ))}
           </div>
         )}

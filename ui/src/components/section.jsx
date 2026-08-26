@@ -114,6 +114,55 @@ export function Status({ tone = "neutral", className }) {
   );
 }
 
+/*
+  The tier selector. One control, used identically wherever a page is scoped
+  to a tier, so the tier colour appears once per option and nowhere else.
+*/
+export function TierPicker({ value, onChange, tiers = TIER_ORDER }) {
+  return (
+    <div role="group" aria-label="Tier" className="flex items-center border border-line">
+      {tiers.map((t) => (
+        <button
+          key={t}
+          type="button"
+          onClick={() => onChange(t)}
+          aria-pressed={value === t}
+          className={cn(
+            "interactive inline-flex h-8 items-center gap-2 border-l border-line px-3 text-[12.5px] first:border-l-0",
+            value === t ? "bg-active text-fg" : "text-fg-faint hover:bg-surface hover:text-fg-muted"
+          )}
+        >
+          <Status tone={TIER_TONE[t]} />
+          {t}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* Which tiers exist, and which state colour each one borrows. */
+const TIER_ORDER = ["obvious", "moderate", "sophisticated", "adaptive"];
+export const TIER_TONE = {
+  obvious: "ok", moderate: "info", sophisticated: "warn", adaptive: "bad",
+};
+
+/*
+  A legend, shown wherever more than one tier is on screen at once so the
+  colours never have to be guessed.
+*/
+export function TierLegend({ tiers = TIER_ORDER, className }) {
+  return (
+    <div className={cn("flex flex-wrap items-center gap-x-6 gap-y-2", className)}>
+      {tiers.map((t) => (
+        <span key={t} className="inline-flex items-center gap-2.5 text-[12.5px] text-fg-muted">
+          <Status tone={TIER_TONE[t]} />
+          {t}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function Empty({ children }) {
   return (
     <p className="border-t border-line py-16 text-center text-[14px] text-fg-faint">

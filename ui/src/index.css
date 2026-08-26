@@ -9,28 +9,43 @@
   reason to paint anything.
 */
 @theme {
-  /* Surfaces. Four steps, and the difference between them is small on purpose. */
+  /*
+    Surface ladder. Four steps, each one a small lift on the last, so depth
+    comes from stacking rather than from shadow.
+
+      base      the page
+      surface   a section that needs separating from the page
+      raised    something interactive sits here
+      active    the selected or highlighted state
+  */
   --color-base: #0b0c0d;
   --color-surface: #101214;
-  --color-raised: #151719;
+  --color-raised: #16191c;
+  --color-active: #1d2126;
   --color-sunken: #08090a;
 
-  /* Structure. Hairlines carry the layout, not boxes. */
+  /* Structure. Hairlines carry the layout; a heavier rule marks a boundary. */
   --color-line: #1d2023;
-  --color-line-strong: #292c30;
+  --color-line-strong: #2b2f34;
+  --color-line-loud: #3a4046;
 
-  /* Text. Three steps is enough; a fourth always becomes decoration. */
-  --color-fg: #f1f1ef;
-  --color-fg-muted: #a4a5a3;
-  --color-fg-faint: #6f716f;
+  /*
+    Text ladder. Five steps, because four was not enough to keep a heading
+    from reading like the paragraph under it.
+  */
+  --color-fg: #f7f7f5;
+  --color-fg-2: #c8c9c6;
+  --color-fg-muted: #9a9c99;
+  --color-fg-faint: #6b6d6b;
+  --color-fg-dim: #4a4c4b;
 
   /* The only non-semantic accent: near-white, for selection and focus. */
   --color-accent: #d9dde2;
 
   /*
-    State. Desaturated on purpose: these have to read as a status marker beside
-    text, never as a fill behind it. Checked with the palette validator against
-    the surface above, so adjacent pairs stay apart under simulated protanopia
+    State. Desaturated on purpose: these read as a status marker beside text,
+    never as a fill behind it. Checked with the palette validator against the
+    surface colour, so adjacent pairs stay apart under simulated protanopia
     and deuteranopia.
   */
   --color-ok: #549b69;
@@ -47,21 +62,24 @@
   --color-tier-sophisticated: #ba8a36;
   --color-tier-adaptive: #a7423e;
 
-  /* Mukta is loaded devanagari-only and is here for exactly one glyph:
-     Geist has no rupee sign, and without this every figure on the page
-     falls back to whatever font the operating system happens to have. */
   --font-sans: "Geist Variable", "Mukta", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Small radii only. Nothing here is a rounded dashboard widget. */
-  --radius-xs: 3px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 5px;
 
-  /* Spacing scale, 4px base. Sections use 64, groups 32, rows 16. */
-  --spacing-section: 4rem;
-  --spacing-group: 2rem;
+  /*
+    Motion. Named by what they are for, so a duration is chosen rather than
+    typed. Everything is ease-out or ease-in-out; nothing bounces.
+  */
+  --motion-fast: 160ms;
+  --motion-standard: 280ms;
+  --motion-slow: 620ms;
+  --motion-stage: 720ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
   --shell-max: 1400px;
 }
@@ -125,7 +143,8 @@
 
 /*
   Figures. Tabular so decimal columns line up down a table, and lining so they
-  sit on the same baseline as the text beside them.
+  sit on the same baseline as the text beside them. Every number on the site
+  wears this.
 */
 @utility tnum {
   font-variant-numeric: tabular-nums lining-nums;
@@ -140,14 +159,75 @@
   letter-spacing: -0.01em;
 }
 
+/*
+  Type scale. Three levels of importance, named after the job rather than the
+  size, so a heading cannot quietly end up the same weight as the paragraph
+  under it.
+
+    t-hero / t-result   level 1, the thing the page is about
+    t-section / t-sub   level 2, the analytical structure
+    t-body / t-meta     level 3, support that should stay quiet
+*/
+@utility t-hero {
+  font-size: clamp(2.5rem, 1.6rem + 2.6vw, 3.75rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+  color: var(--color-fg);
+}
+
+@utility t-result {
+  font-size: clamp(2.25rem, 1.5rem + 2.2vw, 3.25rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+  color: var(--color-fg);
+}
+
+@utility t-section {
+  font-size: clamp(1.375rem, 1.15rem + 0.6vw, 1.75rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--color-fg);
+}
+
+@utility t-sub {
+  font-size: 1.1875rem;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--color-fg);
+}
+
+@utility t-body {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--color-fg-2);
+}
+
+@utility t-meta {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--color-fg-muted);
+}
+
 /* Column headers and field labels. */
 @utility label {
   font-size: 11px;
   line-height: 1rem;
   font-weight: 500;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-fg-faint);
+}
+
+/* Something the reader can act on. Lifts on hover, never glows. */
+@utility interactive {
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
 }
 
 @utility shell {
@@ -165,6 +245,78 @@
   .shell { padding-inline: 56px; }
 }
 
+/*
+  Scene reveals. These are CSS rather than JS on purpose: the style engine
+  guarantees the finished state through animation-fill-mode, so a stalled
+  frame loop or a slow device leaves the diagram fully drawn rather than
+  blank. Motion still drives everything interaction-led, where the resting
+  state is visible anyway.
+
+  Each one takes its delay from --d, set inline by the caller.
+*/
+@keyframes scene-in {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes scene-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scene-draw {
+  from { stroke-dashoffset: 1; opacity: 0; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes scene-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@utility scene-in {
+  animation: scene-in var(--motion-standard) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@utility scene-fade {
+  animation: scene-fade var(--motion-standard) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Needs pathLength="1" on the element, so the dash maths is normalised. */
+@utility scene-draw {
+  stroke-dasharray: 1;
+  animation: scene-draw var(--motion-slow) var(--ease-in-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@utility scene-grow {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: scene-grow var(--motion-standard) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/*
+  Expand and collapse, done with grid rows so the height is animated by the
+  style engine rather than measured in JavaScript. The open state is a real
+  layout, so the content is present and readable whether or not the transition
+  ever runs.
+*/
+@utility expand {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--motion-standard) var(--ease-out),
+              opacity var(--motion-fast) var(--ease-out);
+  opacity: 0;
+}
+
+@utility expand-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
 @keyframes enter {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -174,10 +326,16 @@
   animation: enter 0.18s ease-out both;
 }
 
+/*
+  Reduced motion. The CSS half is here; the JS half reads the same query
+  through useReducedMotion so the pipeline skips its flow animation and jumps
+  straight to each stage's finished state, which stays fully readable.
+*/
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

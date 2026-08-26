@@ -21,11 +21,17 @@ export function THead(props) {
   return <thead {...props} />;
 }
 
-export function TR({ className, ...props }) {
+/*
+  `selected` marks the row a control elsewhere on the page is pointing at, for
+  example the tier chosen in the header. It is a surface shift, not a colour.
+*/
+export function TR({ className, selected = false, ...props }) {
   return (
     <tr
+      data-selected={selected || undefined}
       className={cn(
-        "border-b border-line transition-colors last:border-b-0 hover:bg-surface/70",
+        "interactive border-b border-line last:border-b-0",
+        selected ? "bg-active" : "hover:bg-surface",
         className
       )}
       {...props}
@@ -46,13 +52,15 @@ export function TH({ className, align = "right", ...props }) {
   );
 }
 
-export function TD({ className, align = "right", numeric = true, ...props }) {
+/* `strong` marks the column a reader should land on first in that row. */
+export function TD({ className, align = "right", numeric = true, strong = false, ...props }) {
   return (
     <td
       className={cn(
         "px-3 py-3 first:pl-0 last:pr-0",
         align === "left" ? "text-left" : "text-right",
         numeric && "tnum",
+        strong ? "text-fg" : "text-fg-2",
         className
       )}
       {...props}

@@ -1,13 +1,18 @@
+import { useState } from "react";
 import {
   CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
-import { Note, Panel } from "@/components/ui/panel";
+import { Note } from "@/components/ui/panel";
+import { Disclosure } from "@/components/disclosure";
+import { Metric, MetricRow } from "@/components/metric";
 import {
-  Empty, Metadata, PageHeader, Section, Skeleton, Status,
+  Empty, PageHeader, Section, Skeleton, Status,
 } from "@/components/section";
-import { ChartFrame, ChartTooltip, Legend, axisProps, gridProps } from "@/components/chart";
-import { MARK, count, dp4 } from "@/lib/format";
+import {
+  ChartFrame, Legend, Readout, axisProps, crosshair, gridProps,
+} from "@/components/chart";
+import { count, dp4, isUndefinedPrecision } from "@/lib/format";
 
 const TICKS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
@@ -18,34 +23,62 @@ function deadZoneStart(curve) {
 }
 
 /*
-  One catalogue entry. This is the one place a bordered panel earns itself:
-  each failure is a discrete object a reader works through one at a time.
+  One catalogue entry. Collapsed it gives the failure and where it was seen;
+  opened it gives why, what it costs, and which stage it belongs to. The red
+  marker is one 2px rule, never a red component.
 */
-function FailureEntry({ f, index }) {
+function FailureEntry({ f, index, stage }) {
   return (
-    <Panel>
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-b border-line px-5 py-4">
-        <span className="tnum text-[12px] text-fg-faint">
-          {String(index + 1).padStart(2, "0")}
+    <Disclosure
+      summary={
+        <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <span className="tnum text-[12px] text-fg-dim">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <span className="text-[14.5px] font-medium tracking-[-0.01em] text-fg">
+            {f.failure}
+          </span>
+          <span className="t-meta ml-auto text-fg-faint">{f.example}</span>
         </span>
-        <h3 className="text-[14.5px] font-medium tracking-[-0.01em] text-fg">
-          {f.failure}
-        </h3>
-        <span className="ml-auto text-[12.5px] text-fg-faint">{f.example}</span>
+      }
+    >
+      <div className="border-l-2 border-bad/70 pl-5">
+        <p className="tnum text-[13px] text-fg-2">{f.detail}</p>
+
+        <dl className="mt-6 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+          <div>
+            <dt className="label">Why it happens</dt>
+            <dd className="mt-2.5 text-[13px] leading-[1.65] text-fg-muted">{f.why}</dd>
+          </div>
+          <div>
+            <dt className="label">What it costs</dt>
+            <dd className="mt-2.5 text-[13px] leading-[1.65] text-fg-muted">{f.cost}</dd>
+          </div>
+          <div>
+            <dt className="label">Stage it belongs to</dt>
+            <dd className="mt-2.5 text-[13px] text-fg-2">{stage}</dd>
+          </div>
+          <div>
+            <dt className="label">Where it was seen</dt>
+            <dd className="mt-2.5 text-[13px] text-fg-2">{f.example}</dd>
+          </div>
+        </dl>
       </div>
-      <p className="tnum px-5 py-4 text-[13px] text-fg-muted">{f.detail}</p>
-      <dl className="grid border-t border-line sm:grid-cols-2">
-        <div className="border-b border-line px-5 py-4 sm:border-r sm:border-b-0">
-          <dt className="label">Why it happens</dt>
-          <dd className="mt-2.5 text-[13px] leading-[1.6] text-fg-muted">{f.why}</dd>
-        </div>
-        <div className="px-5 py-4">
-          <dt className="label">What it costs</dt>
-          <dd className="mt-2.5 text-[13px] leading-[1.6] text-fg-muted">{f.cost}</dd>
-        </div>
-      </dl>
-    </Panel>
+    </Disclosure>
   );
+}
+
+/*
+  Which stage a failure belongs to, decided from the wording the pipeline
+  already uses in the catalogue entry rather than from a new field.
+*/
+function stageOf(f) {
+  const text = `${f.failure} ${f.why}`.toLowerCase();
+  if (text.includes("cluster") && text.includes("never")) return "Link, then Cluster";
+  if (text.includes("split") || text.includes("fragment")) return "Cluster";
+  if (text.includes("allow") || text.includes("cost")) return "Decide";
+  if (text.includes("feature") || text.includes("repeat")) return "Features";
+  return "Link";
 }
 
 function Lookalikes({ stress }) {
@@ -55,23 +88,23 @@ function Lookalikes({ stress }) {
       title="Groups that look like rings but are not"
       lede={`${count(stress.worlds)} worlds containing no rings at all, ${count(stress.n_accounts)} accounts. Families share an address. Flatmates share a device. Hostels share both. A detector that cannot tell them from a ring is worthless in production.`}
     >
-      <div className="grid border-y border-line sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid border-y border-line-strong sm:grid-cols-3 lg:grid-cols-5">
         {kinds.map(([kind, k], i) => (
           <div
             key={kind}
             className={[
-              "px-5 py-6 first:pl-0 last:pr-0",
+              "interactive px-5 py-7 first:pl-0 last:pr-0 hover:bg-surface",
               i > 0 && "sm:border-l sm:border-line",
             ].filter(Boolean).join(" ")}
           >
             <div className="label">{kind}</div>
-            <div className="tnum mt-3 text-[24px] leading-none font-medium text-fg">
+            <div className="tnum mt-3.5 text-[26px] leading-none font-medium text-fg">
               {count(k.clusters)}
             </div>
             <div className="mt-3 text-[12.5px] text-fg-faint">
-              clusters · <span className="tnum text-fg-muted">{k.wrongly_blocked}</span> blocked
+              clusters · <span className="tnum text-fg-2">{k.wrongly_blocked}</span> blocked
               {k.sent_to_review > 0 && (
-                <> · <span className="tnum text-fg-muted">{k.sent_to_review}</span> reviewed</>
+                <> · <span className="tnum text-fg-2">{k.sent_to_review}</span> reviewed</>
               )}
             </div>
           </div>
@@ -88,6 +121,9 @@ function Lookalikes({ stress }) {
 }
 
 export default function Failure({ holdout, loading }) {
+  const [hoverA, setHoverA] = useState(null);
+  const [hoverB, setHoverB] = useState(null);
+
   if (loading) return <Skeleton className="mt-16 h-96 w-full" />;
   if (!holdout) return <Empty>No results/holdout.json yet. Run ./run.sh.</Empty>;
 
@@ -107,43 +143,96 @@ export default function Failure({ holdout, loading }) {
   const deviceSpread =
     Math.max(...device.map((d) => d.blocked)) - Math.min(...device.map((d) => d.blocked));
 
+  const a = hoverA != null ? curve[hoverA] : null;
+  const bpt = hoverB != null ? device[hoverB] : null;
+
   return (
     <div className="pt-14">
       <PageHeader
         title="Where this stops working"
         lede="Naming the blind spot precisely is worth more than claiming there isn't one. Everything on this page is a measured failure, not a caveat."
-      >
-        <Metadata
-          className="mt-8"
-          items={[
-            ["Known failures", holdout.failure_catalogue.length],
-            ["Blocking gone by", dead !== null ? dead.toFixed(2) : "n/a"],
-            ["Lookalike worlds", count(holdout.lookalike_stress?.worlds ?? 0)],
-          ]}
-        />
-      </PageHeader>
+      />
 
-      <Section title="Recall as the operator gets better">
+      <Section title="Failure overview">
+        <MetricRow columns={3}>
+          <Metric
+            label="Known failure modes"
+            value={holdout.failure_catalogue.length}
+            level={2}
+            note="Each one carries a real cluster from a real seed"
+            detail="A failure nobody wrote down gets rediscovered in production, so every one that has been found is kept here rather than fixed quietly."
+          />
+          <Metric
+            label="Blocking is finished by"
+            value={dead !== null ? dead.toFixed(2) : "n/a"}
+            level={2}
+            tone="warn"
+            note="Operator sophistication, on the swept curve"
+            detail="Past this point the system blocks nothing at all. Everything it still reaches, it reaches by sending the cluster to a human."
+          />
+          <Metric
+            label="Wrongly blocked, ring-free worlds"
+            value={count(holdout.lookalike_stress?.accounts_wrongly_blocked ?? 0)}
+            level={2}
+            tone="ok"
+            note={`Across ${count(holdout.lookalike_stress?.n_clusters ?? 0)} clusters that contain no ring`}
+            detail="Families, flatmates, hostels and offices all share the attributes a ring shares. This is the count that says whether the detector can tell them apart."
+          />
+        </MetricRow>
+      </Section>
+
+      <Section
+        title="Recall as the operator gets better"
+        lede="Operator sophistication swept from the obvious tier at 0.0 to the adaptive tier at 1.0. Move across the chart to read any point."
+      >
         <ChartFrame
-          description="Operator sophistication swept from the obvious tier at 0.0 to the adaptive tier at 1.0. Past the shaded edge, blocking has stopped contributing anything and only the review queue is still working."
           legend={
             <Legend
               items={[
-                { label: "blocked or reviewed", color: MARK.ok },
-                { label: "blocked", color: MARK.info },
-                { label: "precision", color: MARK.warn, dashed: true },
+                { label: "blocked or reviewed", color: "var(--color-ok)" },
+                { label: "blocked", color: "var(--color-info)" },
+                { label: "precision", color: "var(--color-warn)", dashed: true },
               ]}
+            />
+          }
+          readout={
+            <Readout
+              active={!!a}
+              resting="Move across the chart to read the curve at any level of operator sophistication."
+              items={a ? [
+                { label: "Sophistication", value: a.sophistication.toFixed(2) },
+                { label: "Blocked", value: dp4(a.blocked), color: "var(--color-info)" },
+                { label: "With review", value: dp4(a.withReview), color: "var(--color-ok)" },
+                {
+                  label: "Precision",
+                  value: isUndefinedPrecision(a.precision) ? "undefined" : dp4(a.precision),
+                  color: "var(--color-warn)",
+                },
+                {
+                  label: "Blocking",
+                  value: a.blocked < 0.05 ? "finished" : "still contributing",
+                },
+              ] : []}
             />
           }
           xLabel="operator sophistication"
           yLabel="rate"
+          footer={dead !== null
+            ? `Past ${dead.toFixed(2)} the blocked line is under 0.05, so blocking has stopped contributing and only the review queue is still working.`
+            : undefined}
         >
-          <ResponsiveContainer width="100%" height={360}>
-            <LineChart data={curve} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
+          <ResponsiveContainer width="100%" height={380}>
+            <LineChart
+              data={curve}
+              margin={{ top: 8, right: 16, bottom: 4, left: 0 }}
+              onMouseMove={(s) =>
+                setHoverA(s?.isTooltipActive ? s.activeTooltipIndex ?? null : null)}
+              onMouseLeave={() => setHoverA(null)}
+            >
               <CartesianGrid {...gridProps} />
               {dead !== null && (
                 <ReferenceArea
-                  x1={dead} x2={1} fill={MARK.bad} fillOpacity={0.06} stroke="none"
+                  x1={dead} x2={1} fill="var(--color-bad)" fillOpacity={0.07} stroke="none"
                   label={{
                     value: "blocking is finished here",
                     fill: "var(--color-fg-faint)", fontSize: 11, position: "center",
@@ -154,50 +243,72 @@ export default function Failure({ holdout, loading }) {
                      tickFormatter={(v) => v.toFixed(1)} {...axisProps} />
               <YAxis domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} width={42} {...axisProps} />
               <ReferenceLine y={0.5} stroke="var(--color-line-strong)" strokeDasharray="2 5" />
-              <Tooltip
-                cursor={{ stroke: "var(--color-line-strong)" }}
-                content={<ChartTooltip labelPrefix="sophistication " format={(v) => dp4(v)} />}
-              />
+              <Tooltip content={() => null} cursor={crosshair} />
               <Line type="monotone" dataKey="withReview" name="blocked or reviewed"
-                    stroke={MARK.ok} strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                    stroke="var(--color-ok)" strokeWidth={1.5} dot={false}
+                    isAnimationActive={false}
+                    activeDot={{ r: 3.5, fill: "var(--color-ok)", stroke: "var(--color-base)", strokeWidth: 2 }} />
               <Line type="monotone" dataKey="blocked" name="blocked"
-                    stroke={MARK.info} strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                    stroke="var(--color-info)" strokeWidth={1.5} dot={false}
+                    isAnimationActive={false}
+                    activeDot={{ r: 3.5, fill: "var(--color-info)", stroke: "var(--color-base)", strokeWidth: 2 }} />
               <Line type="monotone" dataKey="precision" name="precision"
-                    stroke={MARK.warn} strokeWidth={1.5} strokeDasharray="4 3"
+                    stroke="var(--color-warn)" strokeWidth={1.5} strokeDasharray="4 3"
                     dot={false} isAnimationActive={false} connectNulls={false} />
             </LineChart>
           </ResponsiveContainer>
         </ChartFrame>
       </Section>
 
-      <Section title="Rotating devices alone does not help the operator">
+      <Section
+        title="Rotating devices alone does not help the operator"
+        lede={`Device reuse swept across its whole range with everything else held at the moderate tier. Blocked recall moves by ${deviceSpread.toFixed(3)} end to end, and the review queue does not move at all.`}
+      >
         <ChartFrame
-          description={`Device reuse swept across its whole range with everything else held at the moderate tier. Blocked recall moves by ${deviceSpread.toFixed(3)} end to end, and the review queue does not move at all. Rotating delivery addresses is what defeats this system, not rotating phones.`}
           legend={
             <Legend
               items={[
-                { label: "blocked or reviewed", color: MARK.ok },
-                { label: "blocked", color: MARK.info },
+                { label: "blocked or reviewed", color: "var(--color-ok)" },
+                { label: "blocked", color: "var(--color-info)" },
               ]}
+            />
+          }
+          readout={
+            <Readout
+              active={!!bpt}
+              resting="Move across the chart to read either curve at any level of device reuse."
+              items={bpt ? [
+                { label: "Device reuse", value: bpt.reuse.toFixed(2) },
+                { label: "Blocked", value: dp4(bpt.blocked), color: "var(--color-info)" },
+                { label: "With review", value: dp4(bpt.withReview), color: "var(--color-ok)" },
+              ] : []}
             />
           }
           xLabel="device reuse"
           yLabel="rate"
+          footer="Rotating delivery addresses is what defeats this system, not rotating phones."
         >
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={device} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart
+              data={device}
+              margin={{ top: 8, right: 16, bottom: 4, left: 0 }}
+              onMouseMove={(s) =>
+                setHoverB(s?.isTooltipActive ? s.activeTooltipIndex ?? null : null)}
+              onMouseLeave={() => setHoverB(null)}
+            >
               <CartesianGrid {...gridProps} />
               <XAxis dataKey="reuse" ticks={TICKS}
                      tickFormatter={(v) => v.toFixed(1)} {...axisProps} />
               <YAxis domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} width={42} {...axisProps} />
-              <Tooltip
-                cursor={{ stroke: "var(--color-line-strong)" }}
-                content={<ChartTooltip labelPrefix="device reuse " format={(v) => dp4(v)} />}
-              />
+              <Tooltip content={() => null} cursor={crosshair} />
               <Line type="monotone" dataKey="withReview" name="blocked or reviewed"
-                    stroke={MARK.ok} strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                    stroke="var(--color-ok)" strokeWidth={1.5} dot={false}
+                    isAnimationActive={false}
+                    activeDot={{ r: 3.5, fill: "var(--color-ok)", stroke: "var(--color-base)", strokeWidth: 2 }} />
               <Line type="monotone" dataKey="blocked" name="blocked"
-                    stroke={MARK.info} strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                    stroke="var(--color-info)" strokeWidth={1.5} dot={false}
+                    isAnimationActive={false}
+                    activeDot={{ r: 3.5, fill: "var(--color-info)", stroke: "var(--color-base)", strokeWidth: 2 }} />
             </LineChart>
           </ResponsiveContainer>
         </ChartFrame>
@@ -207,17 +318,17 @@ export default function Failure({ holdout, loading }) {
 
       <Section
         title="Failure catalogue"
-        lede="Every way this system is known to fail, each with a real cluster from a real seed. Kept because a failure nobody wrote down gets rediscovered in production."
+        lede="Every way this system is known to fail, each with a real cluster from a real seed. Open one for why it happens, what it costs, and which stage it belongs to."
         meta={
-          <span className="inline-flex items-center gap-2 text-[12.5px] text-fg-muted">
+          <span className="inline-flex items-center gap-2.5 text-[12.5px] text-fg-muted">
             <Status tone="bad" />
             {holdout.failure_catalogue.length} known
           </span>
         }
       >
-        <div className="space-y-3">
+        <div className="border-t border-line-strong">
           {holdout.failure_catalogue.map((f, i) => (
-            <FailureEntry key={i} f={f} index={i} />
+            <FailureEntry key={i} f={f} index={i} stage={stageOf(f)} />
           ))}
         </div>
       </Section>

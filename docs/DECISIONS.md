@@ -835,3 +835,47 @@ that one glyph, which is the subset Google ships it in.
 
 Data was not touched. 58 figures were pulled straight out of `results/` and
 checked against the rendered DOM of all six pages before this was committed.
+
+## D-043: An animated pipeline, and why the animation is CSS rather than JavaScript
+Date: 2026-08-26
+Phase: 9
+
+The interface had become uniform: everything dark, everything thin, everything
+roughly as important as everything else. This round added hierarchy and made
+the pipeline page explain the system rather than list it.
+
+**Three levels of importance.** A surface ladder of four steps, a text ladder of
+five, and a type scale named after the job rather than the size, so a heading
+cannot quietly end up the same weight as the paragraph under it. Colour is still
+reserved for state.
+
+**The pipeline is now a machine you step through.** Seven stages, each with its
+own SVG scene, a stage rail, play, pause, replay, previous, next, and an
+auto/manual switch. Every stage names its input, its process and its output. A
+volume rail underneath shows the whole reduction, counts only: 12,000 accounts,
+71,994,000 possible pairs, 542,431 candidates, 54,032 edges, 1,915 clusters, 24
+features, one score, three actions. The link stage sits that rail out, because
+its output is a threshold in bits and a threshold is not a volume.
+
+**motion/react was installed, used, and removed.** Every element it animated
+started at opacity 0, which meant the pipeline diagram rendered blank until a
+frame loop ran. For the one thing on the site whose job is to do the explaining,
+that is the wrong failure mode. The reveals are CSS keyframes now:
+animation-fill-mode guarantees the finished state, so a stalled loop, a
+throttled background tab or a slow device leaves the diagram fully drawn rather
+than empty. Expand and collapse uses grid-template-rows, which animates height
+without measuring it in JavaScript, so an open disclosure is a real layout.
+Interaction-led motion is CSS transitions. Nothing that carries information is
+gated behind a script running.
+
+That change also made the work verifiable. A frame loop does not advance under
+the headless renderer used to check every page here, so with motion in place the
+signature feature could not be looked at before shipping. It can now.
+
+**Two bugs found by rendering rather than by reading.** The visualiser reset its
+stage index on mount, not only when the tier changed, which threw away any
+starting stage. And the volume rail listed each stage's output but never its
+input, so the 54,032 edges above the threshold appeared nowhere on the page.
+
+Data was not touched. 61 figures were read out of `results/` and checked against
+the rendered DOM of all six pages before this was committed.

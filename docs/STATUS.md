@@ -21,7 +21,7 @@ round tested a claim the round before had published, and withdrew it.
 | explanations | 1,334 review notes, 40 written by a language model, every number audited against the pipeline. |
 | interface | README opening in plain language, run.sh, a Flask service that answers what a caller with fewer columns would get, and a six-view React front end on Tailwind: overview, cost, failures, the pipeline stage by stage, a filterable review queue, and the charts the pipeline drew. Neutral by default, colour reserved for state, and every mark colour passes a colour-vision check. |
 
-239 tests. 42 decisions recorded, including every wrong turn.
+239 tests. 43 decisions recorded, including every wrong turn.
 
 Full account: `docs/built_till_now.md`. Every measured number: `docs/METRICS.md`.
 
@@ -73,7 +73,7 @@ baseline on the same worlds loses **Rs.48,028,800**.
 | detection curve showing where the system stops working | yes, plus an adversarial loop |
 | review queue costed against accuracy and against capacity | yes |
 | adversarial loop run at every level of review visibility | yes, 3 replicates on the two that decide it |
-| docs complete | yes, 40 files |
+| docs complete | yes, 41 files |
 | README opens with a plain-language summary | yes, also `docs/PITCH.md` |
 | README numbers match results/ | yes, asserted by 10 tests |
 | no API key anywhere in git history | yes, scanned |
