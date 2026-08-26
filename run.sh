@@ -14,6 +14,7 @@
 #   python -m detector.reassemble --seeds 700-749      rejoining split rings
 #   python -m detector.ablate                          what a caller with
 #                                                      fewer columns gets
+#   python -m detector.throughput                      how long a batch takes
 #
 # Everything runs at nice 10 so the machine stays usable, and every entry point
 # measures free memory before it starts and refuses to run if there is not

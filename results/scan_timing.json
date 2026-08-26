@@ -1,0 +1,63 @@
+{
+ "tier": "moderate",
+ "seed": 700,
+ "repeats": 3,
+ "explanations": "off, they are cached lookups rather than computation",
+ "sizes": [
+  {
+   "n_accounts": 3000,
+   "n_clusters": 10,
+   "candidate_pairs": 52825,
+   "possible_pairs": 4498500,
+   "timings_ms": {
+    "block_ms": 42.6,
+    "link_ms": 19.8,
+    "cluster_ms": 69.1,
+    "features_ms": 10.4,
+    "score_ms": 66.3
+   },
+   "total_ms": 210.5,
+   "accounts_per_second": 14251.8,
+   "repeats": 3
+  },
+  {
+   "n_accounts": 6000,
+   "n_clusters": 54,
+   "candidate_pairs": 200995,
+   "possible_pairs": 17997000,
+   "timings_ms": {
+    "block_ms": 99.6,
+    "link_ms": 66.6,
+    "cluster_ms": 150.7,
+    "features_ms": 49.6,
+    "score_ms": 77.1
+   },
+   "total_ms": 453.4,
+   "accounts_per_second": 13233.3,
+   "repeats": 3
+  },
+  {
+   "n_accounts": 12000,
+   "n_clusters": 195,
+   "candidate_pairs": 546435,
+   "possible_pairs": 71994000,
+   "timings_ms": {
+    "block_ms": 295.4,
+    "link_ms": 184.7,
+    "cluster_ms": 415.5,
+    "features_ms": 175.0,
+    "score_ms": 66.8
+   },
+   "total_ms": 1173.3,
+   "accounts_per_second": 10227.6,
+   "repeats": 3
+  }
+ ],
+ "growth": {
+  "from_accounts": 3000,
+  "to_accounts": 12000,
+  "size_ratio": 4.0,
+  "time_ratio": 5.57,
+  "exponent": 1.24
+ }
+}

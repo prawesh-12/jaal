@@ -905,3 +905,37 @@ stage holds, so the rail doubles as the clock.
 Under reduced motion the advance stops entirely. The rail still selects a
 stage, every scene still holds its finished state, and the page stays complete
 with nothing moving on its own.
+
+## D-045: A page that answers how Jaal is used, and a measurement it needed
+Date: 2026-08-26
+Phase: 9
+
+The site could show that the detector works and could not show how anyone would
+run it. That is the question a reader asks after the numbers land, and it had no
+home. `docs/INTEGRATION.md` covered part of it in prose, but a document nobody
+opens is not an answer.
+
+The Using Jaal tab is ten sections with a contents list that follows the
+reader: what it does, where it sits, what you send, the hashing guarantee, what
+each field is worth, what a narrower column set reaches, how to call it, how
+long it takes, how many analysts it needs, and what it does not promise. The
+active entry is decided by an IntersectionObserver rather than by scroll maths,
+and the list is a plain set of links, so it works before the observer runs.
+
+One measurement was missing and had to be taken. Everything in `results/`
+answered whether the detector is any good; nothing answered whether it can be
+run, which is the first thing an operator asks. `detector/throughput.py` scans a
+batch at three sizes, three times each, and reports the best run per size with
+explanations off, because those are cached lookups rather than computation.
+
+A batch of 12,000 accounts scans in 1,173 ms, about 10,228 accounts a second,
+which puts a million accounts at roughly 98 seconds on one core allocation of a
+laptop. Four times the accounts costs 5.57 times the time, an exponent of 1.24,
+so the cost is closer to linear than to quadratic and a large merchant does not
+have to be sliced to make it finish. Clustering is 35% of the total and is the
+one stage that has to see the whole graph, which is the reason discovery is a
+batch job and assignment is not.
+
+Every figure on the page is read from a results file. 17 of them were checked
+against the rendered DOM before this was committed, on top of the 61 already
+checked across the other six pages.

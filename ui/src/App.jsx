@@ -7,6 +7,7 @@ import Overview from "@/views/Overview";
 import Cost from "@/views/Cost";
 import Failure from "@/views/Failure";
 import Pipeline from "@/views/Pipeline";
+import Integrate from "@/views/Integrate";
 import Queue from "@/views/Queue";
 import Charts from "@/views/Charts";
 
@@ -17,6 +18,7 @@ const TABS = [
   ["pipeline", "Pipeline"],
   ["queue", "Queue"],
   ["charts", "Charts"],
+  ["use", "Using Jaal"],
 ];
 
 const KEYS = TABS.map(([k]) => k);
@@ -171,6 +173,9 @@ export default function App() {
         </TabsContent>
         <TabsContent value="charts">
           <Charts />
+        </TabsContent>
+        <TabsContent value="use">
+          <Integrate />
         </TabsContent>
       </main>
 

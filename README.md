@@ -297,7 +297,7 @@ Five more failure modes with worked examples are in `results/holdout.json` and
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ./run.sh              # full reproduction, about 30 minutes, no network needed
 ./run.sh quick        # smaller worlds, about 4 minutes
-.venv/bin/python -m pytest    # 239 tests
+.venv/bin/python -m pytest    # 242 tests
 ```
 
 `run.sh` will not re-open the holdout if `results/holdout.json` exists. A
@@ -396,7 +396,7 @@ twenty-four by permutation importance, and that is documented rather than hidden
 | `docs/03-glossary.md` | Every term in one line |
 | `docs/phases/` | One document per phase, with real numbers |
 | `docs/diagrams/` | Context, containers, pipeline, and one per stage |
-| `docs/DECISIONS.md` | 44 decisions, including the ones that were wrong |
+| `docs/DECISIONS.md` | 45 decisions, including the ones that were wrong |
 | `extras/plan.md` | The implementation plan this was built from |
 
 Ten places where measurement contradicted the plan are recorded in

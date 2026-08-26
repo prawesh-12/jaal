@@ -138,3 +138,23 @@ def test_unknown_run_lists_what_is_available(client):
     body = client.get("/runs/does-not-exist")
     assert body.status_code == 404
     assert "holdout" in body.json["available"]
+
+
+def test_scan_timing_covers_every_stage():
+    """The Using Jaal page quotes these per stage, so a missing key would show
+    up as a blank column rather than as an error."""
+    import json
+    import os
+
+    if not os.path.exists("results/scan_timing.json"):
+        pytest.skip("no results/scan_timing.json, run python -m detector.throughput")
+    with open("results/scan_timing.json") as f:
+        report = json.load(f)
+
+    assert report["sizes"], "no batch sizes measured"
+    for row in report["sizes"]:
+        for stage in ("block_ms", "link_ms", "cluster_ms", "features_ms", "score_ms"):
+            assert stage in row["timings_ms"], f"{stage} missing at {row['n_accounts']}"
+        assert row["total_ms"] > 0
+        assert row["accounts_per_second"] > 0
+    assert report["growth"]["exponent"] > 0
