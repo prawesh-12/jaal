@@ -104,3 +104,25 @@ def test_a_sentence_ending_period_is_not_part_of_a_number():
     found = explain.numbers_in("extracted Rs.10,800. Confidence 1.00.")
     assert "10,800" in found
     assert "10,800." not in found
+
+
+def test_run_sh_does_not_cap_the_review_queue():
+    """Every cluster that reaches a human gets a note, not the top few.
+
+    run.sh used to pass --limit 40, so a clean run rebuilt 40 of the 1,334
+    notes that the README, METRICS and the dashboard all quote.
+    """
+    with open("run.sh") as f:
+        script = f.read()
+    explain_call = script[script.index("detector.explain"):]
+    explain_call = explain_call[:explain_call.index("fi")]
+    assert "--limit" not in explain_call, "run.sh is capping the review queue"
+
+
+def test_the_published_note_count_matches_the_queue():
+    with open("results/explanations.json") as f:
+        report = json.load(f)
+    with open("results/holdout.json") as f:
+        holdout = json.load(f)
+    pooled = holdout["pooled"]
+    assert report["n_notes"] == pooled["clusters_blocked"] + pooled["clusters_reviewed"]

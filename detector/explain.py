@@ -194,7 +194,9 @@ def main() -> None:
     p_arg = argparse.ArgumentParser(description=__doc__)
     p_arg.add_argument("--features", default="results/features_holdout.csv")
     p_arg.add_argument("--model", default="results/model.pkl")
-    p_arg.add_argument("--limit", type=int, default=40)
+    p_arg.add_argument("--limit", type=int, default=0,
+                       help="how many notes to write, 0 for every "
+                            "cluster in the queue")
     p_arg.add_argument("--live", action="store_true",
                        help="try Ollama Cloud, needs OLLAMA_API_KEY")
     p_arg.add_argument("--out", default="results/explanations.json")
@@ -218,7 +220,8 @@ def main() -> None:
     # A human is only ever handed the blocked and reviewed clusters, worst first.
     interesting = table.assign(p=p, action=action)
     interesting = interesting[interesting["action"] != "allow"]
-    interesting = interesting.nlargest(args.limit, "total_discount")
+    n_notes = args.limit if args.limit > 0 else len(interesting)
+    interesting = interesting.nlargest(n_notes, "total_discount")
 
     print(f"\nwriting {len(interesting)} review notes "
           f"({'live' if args.live else 'cache or template'})")

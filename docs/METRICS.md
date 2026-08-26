@@ -14,7 +14,7 @@ Every number here was produced by a run and read back out of `results/`. Nothing
 | sophisticated | 0.0080 | 3-5 | 40 | 65 | 655 |
 | adaptive | 0.0080 | 3-5 | 40 | 0 | 0 |
 
-Seed 5 generated twice, byte identical: **True**. 100 worlds in 5.32s.
+Seed 5 generated twice, byte identical: **True**. 100 worlds in 5.91s.
 
 ## Blocking
 
@@ -90,7 +90,7 @@ Blocking an innocent customer costs Rs.15,000. Missing an abuser costs Rs.200. B
 | --- | --- | --- | --- | --- | --- |
 | F1-optimal threshold | 0.9162 | 0.9119 | 22,934 | 0 | -Rs.24,642,800 |
 | threshold 0.50 | 0.9084 | 0.9169 | 23,256 | 0 | -Rs.27,740,000 |
-| best two-action threshold | 0.0000 | 0.0000 | 0 | 0 | +Rs.0 |
+| best two-action threshold | n/a (no blocks) | 0.0000 | 0 | 0 | +Rs.0 |
 | three actions, expected cost | 0.9997 | 0.1681 | 3,875 | 17,059 | +Rs.1,317,750 |
 
 Of 101 two-action thresholds swept, **0** turn a profit.

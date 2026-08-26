@@ -115,7 +115,7 @@ fi
 
 if [ -f results/features_holdout.csv ]; then
   run "Review notes"                  -m detector.explain \
-      --features results/features_holdout.csv --limit 40
+      --features results/features_holdout.csv
 fi
 
 run "Every measured number, in one file"     -m detector.report \
