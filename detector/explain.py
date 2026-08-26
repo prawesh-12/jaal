@@ -47,10 +47,20 @@ PROMPT_FIELDS = ("size", "signup_span_days", "coupon_rate", "repeat_rate",
                  "distinct_bin_ratio")
 
 
-def cache_key(facts: dict, p: float, action: str) -> str:
+def cache_key(facts: dict, p: float, action: str,
+              signals: list[tuple[str, float]] | None = None) -> str:
+    """Keyed on everything that appears in the note, evidence included.
+
+    The evidence bullets were left out of the key at first, and the audit caught
+    it: two clusters with identical rounded facts but different edge strengths
+    shared a cache entry, so the second one was handed a note quoting the
+    first one's bits. Anything the note can contain has to be in the key.
+    """
     payload = json.dumps({"f": {k: round(float(facts[k]), 4)
                                 for k in sorted(facts)},
-                          "p": round(float(p), 3), "a": action},
+                          "p": round(float(p), 3), "a": action,
+                          "s": [[n, round(float(b), 2)]
+                                for n, b in (signals or [])]},
                          sort_keys=True)
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
@@ -117,7 +127,7 @@ def explain(facts: dict, p: float, action: str,
             top_signals: list[tuple[str, float]], live: bool = False,
             cache_dir: str = CACHE_DIR) -> dict:
     """One review note, with the source it came from recorded."""
-    key = cache_key(facts, p, action)
+    key = cache_key(facts, p, action, top_signals)
     path = os.path.join(cache_dir, f"{key}.json")
 
     if os.path.exists(path):

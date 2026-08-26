@@ -1,0 +1,8 @@
+{
+ "key": "4bc1176b2c6d4f31",
+ "note": "20 accounts created over 2.4 days, 100% of them in one pincode. 100% used the first-order coupon and 0% ever ordered again, extracting Rs.4,000 in discounts. Calibrated probability 1.00. Recommended: review.\nStrongest linking evidence:\n  - pincode agreement, average edge: +37.2 bits\n  - weakest link inside the cluster: +18.4 bits\n  - spread of edge strength: +12.8 bits",
+ "source": "template",
+ "model": null,
+ "action": "review",
+ "p": 1.0
+}

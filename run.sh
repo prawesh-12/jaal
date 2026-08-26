@@ -42,6 +42,13 @@ run() {
 }
 
 echo "Jaal, $MODE run, $ACCOUNTS accounts per world"
+if [ "$MODE" = "quick" ]; then
+  echo
+  echo "NOTE: quick mode overwrites results/*.json with smaller, noisier runs."
+  echo "The numbers published in the README come from the full run. To put the"
+  echo "committed ones back afterwards:  git checkout results/"
+  echo
+fi
 $PY -c "from detector.resources import apply, announce; announce(apply())"
 
 if [ ! -f data/olist_priors.json ]; then

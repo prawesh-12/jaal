@@ -19,7 +19,7 @@ All 11 phases complete. Holdout opened once and reported.
 | 9 interface | README, run.sh, Flask API, React dashboard |
 | 10 submission | Clean-checkout check, secret scan, final checklist |
 
-107 tests pass. 25 decisions recorded, including the wrong turns.
+122 tests pass. 25 decisions recorded, including the wrong turns.
 
 ## Blocked or uncertain
 

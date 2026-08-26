@@ -35,12 +35,15 @@ See `docs/diagrams/seq-explain-cache.md` for the sequence.
 ## Results
 
 ```
-$ python -m detector.explain --features results/features_holdout.csv --limit 40
+$ python -m detector.explain --features results/features_holdout.csv --limit 2000
 
-writing 40 review notes (cache or template)
-sources: cache 0, live 0, template 40
+writing 1334 review notes (cache or template)
+sources: cache 0, live 0, template 1334
 notes containing a number not in the feature dict: 0
 ```
+
+Every cluster the holdout run did not simply allow gets a note: 260 blocked and
+1,074 sent for review. All 1,334 are committed in `cache/explanations/`.
 
 An example, from the adaptive tier, seed 977, cluster 1:
 
@@ -66,11 +69,21 @@ token against the feature dict and the evidence bullets, and reports any that do
 not trace back. Ten notes were also read by hand, because that check catches an
 invented number and not a real one rephrased into a wrong claim.
 
+**The audit earned its place immediately.** It flagged 7 notes out of 1,334
+quoting bit values that were not on their own cluster. The cache key covered the
+facts, the probability and the action but not the evidence bullets, so two
+clusters with identical rounded facts and different edge strengths shared an
+entry and the second was handed the first one's evidence. The key now covers
+everything the note can contain, and
+`test_the_cache_key_covers_the_evidence_too` fails if that regresses. Without
+the audit this would have shipped, and it is exactly the class of error the
+audit exists to catch: a real number, in the wrong place.
+
 ## Known limitations
 
 **No live language model output exists in this repository.** `OLLAMA_API_KEY` is
 not set on the machine this was built on and no Ollama server is running, so all
-40 committed cache entries are template notes and are labelled `"source":
+1,334 committed cache entries are template notes and are labelled `"source":
 "template"`. The live path is implemented and wrapped in try/except, so setting
 the key and re-running with `--live` fills the cache with written notes. Marking
 them as templates rather than pretending otherwise is the point.
