@@ -461,3 +461,125 @@ Recorded rather than papered over, and not fixed by rewriting history to
 manufacture commits that did not happen. Each message says what changed and what
 was learned, several of them describe a measurement contradicting the plan, and
 there is no single dump commit. That is the property the rule was protecting.
+
+## D-028: Reviewer accuracy is priced, and it decides the result
+Date: 2026-08-26
+
+Every rupee of benefit from the review queue assumed a person resolves each
+cluster correctly. That assumption was carrying the headline number and had
+never been costed.
+
+A reviewer who fails on a ring cluster leaves those accounts unrecovered at one
+coupon each, so net saving falls linearly with accuracy and reaches zero at
+0.5753 pooled. Below that the system loses money.
+
+The tiers do not share that burden. Blocking alone carries the easiest tier
+whatever the reviewer does, so it never goes negative. The hardest tier needs an
+82% accurate reviewer, because every rupee it earns comes from the queue. That
+asymmetry is worth more than the pooled figure: it says the harder the adversary,
+the more the result depends on a person doing their job.
+
+## D-029: Precision is undefined where nothing was blocked
+Date: 2026-08-26
+
+The adaptive tier blocks zero accounts, so its precision is 0 of 0. It had been
+printing as 0.0000, which reads as "everything it blocked was wrong". That is a
+different claim and it is untrue.
+
+It now reads `n/a (no blocks)` in the holdout results, the README, the metrics
+report and the dashboard. The same false zero was sitting on 14 points of the
+detection curve. Pooled precision needed no change: a tier that blocks nothing
+contributes no numerator and no denominator, so it was already excluded, and a
+test now asserts that rather than assuming it.
+
+The rules baseline blocks 919 innocents and catches none at the same tier. That
+zero is real and is left alone.
+
+## D-030: The review queue is priced against a bounded analyst budget
+Date: 2026-08-26
+
+The queue was unbounded, which no merchant is.
+
+Ranking clusters by expected value of review, predicted purity times accounts
+times the coupon minus analyst time on every account, 80% of everything the
+queue adds comes from the top 1.69 clusters per batch of 12,000 accounts and 95%
+from the top 2.23. The whole queue is 2.69 per batch.
+
+Two things worth stating. The number that matters is the share of what review
+*adds*, not of the total, because blocking already nets Rs.1,440,000 with no
+analyst at all and the budget cannot touch that. And the curve is not perfectly
+monotonic: 4 of 60 steps paid less with more capacity, the worst by Rs.9,950,
+because a cluster pushed out of the queue falls back to blocking and blocking a
+genuinely pure cluster costs nothing. That is left in rather than smoothed.
+
+## D-031: The adversarial loop did not converge on address rotation
+Date: 2026-08-26
+
+An operator was given its own five parameters, one observable outcome, and no
+access to anything else. It sees the share of its accounts that were blocked,
+because a cluster sent to a human is indistinguishable from one that was allowed
+until somebody acts.
+
+It moved signup timing, twice, and nothing else. Blocking fell from 0.1354 to
+zero. The share of its accounts reaching a human fell from 0.9631 to 0.9283.
+
+This was not the expected answer. The detection curve says rotating delivery
+addresses is what defeats this system, and address rotation was the second
+strongest signal the operator found, at rho +0.254 against +0.321. It never
+picked it, because it optimises what it can measure and spreading signups
+measures better.
+
+The finding that came out of it is uncomfortable and is reported as such: the
+review queue is not adversarially robust because it is hard to evade, it is
+robust because it is invisible. An operator patient enough to watch which
+accounts get closed weeks later would recover that signal. This loop does not
+model that operator.
+
+## D-032: 100 worlds per adversarial round, chosen by measurement
+Date: 2026-08-26
+
+Three replicates of a single round on different seeds. At 20 and 40 worlds the
+blocked rate was constant across every world, so there was nothing to correlate
+and the operator learned nothing at all. At 60 the answer flipped between
+replicates, signup window against drop addresses. At 100 all three replicates
+agreed at p of 0.001 or better, and 150 added nothing.
+
+Recorded because "enough worlds for the result to be stable" is otherwise a
+matter of taste, and here it is a measurement.
+
+## D-033: Rejoining split rings was measured and rejected
+Date: 2026-08-26
+
+Weak edges break one ring into several clusters, each judged alone. A second
+pass merged clusters sharing a pincode and an overlapping signup window, gated
+so the joined group could not be less pure than its parts.
+
+It made things worse by Rs.1,431,700 on 200 validation worlds, turning a
+Rs.1,079,900 gain into a Rs.351,800 loss. Merging halved the cluster count and
+recall fell with it, 0.1645 to 0.0950.
+
+The gate did its job, rejecting 11,566 merges on purity. It protected the ratio
+and could not protect the economics. Every cost in this system scales with
+cluster size, so a bigger group costs more to review and needs a higher purity to
+be worth blocking, even when merging diluted nothing. That is the lesson worth
+keeping: a purity-preserving merge is not a cost-preserving merge.
+
+Kept, off by default, and a test fails if anything in the live path calls it.
+
+## D-034: `diameter` returns -1 for a disconnected group
+Date: 2026-08-26
+
+igraph reports an infinite diameter for a disconnected subgraph, which then
+crashes the model with a non-finite feature. Leiden guarantees connected
+communities so this never fired, and the merge experiment above is the first
+thing that could build a disconnected group. The feature now returns -1, the
+same sentinel it already used for a group with no edges.
+
+## D-035: The memory budget is tested against a stubbed reading
+Date: 2026-08-26
+
+Two resource tests failed mid-round because they called `budget()` for real and
+it correctly refused when free memory dipped under the floor while the desktop
+was busy. A test that fails when somebody opens a browser is testing the laptop,
+not the code. The logic is now checked against a stubbed reading, and one test
+still confirms the real reading is plausible.

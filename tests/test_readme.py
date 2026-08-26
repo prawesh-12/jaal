@@ -76,3 +76,46 @@ def test_no_placeholder_numbers_survive(readme):
 def test_the_evaluation_protocol_is_published(readme):
     assert "900-999" in readme
     assert "SEALED" in readme
+
+
+def test_the_review_accuracy_table_matches_its_file(readme):
+    with open("results/review_accuracy.json") as f:
+        ra = json.load(f)
+    pooled = ra["pooled"]
+    assert f"{pooled['ring_accounts_reviewed']:,}" in readme
+    assert f"Rs.{pooled['worst_case_review_loss_rupees']:,}" in readme
+    assert f"{pooled['breakeven_accuracy']:.4f}" in readme
+    for tier, block in ra["tiers"].items():
+        for row in block["curve"]:
+            v = row["net_rupees"]
+            assert f"Rs.{abs(v):,}" in readme, f"{tier} at {row['accuracy']}"
+
+
+def test_the_capacity_figures_match_their_file(readme):
+    with open("results/review_capacity.json") as f:
+        rc = json.load(f)
+    per_batch = rc["n_reviewable_clusters"] / rc["n_worlds"]
+    assert f"{per_batch:.2f}" in readme
+    assert f"Rs.{rc['net_with_no_review_rupees']:,}" in readme
+    for share in (80, 95):
+        hit = rc[f"reaches_{share}_percent"]
+        assert f"{hit['budget_per_world']:.2f}" in readme
+
+
+def test_the_adversarial_figures_match_their_file(readme):
+    with open("results/adaptive_loop.json") as f:
+        al = json.load(f)
+    first, last = al["history"][0], al["history"][-1]
+    assert str(al["worlds_per_round"]) in readme
+    for value in (f"{first['recall_blocked']:.4f}",
+                  f"{first['recall_including_review']:.4f}",
+                  f"{last['recall_including_review']:.4f}"):
+        assert value in readme, value
+
+
+def test_the_baseline_per_tier_figures_match(readme):
+    with open("results/baseline_holdout.json") as f:
+        base = json.load(f)
+    for tier, t in base["tiers"].items():
+        assert f"Rs.{abs(t['net_vs_nothing_rupees']):,}" in readme, tier
+        assert f"{t['recall']:.4f}" in readme, tier
