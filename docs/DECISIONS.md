@@ -657,3 +657,42 @@ replicate at 0.8918, so the two do not overlap. The middle three q values still
 have one run each, which is why **no threshold in q is claimed**. The
 one-replicate ordering between them is reported as noise rather than smoothed
 into a curve.
+
+## D-039: Tailwind and shadcn conventions in the dashboard, reversing D-023
+Date: 2026-08-26
+Phase: 9
+
+D-023 cut Tailwind and wrote the dashboard in 70 lines of plain CSS, on the
+argument that five tabs of tables did not need a build-time dependency. That was
+right at the time and wrong once the page grew. The dark palette had no tokens,
+the tables had no way to show a rate as a length, the review queue rendered all
+1,334 notes with no filter, and nothing below 1100px was thought about.
+
+So the plan's original choice is back: Tailwind v4 through its Vite plugin, and
+components written the way shadcn/ui writes them, which means `cn` over
+`clsx` and `tailwind-merge`, variants through `class-variance-authority`, and
+Radix for the tab primitive. Icons come from lucide-react. Inter and JetBrains
+Mono are self-hosted through fontsource, so the page still renders with no
+network.
+
+Eight npm packages, all dev-time. The nine-library budget in CLAUDE.md is the
+Python pipeline's, and `requirements.txt` is untouched. `run.sh` does not build
+the UI and does not need it, so a judge who never runs `npm install` still gets
+every published number.
+
+What the redesign actually changed, beyond looks:
+
+- The review queue filters by tier, action and free text, and pages 24 at a
+  time instead of mounting 1,334 cards.
+- Recall is drawn as a meter next to its number, so the four tiers can be
+  compared by length.
+- The baseline comparison is a diverging bar on one scale. On the obvious tier
+  the rules lose Rs.1,18,20,000 while Jaal keeps Rs.11,48,700. The old table
+  printed both numbers and left you to work out how far apart they are.
+- Precision on the adaptive tier is labelled `undefined, nothing blocked`
+  rather than `n/a`, which is the honest reading of 0 of 0.
+- The lookalike stress test now has a place on the page. It was measured in
+  Phase 7 and had never been shown.
+- Chart animation is off. It said nothing and it left the lines undrawn in a
+  headless screenshot.
+

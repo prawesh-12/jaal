@@ -1,65 +1,111 @@
-:root {
-  --bg: #0f1115;
-  --panel: #171a21;
-  --line: #262b36;
-  --text: #e6e8ee;
-  --dim: #98a0b3;
-  --good: #4ea87a;
-  --bad: #d4685a;
-  --accent: #5b8def;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+@import "tailwindcss";
+
+/*
+  Dark only. This is a risk console, it is read in a dark room next to a
+  terminal, and a light theme would mean a second palette to keep honest.
+*/
+@theme {
+  --color-bg: oklch(0.145 0.008 265);
+  --color-bg-deep: oklch(0.115 0.008 265);
+  --color-surface: oklch(0.187 0.011 265);
+  --color-surface-2: oklch(0.225 0.013 265);
+  --color-line: oklch(0.272 0.014 265);
+  --color-line-soft: oklch(0.232 0.012 265);
+  --color-ink: oklch(0.965 0.004 265);
+  --color-ink-dim: oklch(0.715 0.017 265);
+  --color-ink-faint: oklch(0.565 0.018 265);
+
+  --color-accent: oklch(0.705 0.155 258);
+  --color-accent-soft: oklch(0.42 0.10 258);
+  --color-pos: oklch(0.775 0.155 158);
+  --color-neg: oklch(0.675 0.185 22);
+  --color-warn: oklch(0.815 0.135 78);
+
+  /* Tier ramp, easiest to hardest. Green means we catch it, red means we do not. */
+  --color-tier-obvious: oklch(0.775 0.155 158);
+  --color-tier-moderate: oklch(0.745 0.135 210);
+  --color-tier-sophisticated: oklch(0.815 0.135 78);
+  --color-tier-adaptive: oklch(0.675 0.185 22);
+
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-card: 0.875rem;
 }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); }
-a { color: var(--accent); }
 
-.wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
-header h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: -0.01em; }
-header p { margin: 0; color: var(--dim); }
-.defence {
-  margin: 16px 0 24px; padding: 12px 14px; border-radius: 8px;
-  background: #1b1f29; border: 1px solid var(--line); color: var(--dim);
-  font-size: 13px; line-height: 1.5;
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+  }
+
+  /* A single cool wash behind the header so the page has a top and a bottom. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -20% 0 auto 0;
+    height: 70vh;
+    pointer-events: none;
+    background:
+      radial-gradient(60% 55% at 50% 0%, oklch(0.45 0.11 258 / 0.30), transparent 70%),
+      radial-gradient(35% 40% at 85% 5%, oklch(0.52 0.13 158 / 0.11), transparent 70%);
+    z-index: 0;
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+  }
+
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+    border: 3px solid var(--color-bg);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-surface-2); }
 }
 
-nav { display: flex; gap: 6px; margin: 18px 0 20px; flex-wrap: wrap; }
-nav button {
-  background: var(--panel); color: var(--dim); border: 1px solid var(--line);
-  padding: 7px 13px; border-radius: 7px; cursor: pointer; font-size: 14px;
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "zero" 1;
+  letter-spacing: -0.02em;
 }
-nav button[aria-selected="true"] { color: var(--text); border-color: var(--accent); }
 
-section { margin-bottom: 30px; }
-h2 { font-size: 17px; margin: 0 0 4px; }
-.sub { color: var(--dim); font-size: 13px; margin: 0 0 12px; line-height: 1.5; }
-
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
-.card {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: 9px; padding: 14px;
+@utility eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
 }
-.card .label { color: var(--dim); font-size: 12px; }
-.card .value { font-size: 22px; margin-top: 5px; font-variant-numeric: tabular-nums; }
-.pos { color: var(--good); }
-.neg { color: var(--bad); }
 
-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-th, td { text-align: right; padding: 7px 9px; border-bottom: 1px solid var(--line); }
-th:first-child, td:first-child { text-align: left; }
-th { color: var(--dim); font-weight: 500; }
-td { font-variant-numeric: tabular-nums; }
-tbody tr:hover { background: #1b1f29; }
-
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 14px; }
-img.chart { width: 100%; border-radius: 8px; background: #fff; }
-
-.note { white-space: pre-wrap; font-size: 13px; line-height: 1.55; color: var(--text); }
-.meta { color: var(--dim); font-size: 12px; margin-bottom: 6px; }
-.pill {
-  display: inline-block; padding: 1px 7px; border-radius: 999px;
-  font-size: 11px; border: 1px solid var(--line); margin-left: 6px;
+/* One hairline of light along the top edge, so cards read as lifted. */
+@utility lift {
+  box-shadow:
+    inset 0 1px 0 0 oklch(1 0 0 / 0.045),
+    0 1px 2px 0 oklch(0 0 0 / 0.4);
 }
-.pill.block { color: var(--bad); border-color: var(--bad); }
-.pill.review { color: #e0b054; border-color: #e0b054; }
-.loading { color: var(--dim); padding: 40px 0; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@utility rise {
+  animation: rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

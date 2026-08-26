@@ -23,7 +23,7 @@ was built last, after every number existed.
 | `README.md` | Results first, then why recall is low, then the baseline comparison |
 | `run.sh` | The whole pipeline, offline, `full` or `quick` |
 | `api/app.py` | `POST /score`, `GET /runs/<id>`, plus `/health` and `/features` |
-| `ui/` | React and Vite, Recharts for the curves, no backend needed |
+| `ui/` | React, Vite, Tailwind and Recharts. Static, no backend needed. |
 
 ## Key decisions
 
@@ -39,9 +39,11 @@ noisier, and the published ones come from the full run.
 numpy and scikit-learn each claim every core, and the machine this runs on
 belongs to someone who is using it.
 
-**No Tailwind.** The plan lists it. Plain CSS in one 70-line file does the same
-job here without a build-time dependency and one more thing to go wrong on a
-judge's machine. See D-023.
+**Tailwind is in after all.** D-023 kept the dashboard on 70 lines of plain
+CSS. That held while the page was five tables. It stopped holding once the page
+needed a theme, meters inside table cells, sticky filters and a responsive
+layout, so the plan's original choice was restored and the components follow the
+shadcn/ui conventions. See D-039.
 
 **The dashboard computes nothing.** `npm run data` copies `results/*.json` and
 `results/*.png` into `public/data` and the app fetches them. The two Recharts
@@ -53,18 +55,24 @@ calculating a feature, it belongs in `detector/`.
 
 ```
 $ cd ui && npm install && npm run build
-added 104 packages in 16s
-copied 18 result files into public/data
-dist/index.html                   0.42 kB
-dist/assets/index-Br5dtKwn.css    2.23 kB
-dist/assets/index-DOQwOG8s.js   585.02 kB (gzip 175.01 kB)
-built in 1.35s
+copied 30 result files into public/data
+dist/index.html                    0.69 kB
+dist/assets/index-tV4faKpK.css    54.62 kB (gzip 20.56 kB)
+dist/assets/index-Dj86wcBD.js    661.91 kB (gzip 200.48 kB)
+built in 3.48s
 ```
 
-Five tabs: Results (the holdout matrix and the baseline comparison), Cost (the
-policy table, the cost sweep and the sensitivity analysis), Where it fails (both
-detection curves and the failure catalogue), Review queue (the 40 notes), and
-Charts (the four matplotlib PNGs).
+Five tabs, each reachable by its own hash so a reviewer can link straight to
+one. Results is the holdout matrix, the pooled figures and the baseline
+comparison. Cost is the three-action table, the threshold sweep and the
+sensitivity analysis. Where it fails holds both detection curves, the lookalike
+stress test and the failure catalogue. Review queue is all 1,334 notes, filtered
+by tier, action or free text, 24 at a time. Charts is the eight matplotlib PNGs
+the pipeline drew, framed as paper so it stays obvious the page did not draw
+them.
+
+The self-hosted Inter and JetBrains Mono files are what the CSS bundle grew
+into. Nothing on the page reaches the network at runtime.
 
 The API, checked against a real cluster from the validation table:
 
