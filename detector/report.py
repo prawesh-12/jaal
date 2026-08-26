@@ -310,6 +310,29 @@ def build() -> str:
                        f"Rs.{best['net_rupees'] - rc['net_with_unlimited_review_rupees']:,} "
                        f"above an unlimited queue.")
 
+    al = load("adaptive_loop")
+    if al:
+        out.append(section("An operator that adapts"))
+        out.append(f"{al['rounds']} rounds, {al['worlds_per_round']} worlds "
+                   f"each, starting from the {al['start_tier']} settings. The "
+                   f"operator sees only what share of its own accounts got "
+                   f"blocked. A cluster sent to a human looks the same to it as "
+                   f"one that was allowed.\n")
+        out.append("| round | blocked | blocked or reviewed | parameter moved "
+                   "| from | to |")
+        out.append("| --- | --- | --- | --- | --- | --- |")
+        for h in al["history"]:
+            m = h.get("move")
+            tail = (f"{m['parameter']} | {m['from']} | {m['to']} |"
+                    if m else "none, no signal to learn from | | |")
+            out.append(f"| {h['round']} | {h['recall_blocked']:.4f} | "
+                       f"{h['recall_including_review']:.4f} | " + tail)
+        first, last = al["history"][0], al["history"][-1]
+        out.append(f"\nBlocking fell from {first['recall_blocked']:.4f} to "
+                   f"{last['recall_blocked']:.4f}. The share reaching a human "
+                   f"fell from {first['recall_including_review']:.4f} to "
+                   f"{last['recall_including_review']:.4f}.")
+
     ex = load("explanations")
     if ex:
         out.append(section("Review notes"))

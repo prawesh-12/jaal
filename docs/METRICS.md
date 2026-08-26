@@ -211,6 +211,21 @@ Clusters are opened best first, ranked by expected value: predicted purity times
 
 The curve is not perfectly monotonic. 4 of 60 steps paid less with more capacity, the worst by Rs.9,950. A cluster pushed out of the queue falls back to blocking, and blocking a genuinely pure cluster costs nothing while reviewing it costs Rs.150 an account. The best budget measured is 2.60 clusters per batch at Rs.2,256,850, which is Rs.3,800 above an unlimited queue.
 
+## An operator that adapts
+
+5 rounds, 100 worlds each, starting from the moderate settings. The operator sees only what share of its own accounts got blocked. A cluster sent to a human looks the same to it as one that was allowed.
+
+| round | blocked | blocked or reviewed | parameter moved | from | to |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 0.1354 | 0.9631 | none, no signal to learn from | | |
+| 1 | 0.0293 | 0.9557 | signup_window_days | 3.0 | 16.488 |
+| 2 | 0.0000 | 0.9544 | none, no signal to learn from | | |
+| 3 | 0.0000 | 0.9460 | none, no signal to learn from | | |
+| 4 | 0.0050 | 0.9331 | signup_window_days | 16.488 | 29.976 |
+| 5 | 0.0000 | 0.9283 | none, no signal to learn from | | |
+
+Blocking fell from 0.1354 to 0.0000. The share reaching a human fell from 0.9631 to 0.9283.
+
 ## Review notes
 
 1,334 notes for every cluster not simply allowed. Sources: live 40, template 1294. Notes quoting a number not from the pipeline: **0**.

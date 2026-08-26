@@ -31,7 +31,7 @@ A full account of everything built is in `docs/built_till_now.md`.
 | 2. Undefined precision | done. Adaptive precision reads `n/a (no blocks)` everywhere |
 | 3. Bounded review capacity | done. 80% of what review adds needs 1.69 clusters per batch |
 | 4. Ninety-second version | done. `docs/PITCH.md`, and prepended to the README |
-| 5. Adversarial loop | not started |
+| 5. Adversarial loop | done. Blocking driven to zero in two moves, review queue held at 0.93 |
 | 6. Vulcan positioning | not started |
 | 7. Ring reassembly | not started |
 

@@ -165,6 +165,36 @@ the obvious tier and loses twelve million rupees doing it. Jaal catches half as
 many and turns a profit. That comparison is the entire argument of this project,
 and without a published baseline nobody, the author included, could have made it.
 
+## We let the operator fight back
+
+Sophistication had been a dial we set, which invites the fair objection that we
+wrote the fraud so of course we catch it. So we built an operator that adapts.
+
+It starts at ordinary settings and sees exactly one thing: what share of its own
+accounts got blocked. Not our code, not our weights, not the review queue, which
+from its side is indistinguishable from being allowed. Each round it runs 100
+worlds with settings scattered around where it stands, correlates each of its own
+five behaviours against getting blocked, and changes the strongest one.
+
+**In two moves it drove automatic blocking from 0.1354 to zero, and the share of
+its accounts reaching a human fell only from 0.9631 to 0.9283.**
+
+It did not converge on rotating delivery addresses, which is what the detection
+curve says actually defeats this system. It converged on spreading signups over
+time, because that is the one it could measure. Address rotation was the second
+strongest signal it found and it never picked it.
+
+The reading we take from that is uncomfortable and worth stating. The review
+queue is not adversarially robust because it is hard to evade. It is robust
+because it is **invisible**: an operator learns from feedback, and a queue gives
+none. A more patient operator, one that watched which accounts got closed weeks
+later rather than which got blocked at signup, would recover that signal. This
+loop does not model that operator and nothing here says the system would survive
+one.
+
+Round by round, the method, and what it means: `docs/phases/phase-11-adversarial.md`.
+Chart: `results/adaptive_loop.png`.
+
 ## What this does not detect
 
 The detector was swept across operator sophistication continuously rather than
