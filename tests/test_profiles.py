@@ -40,7 +40,7 @@ def test_the_full_profile_keeps_everything():
 
 def test_the_sdk_payload_is_the_full_column_set():
     """The two fields the merchant sends are what closes the gap. If this ever
-    stops holding, the integration story in docs/INTEGRATION.md is wrong."""
+    stops holding, the integration story in docs/06-run-and-integrate.md is wrong."""
     sdk = profiles.get("sdk_payload")
     assert set(sdk.columns) == set(profiles.ALL_COLUMNS)
     assert sdk.comparisons == profiles.FULL.comparisons

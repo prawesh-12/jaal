@@ -122,13 +122,14 @@ if [ -f results/features_holdout.csv ]; then
 fi
 
 run "Every measured number, in one file"     -m detector.report \
-    --out docs/METRICS.md
+    --out results/metrics.md \
+    --integration docs/06-run-and-integrate.md
 
 echo
 echo "=============================================================="
 echo "  done"
 echo "=============================================================="
 echo "results/       every number, as JSON"
-echo "docs/METRICS.md  the same numbers as one report"
+echo "results/metrics.md  the same numbers as one generated report"
 echo "results/*.png  PR curves, reliability diagram, cost curve, detection curve"
-echo "docs/          how it works, stage by stage"
+echo "docs/          start at docs/README.md"

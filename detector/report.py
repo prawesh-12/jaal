@@ -4,7 +4,8 @@ Reads results/ and formats it. Computes nothing, so anything it prints can be
 traced back to the file that produced it.
 
     python -m detector.report
-    python -m detector.report --out docs/METRICS.md
+    python -m detector.report --out results/metrics.md \
+                              --integration docs/06-run-and-integrate.md
 """
 
 from __future__ import annotations

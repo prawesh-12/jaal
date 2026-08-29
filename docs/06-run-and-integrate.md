@@ -1,31 +1,55 @@
-# Integrating Jaal
+# Running it, and calling it
 
-Jaal finds groups of accounts run by one person farming a merchant's first-order
-promo discount. It works on the **cluster**, never the transaction, because no
-single order in a fifty-account ring looks wrong.
-
-This page is the contract. It says exactly what you send, what comes back, what
-each field is worth, and what happens when you cannot send one of them. Every
-number here came out of a run and can be rebuilt offline with `./run.sh`.
-
-Defence only. All data in this project is synthetic.
+For: someone who wants to reproduce the numbers, or wire Jaal into a real
+system. Answers what to run, what to send, and what comes back.
 
 ---
 
-## The short version
+## Reproducing every published number
 
-1. You send a batch of account records, twelve columns.
-2. Five of those twelve can be a salted hash. We never need the real value.
-3. You get back one decision per cluster: **block**, **review** or **allow**,
-   each priced in rupees, each with a sentence saying why.
-4. If you cannot send all twelve, `POST /v1/coverage` tells you what you lose
-   before you write any code.
+```bash
+git clone <repo> && cd jaal
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+./run.sh
+```
+
+No network needed. Ten pip packages. About 35 minutes.
+
+```bash
+./run.sh quick      # 4,000-account worlds, fewer seeds, about 2 minutes
+pytest -q           # 242 tests
+```
+
+**`./run.sh quick` overwrites `results/*.json`** with smaller, noisier runs.
+The published numbers come from the full run. To put them back:
+
+```bash
+git checkout results/
+```
+
+Do that before you show anyone the UI, because the UI reads `results/`.
+
+Two experiments sit outside `run.sh` because they add about 40 minutes:
+
+```bash
+python -m detector.adapt --rounds 5 --worlds 100   # an operator that adapts
+python -m detector.adapt --visibility-sweep        # the same, at every level
+                                                   # of what it can see
+python -m detector.reassemble --seeds 700-749      # rejoining split rings
+python -m detector.ablate                          # fewer columns
+python -m detector.throughput                      # how long a batch takes
+```
+
+Every entry point takes `--accounts` and `--seeds`, so you can run something
+small before you run something large. Everything runs at `nice -n 10`, and
+every entry point measures free memory first and refuses to start if there is
+not enough. See `detector/resources.py`.
 
 ---
 
 ## What you send
 
-One row per account.
+One row per account, twelve columns.
 
 | column | type | what it is | can be hashed |
 | --- | --- | --- | --- |
@@ -35,7 +59,7 @@ One row per account.
 | `pincode` | string | postcode | **yes** |
 | `card_bin` | string | first six of the card | **yes** |
 | `ip_prefix` | string | first three octets | **yes** |
-| `signup_ts` | int | unix seconds, when the account was created | no, it is compared as a gap |
+| `signup_ts` | int | unix seconds, when the account was created | no, compared as a gap |
 | `n_orders` | int | orders placed so far | no |
 | `coupon_used` | bool | did this account claim the first-order promo | no |
 | `first_order_value` | int | rupees, integer | no |
@@ -220,7 +244,7 @@ to your finance team:
 | one analyst review | Rs.150 | `config.COST_ANALYST_REVIEW` |
 
 They decide everything. At these three, blocking only pays above **98.68%**
-precision, which is why there is a third action at all. `docs/METRICS.md` has
+precision, which is why there is a third action at all. `docs/04-results.md` has
 the sensitivity across every cost ratio from 10:1 to 200:1, and three actions
 pay at all of them.
 

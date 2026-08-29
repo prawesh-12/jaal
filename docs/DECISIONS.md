@@ -428,7 +428,7 @@ model to fail to generalise across. The seed split does the job it was built for
 which is preventing world-level artefacts leaking between train and test, and
 that is all it can do. A synthetic holdout tests the split, not the world.
 
-Stated in `docs/phases/phase-07-holdout.md` rather than left for a reader to
+Stated in `docs/04-results.md` rather than left for a reader to
 notice, because a suspiciously clean generalisation result deserves an
 explanation more than a good one deserves a mention.
 
@@ -525,9 +525,15 @@ zero. The share of its accounts reaching a human fell from 0.9631 to 0.9283.
 
 This was not the expected answer. The detection curve says rotating delivery
 addresses is what defeats this system, and address rotation was the second
-strongest signal the operator found, at rho +0.254 against +0.321. It never
+strongest signal the operator found, at rho +0.2544 against -0.3205. It never
 picked it, because it optimises what it can measure and spreading signups
 measures better.
+
+Corrected 2026-08-29: this line originally read "+0.254 against +0.321". The
+second figure is negative in `results/adaptive_loop.json`, because the two
+knobs evade in opposite directions. The comparison the sentence makes is on
+magnitude and is unchanged, 0.3205 beats 0.2544, but the printed sign was
+wrong.
 
 The finding that came out of it is uncomfortable and is reported as such: the
 review queue is not adversarially robust because it is hard to evade, it is
@@ -972,3 +978,38 @@ The fix is not a corrected animation. HTML bars are plain widths now, with a
 transition for when the value changes. A bar carries a value, and its length
 must not depend on an animation having run. That is the same rule the pipeline
 scenes already follow, and it should have been applied here at the same time.
+
+## D-047: Cut docs/ from 41 files to 8, and move the deep tables off the README
+Date: 2026-08-29
+
+The docs had grown to 5,881 lines across 41 files. Eleven phase documents and
+an 830-line build log recorded how the code got written, which is what
+`DECISIONS.md` and the git history are for. Seventeen diagrams sat in their own
+files, so nobody navigated to them. Nothing anywhere documented the model: not
+the two-model design, not the 24 features, not a single hyperparameter.
+
+The new set is eight files plus this log, diagrams inline in the doc they
+explain. Deleted: `phases/`, `diagrams/`, `built_till_now.md`, `METRICS.md`,
+`STATUS.md`, `PITCH.md`, both video scripts, `ui-refinement-plan.md`, and the
+four numbered docs that the new `01` to `06` replace. `INTEGRATION.md` was the
+best of the old set and survives as most of `06-run-and-integrate.md`.
+
+The README went from 20,725 bytes to about 5,000. It was that long because
+`tests/test_readme.py` asserted that it carried every review-accuracy figure,
+every capacity figure, the adversarial replicate table and the mechanism table.
+The test was right to check those numbers and wrong about where they belong. It
+now checks the README for the headline and the sealed-holdout table, and checks
+`docs/04-results.md` and `docs/05-where-it-fails.md` for the deep tables. Same
+guarantee, applied to the file that actually publishes each number. Two new
+checks were added while the file was open: no em dashes and no placeholder
+numbers, across all eight documents.
+
+`detector/report.py` used to generate `docs/METRICS.md`. A generated artefact
+built from `results/` belongs next to the data, so it now writes
+`results/metrics.md`, and `run.sh` passes it
+`--integration docs/06-run-and-integrate.md` to keep the ablation block filled
+from the run that produced it.
+
+One thing this cost. The phase documents held some reasoning that is not in
+this log. Where it was load bearing it moved into the new docs, and where it
+was narrative it went. The git history still has all of it.
