@@ -64,15 +64,15 @@ Record decisions in `docs/DECISIONS.md` rather than asking about them.
 - A phase that has failed three separate repair attempts
 - Anything that would cost money
 
-When you stop, write the blocker into `docs/STATUS.md` first, so the state
-survives even if the session ends.
+When you stop, write the blocker into `docs/DECISIONS.md` first, so the
+state survives even if the session ends.
 
 ### When something fails
 
 1. Read the actual error, do not guess
 2. Form one hypothesis and test it
-3. If three attempts fail, write what you tried into `docs/STATUS.md`, mark the
-   phase blocked, and move to work that does not depend on it
+3. If three attempts fail, write what you tried into `docs/DECISIONS.md` and move to
+   work that does not depend on it
 4. Never fake a result to get past a failure
 
 ### Self-check loop
@@ -203,8 +203,8 @@ Run long jobs at lowered priority so the desktop stays responsive:
 nice -n 10 python -m detector.run --tier sophisticated
 ```
 
-If `budget()` raises, do not work around it. Report it in `docs/STATUS.md` and
-either wait or run a smaller job with `--accounts 1500`.
+If `budget()` raises, do not work around it. Report it to the developer and either wait
+or run a smaller job with `--accounts 1500`.
 
 ### Memory discipline in this pipeline
 
@@ -318,7 +318,7 @@ Genuinely parallel work:
 
 | Point in the build        | Split                                                                                                                             |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| After any phase completes | One worker writes the phase doc and its L3 diagram, while you start the next phase's code                                         |
+| After any phase completes | One worker updates the affected doc and its diagram, while you start the next phase's code                                          |
 | Phase 3, step 3.4         | One worker runs the Louvain comparison while you tune Leiden resolution. Both are compute, so run them in sequence, not together. |
 | Phase 9                   | Three workers: README, Flask API, React UI. None touch the pipeline. Best parallel opportunity in the project.                    |
 | Phase 10                  | One worker drafts the video script while you do the clean-checkout test                                                           |
@@ -344,11 +344,11 @@ Genuinely parallel work:
 Example brief:
 
 ```
-Write docs/phases/phase-02-linking.md following the template in CLAUDE.md.
+Rewrite the linking section of docs/02-how-it-works.md.
 
 Read: extras/plan.md Phase 2, detector/link.py, detector/blocking.py,
       results/link_params.json
-Write: docs/phases/phase-02-linking.md, docs/diagrams/L3-linking.md only
+Write: docs/02-how-it-works.md only
 Compute: none. Do not run the pipeline.
 Numbers: take them from results/link_params.json. Do not invent any.
 Style: plain English, no em dashes, short sentences.
@@ -582,28 +582,40 @@ It adds up evidence from each field, measured in bits."
 
 ```
 jaal/
-  extras/plan.md              the spec. read it, do not edit it.
+  extras/plan.md              the original spec. read it, do not edit it.
   CLAUDE.md                   this file
-  README.md                   written in Phase 9, results above the fold
+  README.md                   the front door, results above the fold
   run.sh                      one command, offline, reproduces everything
   requirements.txt            pinned
 
   config.py                   all tunable constants, single source of truth
 
   detector/
+    resources.py              memory budget, called by every entry point
+    calibrate_from_olist.py   extracts real distributions from Olist
     generate_accounts.py      synthetic worlds + hidden answer key
-    calibrate_from_olist.py   extracts real distributions, Phase 0
-    blocking.py                candidate pair generation
-    link.py                    Fellegi-Sunter pair scoring
-    link_train.py              m and u estimation
-    cluster.py                 Leiden community detection
-    features.py                cluster to numbers
-    model.py                   train and calibrate
-    costs.py                   rupee cost functions
-    decide.py                  block / allow / review
-    evaluate.py                metrics
-    explain.py                 LLM review notes, cached
-    run.py                     end to end
+    check_generator.py        asserts the generator is what it claims
+    baseline.py               rules-only reference detector
+    blocking.py               candidate pair generation
+    link.py                   Fellegi-Sunter pair scoring
+    link_train.py             m and u estimation, no labels
+    link_eval.py              threshold sweep for the edge cutoff
+    cluster.py                Leiden community detection
+    features.py               cluster to 25 numbers
+    model.py                  forest, calibration, purity regressor
+    costs.py                  rupee cost functions
+    decide.py                 block / allow / review
+    pipeline.py               the seven stages in order, what a caller uses
+    evaluate_holdout.py       the sealed run
+    explain.py                review notes, cached, LLM optional
+    adapt.py                  an operator that adapts to its own outcomes
+    reassemble.py             rejoining split rings. measured, disabled.
+    ablate.py                 what a caller with fewer columns gets
+    profiles.py               column profiles for the API
+    review.py                 review queue accuracy and capacity
+    throughput.py             how long a batch takes
+    report.py                 tables and plots
+    cli.py                    --accounts and --seeds, shared
 
   data/
     olist_priors.json         extracted distributions, committed
@@ -611,15 +623,13 @@ jaal/
 
   cache/explanations/         committed LLM responses
 
-  results/
-    baseline.json             frozen Phase 1 reference
-    holdout.json              sealed run, Phase 7
-    *.png                     PR curves, cost curve, reliability diagram
+  results/                    every published number, as JSON and PNG
+                              holdout.json is the sealed run
 
   tests/                      pytest
-  api/                        Flask, thin, Phase 9 only
-  ui/                         React + Vite, Phase 9 only
-  docs/                       see below
+  api/                        Flask, thin
+  ui/                         React + Vite
+  docs/                       nine files, see below
 ```
 
 **Hard boundary:** no detection logic in `api/` or `ui/`. They read results and
@@ -630,181 +640,63 @@ display them. Nothing else.
 ## Documentation system
 
 Documentation is not written at the end. **Code and its docs land in the same
-commit.** A phase is not done until its doc exists.
+commit.**
 
-### Structure
+The rule that governs everything here: **a doc nobody reads is worth nothing.**
+An earlier version of this project produced 41 doc files and 5,881 lines,
+including a build-log entry per phase and a separate file per diagram. Almost
+none of it was ever read. It was replaced with the set below. Do not grow it
+back.
+
+### The files, and there are only these
 
 ```
+README.md                    the front door. results above the fold.
 docs/
-  STATUS.md                 current state, updated continuously
-  DECISIONS.md              running decision log
-  00-overview.md            what Jaal is, for someone who knows nothing
-  01-architecture.md        how the pieces fit
-  02-data-model.md          schemas and record shapes
-  03-glossary.md            every term defined in one line
-
-  phases/
-    phase-00-foundation.md
-    phase-01-baseline.md
-    phase-02-linking.md
-    ...one per phase, written as the phase completes
-
-  diagrams/
-    L0-context.md           the system and who touches it
-    L1-containers.md        detector, api, ui, data stores
-    L2-pipeline.md          the 7 stages end to end
-    L3-blocking.md          inside one stage
-    L3-linking.md
-    L3-clustering.md
-    L3-features.md
-    L3-model.md
-    L3-decision.md
-    L3-explain.md
-    seq-full-run.md         sequence: run.sh start to results.json
-    seq-pair-scoring.md     sequence: scoring one candidate pair
-    seq-decision.md         sequence: one cluster to an action
-    seq-explain-cache.md    sequence: cache hit and cache miss
+  README.md                  one page. a table saying which doc answers what.
+  01-problem.md              the scam, the cost asymmetry, why transaction
+                             models cannot see it
+  02-how-it-works.md         the seven stages, a diagram each
+  03-the-model.md            features, the forest, calibration, the purity
+                             model, the learned weights
+  04-results.md              every measured number, per tier. mostly tables.
+  05-where-it-fails.md       the failure catalogue and the adversarial loop
+  06-run-and-integrate.md    run.sh, the API, the integration contract
+  glossary.md                every term in one line
+  DECISIONS.md               the running decision log, append only
 ```
 
-### The four levels
+Nine files. If you want a tenth, the answer is almost always no. Put it in an
+existing file instead.
 
-Work top down. Each level assumes the reader has read the one above.
+### Rules
 
-| Level                   | Question it answers                                | Diagram type               |
-| ----------------------- | -------------------------------------------------- | -------------------------- |
-| **L0 Context**    | What is this system and who uses it?               | flowchart, few boxes       |
-| **L1 Containers** | What are the major runnable parts?                 | flowchart with data stores |
-| **L2 Pipeline**   | What are the 7 stages and what flows between them? | flowchart, left to right   |
-| **L3 Stage**      | What happens inside one stage?                     | flowchart plus sequence    |
+- **Diagrams live inside the doc they explain.** Never in a separate file. A
+  diagram in its own file does not get looked at.
+- **Tables beat paragraphs. Diagrams beat tables.** In that order, when the
+  content allows it.
+- **No build log.** How the code got written belongs in `DECISIONS.md` and in
+  the git history. It is not documentation.
+- **No status file.** `git log` is the status.
+- **Length is a constraint, not an accident.** If a doc passes about 260 lines,
+  something in it is padding or belongs somewhere else.
+- Every doc opens by saying who it is for and what it answers. One line.
+- Numbers carry the file they came from, so a reader can check them:
+  `PR-AUC 0.9974 (results/holdout.json)`.
 
 ### Diagram rules
 
-- Use **Mermaid** in fenced code blocks. It renders on GitHub.
-- Every diagram gets a short paragraph above it saying what to look at, and a
-  short one below it saying what the reader should take away.
-- A diagram nobody can read at a glance is not helping. Keep L0 and L1 under 8
-  boxes.
-- Use `flowchart LR` for pipelines, `sequenceDiagram` for interactions,
+- **Mermaid** in fenced code blocks. It renders on GitHub.
+- One line above saying what to look at, one line below saying what to take
+  away. A diagram with no framing is decoration.
+- Under about 10 boxes. If it needs a scrollbar it is two diagrams.
+- `flowchart LR` for pipelines, `sequenceDiagram` for interactions,
   `erDiagram` for the data model, `stateDiagram-v2` for decision states.
-
-Example of the expected quality:
-
-````markdown
-## How a candidate pair gets scored
-
-Every pair that survives blocking goes through the same six steps. The
-important part is that we keep the per-field breakdown, not just the total,
-because the explanation layer in Phase 8 needs to say *why* a pair matched.
-
-```mermaid
-sequenceDiagram
-    participant B as blocking.py
-    participant L as link.py
-    participant P as link_params.json
-    B->>L: candidate pair (a, b)
-    L->>P: load m and u for each field
-    loop each comparison field
-        L->>L: does the field agree?
-        L->>L: weight = log2(m / u)
-    end
-    L->>L: sum weights into total bits
-    L-->>B: (bits, per-field contributions)
-```
-
-The output is two things, not one. The total decides whether an edge exists.
-The breakdown is what a human reviewer reads later.
-````
-
-### Per-phase doc template
-
-Every `docs/phases/phase-NN-*.md` follows this shape:
-
-```markdown
-# Phase N: <name>
-
-## What this phase does
-Two or three sentences. Plain English.
-
-## Why it matters
-What breaks downstream if this is wrong.
-
-## How it works
-The idea first, then the mechanism. Include an L3 diagram.
-
-## Files
-Table: file, what it does, key functions.
-
-## Key decisions
-Anything chosen over an alternative, with the reason.
-
-## Results
-Real numbers from a real run. Command used, output shown.
-If not yet measured, say so.
-
-## Known limitations
-What this phase does not handle.
-```
-
----
-
-## Session workflow
-
-The person running this cannot watch continuously. State must survive between
-sessions, so keep it in files rather than in your head.
-
-### At session start
-
-1. Read `docs/STATUS.md`
-2. Read `docs/DECISIONS.md`
-3. Read the current phase in `extras/plan.md`
-4. Run `pytest -q` to confirm nothing is broken
-5. Say in one short paragraph what you are about to do, then start
-
-### During work
-
-- One phase at a time. Do not begin Phase N+1 until Phase N passes its "check
-  before moving on" list.
-- Run code. Do not describe what output would look like. Produce it.
-- Commit at each step, with docs and tests in the same commit.
-- Update `docs/STATUS.md` whenever the picture changes materially, not only at
-  the end.
-
-### STATUS.md format
-
-Keep it short and current. Rewrite it, do not append.
-
-```markdown
-# Status
-
-Last updated: <date>
-Current phase: 2 (probabilistic linking), step 2.3
-
-## Done
-- Phase 0 complete, all checks pass
-- Phase 1 complete, baseline frozen in results/baseline.json
-- Phase 2: blocking works, recall 0.94 on all tiers
-
-## In progress
-- Estimating m and u in link_train.py
-- u estimation done, m bootstrap half written
-
-## Next
-- Finish m estimation, print the match weight table
-- Then step 2.4, pair scoring
-
-## Blocked or uncertain
-- m estimates are biased toward device-reusing operators.
-  Documented in docs/phases/phase-02-linking.md, needs a README note.
-
-## Numbers so far (all real, from committed runs)
-- baseline, obvious tier: precision 1.00, recall 0.94
-- baseline, sophisticated tier: precision 0.00, recall 0.00
-- blocking recall: 0.94 / 0.93 / 0.91 / 0.90 across the four tiers
-```
 
 ### DECISIONS.md format
 
-Append whenever you choose between options.
+Append whenever you choose between options. This file is the exception to the
+length rule, it grows forever and that is correct.
 
 ```markdown
 ## D-007: Platt scaling over isotonic regression
@@ -816,6 +708,38 @@ about 1,900 clusters, which is under the size where isotonic starts to lose.
 Started with Platt, measured both, Platt gave the better Brier score
 (0.058 vs 0.071). Both numbers are in results/.
 ```
+
+### Published numbers are tested, not trusted
+
+`tests/test_readme.py` asserts that every figure quoted in `README.md`,
+`docs/04-results.md` and `docs/05-where-it-fails.md` matches the file in
+`results/` it claims to summarise. A table that has drifted from its source is
+worse than no table, so this fails rather than warns.
+
+If you publish a new number in a doc, add the assertion in the same commit.
+
+---
+
+## Session workflow
+
+The person running this cannot watch continuously. State must survive between
+sessions, so keep it in files rather than in your head.
+
+### At session start
+
+1. Read `docs/DECISIONS.md`, it is the memory
+2. Run `git log --oneline | head -20`, it is the status
+3. Run `pytest -q` to confirm nothing is broken
+4. Say in one short paragraph what you are about to do, then start
+
+There is no status file. It went stale between every session it existed for,
+and the git log never does.
+
+### During work
+
+- Run code. Do not describe what output would look like. Produce it.
+- Commit at each step, with docs and tests in the same commit.
+- Record a decision in `docs/DECISIONS.md` the moment you make it, not later.
 
 ---
 
@@ -845,7 +769,7 @@ Keep `run.sh` working at every commit. It is what a judge will run.
 | Write "should be around 90%"              | Run it and report the real number.                                          |
 | Delete or rewrite a failing result        | Failing results are findings. Keep them.                                    |
 | Refactor working code for elegance        | Fifteen days. Ship the phases.                                              |
-| Skip the phase doc to save time           | The doc is part of the deliverable.                                         |
+| Add a tenth file to docs/           | Nine is the budget. Put it in an existing file.                             |
 | Save up work for one big commit           | The history is part of what a reviewer reads.                               |
 | Use`n_jobs=-1` anywhere                 | Grabs all 12 threads and stalls the desktop. Use`config.N_JOBS`.          |
 | Run the full dataset while debugging      | Use`--accounts 1500` until the step works.                                |
@@ -859,7 +783,7 @@ Keep `run.sh` working at every commit. It is what a judge will run.
 
 ## If you fall behind
 
-Cut in this order, and record in `docs/STATUS.md` that you cut it:
+Cut in this order, and record in `docs/DECISIONS.md` that you cut it:
 
 1. React dashboard (Phase 9.4)
 2. Flask API (Phase 9.3)
@@ -882,7 +806,7 @@ above a polished dashboard with no baseline and uncalibrated probabilities.
 [ ] every flagged cluster carries a human-readable reason
 [ ] failure catalogue with at least 4 entries
 [ ] detection curve showing where the system stops working
-[ ] docs/ complete: overview, architecture, data model, phase docs, all diagrams
+[ ] docs/ complete: the nine files, diagrams inline, no build log
 [ ] README states defence-only and synthetic data in the first 200 words
 [ ] no API key anywhere in git history
 [ ] commit history reads as incremental work, no single dump commit
