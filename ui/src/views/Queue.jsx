@@ -109,7 +109,7 @@ function Segmented({ options, value, onChange, label }) {
   );
 }
 
-export default function Queue({ explanations, loading }) {
+export default function Queue({ explanations, loading, bare = false }) {
   const [tier, setTier] = useState("all");
   const [action, setAction] = useState("all");
   const [q, setQ] = useState("");
@@ -150,19 +150,21 @@ export default function Queue({ explanations, loading }) {
   ];
 
   return (
-    <div className="pt-14">
-      <PageHeader
-        title="Review queue"
-        lede={`${count(explanations.n_notes)} clusters the system did not simply allow, ordered worst first by rupees extracted. Every number inside a note is checked against the pipeline before it is shown. The language model, where one was used, only writes the sentence around those numbers.`}
-      >
-        <Metadata
-          className="mt-8"
-          items={[
-            ["Served from cache", pct(explanations.served_from_cache / explanations.n_notes, 0)],
-            ["Failed the audit", explanations.notes_with_unverified_numbers],
-          ]}
-        />
-      </PageHeader>
+    <div className={bare ? undefined : "pt-14"}>
+      {!bare && (
+        <PageHeader
+          title="Review queue"
+          lede={`${count(explanations.n_notes)} clusters the system did not simply allow, ordered worst first by rupees extracted. Every number inside a note is checked against the pipeline before it is shown. The language model, where one was used, only writes the sentence around those numbers.`}
+        >
+          <Metadata
+            className="mt-8"
+            items={[
+              ["Served from cache", pct(explanations.served_from_cache / explanations.n_notes, 0)],
+              ["Failed the audit", explanations.notes_with_unverified_numbers],
+            ]}
+          />
+        </PageHeader>
+      )}
 
       <Section title="Queue composition">
         <MetricRow>

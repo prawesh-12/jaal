@@ -1013,3 +1013,45 @@ from the run that produced it.
 One thing this cost. The phase documents held some reasoning that is not in
 this log. Where it was load bearing it moved into the new docs, and where it
 was narrative it went. The git history still has all of it.
+
+## D-048: Rebuilt the UI around five sections, judged in ninety seconds
+Date: 2026-08-30
+
+`extras/ui_improvement_plan.md` asked for a submission UI a reviewer can read
+in 30 to 90 seconds. The seven old tabs (Overview, Cost, Failures, Pipeline,
+Queue, Charts, Using Jaal) were a documentation site: correct, and shaped like
+a paper. They are now five: Overview, Simulation, Results, Failures, Deep Dive.
+
+Nothing was deleted. Cost, Pipeline, Queue, Charts and Using Jaal all still
+render, unchanged, inside collapsed sections on Deep Dive. Each of those views
+grew a `bare` prop that drops its own page header, since the disclosure it sits
+in already carries the title. The old hashes still resolve: `#cost`, `#queue`
+and the rest alias to `#deep`.
+
+Two things the UI now derives rather than reads, both arithmetic on published
+constants, both labelled where they appear:
+
+- Possible pairs is n choose 2 of the accounts in a world.
+- The purity bands on the Simulation page come from the expected cost formula
+  in `detector/decide.py` with the three prices in `results/decisions.json`.
+  Every term scales with cluster size, so the winner depends only on purity:
+  allow under 0.75, review to 0.99, block above. That is the decision rule
+  drawn, not a second implementation of it.
+
+The Simulation page runs no model. It reads the measured figures for the tier
+and case you pick. The agreement pattern a ring pair shows at each tier comes
+from `results/generator_check.json`, which counts device and address collisions
+inside rings and the median ring signup span. At the adaptive tier both counts
+are zero and the span is 42 days, so the pair totals -2.12 bits and never
+crosses the 14-bit threshold. That is the whole failure, shown rather than
+described.
+
+Ring purity is computed per cluster by `detector/explain.py` but not written to
+`results/explanations.json`, so the page shows the band the action implies and
+says the per-cluster value is not published, rather than inventing one.
+
+`ui/scripts/check-views.mjs` is new. It bundles every view with esbuild, stubs
+`useJson` with the real result files, and renders each one with
+`react-dom/server`, including all eight tier and case combinations of the
+simulation. `npm run build` only proves the modules parse. This proves they
+run, which matters because there is no browser in this environment.

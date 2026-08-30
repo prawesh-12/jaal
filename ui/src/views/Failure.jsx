@@ -5,14 +5,13 @@ import {
 } from "recharts";
 import { Note } from "@/components/ui/panel";
 import { Disclosure } from "@/components/disclosure";
-import { Metric, MetricRow } from "@/components/metric";
-import {
-  Empty, PageHeader, Section, Skeleton, Status,
-} from "@/components/section";
+import { Empty, PageHeader, Section, Skeleton, Status } from "@/components/section";
 import {
   ChartFrame, Legend, Readout, axisProps, crosshair, gridProps,
 } from "@/components/chart";
-import { count, dp4, isUndefinedPrecision } from "@/lib/format";
+import { useJson } from "@/lib/useJson";
+import { TIERS, count, dp4, isUndefinedPrecision } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 const TICKS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
@@ -22,7 +21,7 @@ function deadZoneStart(curve) {
   return hit ? hit.sophistication : null;
 }
 
-function FailureEntry({ f, index, stage }) {
+function FailureEntry({ f, index }) {
   return (
     <Disclosure
       summary={
@@ -39,8 +38,7 @@ function FailureEntry({ f, index, stage }) {
     >
       <div className="border-l-2 border-bad/70 pl-5">
         <p className="tnum text-[13px] text-fg-2">{f.detail}</p>
-
-        <dl className="mt-6 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+        <dl className="mt-5 grid gap-x-10 gap-y-5 sm:grid-cols-2">
           <div>
             <dt className="label">Why it happens</dt>
             <dd className="mt-2.5 text-[13px] leading-[1.65] text-fg-muted">{f.why}</dd>
@@ -49,27 +47,126 @@ function FailureEntry({ f, index, stage }) {
             <dt className="label">What it costs</dt>
             <dd className="mt-2.5 text-[13px] leading-[1.65] text-fg-muted">{f.cost}</dd>
           </div>
-          <div>
-            <dt className="label">Stage it belongs to</dt>
-            <dd className="mt-2.5 text-[13px] text-fg-2">{stage}</dd>
-          </div>
-          <div>
-            <dt className="label">Where it was seen</dt>
-            <dd className="mt-2.5 text-[13px] text-fg-2">{f.example}</dd>
-          </div>
         </dl>
       </div>
     </Disclosure>
   );
 }
 
-function stageOf(f) {
-  const text = `${f.failure} ${f.why}`.toLowerCase();
-  if (text.includes("cluster") && text.includes("never")) return "Link, then Cluster";
-  if (text.includes("split") || text.includes("fragment")) return "Cluster";
-  if (text.includes("allow") || text.includes("cost")) return "Decide";
-  if (text.includes("feature") || text.includes("repeat")) return "Features";
-  return "Link";
+/* Answers: which signals survive an operator that adapts? Straight out of the
+   per-tier blocking recall, so it is measured rather than argued. */
+function SignalDecay({ blocking }) {
+  const rows = blocking.rules.map((rule) => ({
+    rule,
+    by: TIERS.map((t) => blocking.tiers[t].recall_by_rule[rule]),
+  }));
+  // Tailwind cannot see a class built from a template string, so the colour
+  // is looked up rather than interpolated.
+  const VERDICT = {
+    holds: { tone: "ok", text: "text-ok" },
+    collapses: { tone: "bad", text: "text-bad" },
+    "weak throughout": { tone: "warn", text: "text-warn" },
+  };
+  const verdict = (by) => {
+    const last = by[by.length - 1];
+    if (last >= 0.5) return "holds";
+    if (by[0] >= 0.5) return "collapses";
+    return "weak throughout";
+  };
+
+  return (
+    <div className="border-t border-line-strong">
+      <div className="hidden grid-cols-[150px_minmax(0,1fr)_140px] gap-6 border-b border-line px-2 pb-2.5 sm:grid">
+        <span className="label">Blocking rule</span>
+        <span className="label">{TIERS.join("  →  ")}</span>
+        <span className="label text-right">Against adaptive</span>
+      </div>
+      {rows.map((r) => {
+        const word = verdict(r.by);
+        const { tone, text } = VERDICT[word];
+        return (
+          <div
+            key={r.rule}
+            className="grid items-center gap-x-6 gap-y-3 border-b border-line px-2 py-3.5 sm:grid-cols-[150px_minmax(0,1fr)_140px]"
+          >
+            <span className="ident text-[12.5px] text-fg-muted">{r.rule}</span>
+            <span className="flex items-end gap-1.5">
+              {r.by.map((v, i) => (
+                <span key={i} className="flex-1">
+                  <span className="block h-8 w-full bg-raised">
+                    <span
+                      className="block w-full origin-bottom bg-fg-dim"
+                      style={{
+                        height: `${Math.max(v, 0.02) * 100}%`,
+                        marginTop: `${(1 - Math.max(v, 0.02)) * 100}%`,
+                        background: i === TIERS.length - 1
+                          ? `var(--color-${tone})` : "var(--color-fg-dim)",
+                      }}
+                    />
+                  </span>
+                  <span className="tnum mt-1.5 block text-center text-[10.5px] text-fg-faint">
+                    {v.toFixed(2)}
+                  </span>
+                </span>
+              ))}
+            </span>
+            <span className={cn("text-[12.5px] sm:text-right", text)}>{word}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* Answers: which single change actually hurts? One knob moved at a time. */
+function OneChangeAtATime({ mechanism }) {
+  const entries = Object.entries(mechanism.configs);
+  const base = mechanism.configs.ordinary;
+
+  return (
+    <div className="border-t border-line-strong">
+      {entries.map(([name, cfg]) => {
+        const isBase = name === "ordinary";
+        return (
+          <div
+            key={name}
+            className={cn(
+              "grid items-center gap-x-6 gap-y-2 border-b border-line px-2 py-3.5 sm:grid-cols-[minmax(0,210px)_120px_minmax(0,1fr)_110px]",
+              isBase && "bg-surface"
+            )}
+          >
+            <span className={cn("text-[13px]", isBase ? "text-fg" : "text-fg-muted")}>
+              {name}
+            </span>
+            <span className={cn("tnum text-[13px]", cfg.recall_blocked > 0 ? "text-fg" : "text-fg-dim")}>
+              {dp4(cfg.recall_blocked)}
+              <span className="ml-2 text-[11px] text-fg-faint">blocked</span>
+            </span>
+            <span className="block h-2 w-full bg-raised">
+              <span
+                className="block h-full"
+                style={{
+                  width: `${cfg.recall_including_review * 100}%`,
+                  background: isBase ? "var(--color-accent)" : "var(--color-fg-dim)",
+                }}
+              />
+            </span>
+            <span className="tnum text-[13px] text-fg-2 sm:text-right">
+              {dp4(cfg.recall_including_review)}
+            </span>
+          </div>
+        );
+      })}
+      <p className="t-meta mt-5 max-w-[80ch]">
+        Bar and right-hand figure are recall including review, against{" "}
+        {dp4(base.recall_including_review)} for an ordinary operator. Rotating
+        devices alone changes it by {base.recall_including_review > 0 ? "" : ""}
+        {dp4(Math.abs(mechanism.configs["devices rotated only"].change_vs_ordinary))}.
+        Rotating addresses alone kills blocking outright. Every one of these was
+        run over {count(mechanism.n_worlds)} worlds.
+      </p>
+    </div>
+  );
 }
 
 function Lookalikes({ stress }) {
@@ -77,16 +174,14 @@ function Lookalikes({ stress }) {
   return (
     <Section
       title="Groups that look like rings but are not"
-      lede={`${count(stress.worlds)} worlds containing no rings at all, ${count(stress.n_accounts)} accounts. Families share an address. Flatmates share a device. Hostels share both. A detector that cannot tell them from a ring is worthless in production.`}
+      lede={`${count(stress.worlds)} worlds containing no rings at all, ${count(stress.n_accounts)} accounts. Families share an address. Flatmates share a device. Hostels share both.`}
     >
       <div className="grid border-y border-line-strong sm:grid-cols-3 lg:grid-cols-5">
         {kinds.map(([kind, k], i) => (
           <div
             key={kind}
-            className={[
-              "interactive px-5 py-7 first:pl-0 last:pr-0 hover:bg-surface",
-              i > 0 && "sm:border-l sm:border-line",
-            ].filter(Boolean).join(" ")}
+            className={cn("interactive px-5 py-7 first:pl-0 last:pr-0 hover:bg-surface",
+                          i > 0 && "sm:border-l sm:border-line")}
           >
             <div className="label">{kind}</div>
             <div className="tnum mt-3.5 text-[26px] leading-none font-medium text-fg">
@@ -94,9 +189,6 @@ function Lookalikes({ stress }) {
             </div>
             <div className="mt-3 text-[12.5px] text-fg-faint">
               clusters · <span className="tnum text-fg-2">{k.wrongly_blocked}</span> blocked
-              {k.sent_to_review > 0 && (
-                <> · <span className="tnum text-fg-2">{k.sent_to_review}</span> reviewed</>
-              )}
             </div>
           </div>
         ))}
@@ -112,8 +204,9 @@ function Lookalikes({ stress }) {
 }
 
 export default function Failure({ holdout, loading }) {
-  const [hoverA, setHoverA] = useState(null);
-  const [hoverB, setHoverB] = useState(null);
+  const blocking = useJson("blocking");
+  const mechanism = useJson("adaptive_mechanism");
+  const [hover, setHover] = useState(null);
 
   if (loading) return <Skeleton className="mt-16 h-96 w-full" />;
   if (!holdout) return <Empty>No results/holdout.json yet. Run ./run.sh.</Empty>;
@@ -126,55 +219,48 @@ export default function Failure({ holdout, loading }) {
     precision: c.precision ?? null,
   }));
   const dead = deadZoneStart(holdout.detection_curve);
-  const device = holdout.device_only_curve.map((c) => ({
-    reuse: c.device_reuse,
-    blocked: c.recall,
-    withReview: c.recall_including_review,
-  }));
-  const deviceSpread =
-    Math.max(...device.map((d) => d.blocked)) - Math.min(...device.map((d) => d.blocked));
-
-  const a = hoverA != null ? curve[hoverA] : null;
-  const bpt = hoverB != null ? device[hoverB] : null;
+  const a = hover != null ? curve[hover] : null;
+  const last = curve[curve.length - 1];
 
   return (
     <div className="pt-14">
       <PageHeader
         title="Where this stops working"
-        lede="Naming the blind spot precisely is worth more than claiming there isn't one. Everything on this page is a measured failure, not a caveat."
+        lede="Automatic blocking fails first. The review queue survives longer. Both statements are measured, and this page is how the system says so."
       />
 
-      <Section title="Failure overview">
-        <MetricRow columns={3}>
-          <Metric
-            label="Known failure modes"
-            value={holdout.failure_catalogue.length}
-            level={2}
-            note="Each one carries a real cluster from a real seed"
-            detail="A failure nobody wrote down gets rediscovered in production, so every one that has been found is kept here rather than fixed quietly."
-          />
-          <Metric
-            label="Blocking is finished by"
-            value={dead !== null ? dead.toFixed(2) : "n/a"}
-            level={2}
-            tone="warn"
-            note="Operator sophistication, on the swept curve"
-            detail="Past this point the system blocks nothing at all. Everything it still reaches, it reaches by sending the cluster to a human."
-          />
-          <Metric
-            label="Wrongly blocked, ring-free worlds"
-            value={count(holdout.lookalike_stress?.accounts_wrongly_blocked ?? 0)}
-            level={2}
-            tone="ok"
-            note={`Across ${count(holdout.lookalike_stress?.n_clusters ?? 0)} clusters that contain no ring`}
-            detail="Families, flatmates, hostels and offices all share the attributes a ring shares. This is the count that says whether the detector can tell them apart."
-          />
-        </MetricRow>
-      </Section>
+      <div className="grid gap-x-16 gap-y-10 border-y border-line-strong py-10 sm:grid-cols-3">
+        <div>
+          <div className="label">Blocking is finished by</div>
+          <div className="tnum mt-4 text-[46px] leading-none font-medium tracking-[-0.03em] text-warn">
+            {dead !== null ? dead.toFixed(2) : "n/a"}
+          </div>
+          <p className="t-meta mt-3.5 max-w-[30ch]">
+            operator sophistication, on a scale from the obvious tier at 0 to the
+            adaptive tier at 1
+          </p>
+        </div>
+        <div className="sm:border-l sm:border-line sm:pl-10">
+          <div className="label">Blocked recall at the far end</div>
+          <div className="tnum mt-4 text-[46px] leading-none font-medium tracking-[-0.03em] text-bad">
+            {dp4(last.blocked)}
+          </div>
+          <p className="t-meta mt-3.5 max-w-[30ch]">nothing is blocked at all</p>
+        </div>
+        <div className="sm:border-l sm:border-line sm:pl-10">
+          <div className="label">Blocked or reviewed, same point</div>
+          <div className="tnum mt-4 text-[46px] leading-none font-medium tracking-[-0.03em] text-ok">
+            {dp4(last.withReview)}
+          </div>
+          <p className="t-meta mt-3.5 max-w-[30ch]">
+            the queue still reaches most of the ring
+          </p>
+        </div>
+      </div>
 
       <Section
         title="Recall as the operator gets better"
-        lede="Operator sophistication swept from the obvious tier at 0.0 to the adaptive tier at 1.0. Move across the chart to read any point."
+        lede="Sophistication swept end to end. Move across the chart to read any point."
       >
         <ChartFrame
           legend={
@@ -199,10 +285,7 @@ export default function Failure({ holdout, loading }) {
                   value: isUndefinedPrecision(a.precision) ? "undefined" : dp4(a.precision),
                   color: "var(--color-warn)",
                 },
-                {
-                  label: "Blocking",
-                  value: a.blocked < 0.05 ? "finished" : "still contributing",
-                },
+                { label: "Blocking", value: a.blocked < 0.05 ? "finished" : "still contributing" },
               ] : []}
             />
           }
@@ -212,13 +295,12 @@ export default function Failure({ holdout, loading }) {
             ? `Past ${dead.toFixed(2)} the blocked line is under 0.05, so blocking has stopped contributing and only the review queue is still working.`
             : undefined}
         >
-          <ResponsiveContainer width="100%" height={380}>
+          <ResponsiveContainer width="100%" height={340}>
             <LineChart
               data={curve}
               margin={{ top: 8, right: 16, bottom: 4, left: 0 }}
-              onMouseMove={(s) =>
-                setHoverA(s?.isTooltipActive ? s.activeTooltipIndex ?? null : null)}
-              onMouseLeave={() => setHoverA(null)}
+              onMouseMove={(s) => setHover(s?.isTooltipActive ? s.activeTooltipIndex ?? null : null)}
+              onMouseLeave={() => setHover(null)}
             >
               <CartesianGrid {...gridProps} />
               {dead !== null && (
@@ -235,81 +317,43 @@ export default function Failure({ holdout, loading }) {
               <YAxis domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} width={42} {...axisProps} />
               <ReferenceLine y={0.5} stroke="var(--color-line-strong)" strokeDasharray="2 5" />
               <Tooltip content={() => null} cursor={crosshair} />
-              <Line type="monotone" dataKey="withReview" name="blocked or reviewed"
-                    stroke="var(--color-ok)" strokeWidth={1.5} dot={false}
-                    isAnimationActive={false}
+              <Line type="monotone" dataKey="withReview" stroke="var(--color-ok)"
+                    strokeWidth={1.5} dot={false} isAnimationActive={false}
                     activeDot={{ r: 3.5, fill: "var(--color-ok)", stroke: "var(--color-base)", strokeWidth: 2 }} />
-              <Line type="monotone" dataKey="blocked" name="blocked"
-                    stroke="var(--color-info)" strokeWidth={1.5} dot={false}
-                    isAnimationActive={false}
+              <Line type="monotone" dataKey="blocked" stroke="var(--color-info)"
+                    strokeWidth={1.5} dot={false} isAnimationActive={false}
                     activeDot={{ r: 3.5, fill: "var(--color-info)", stroke: "var(--color-base)", strokeWidth: 2 }} />
-              <Line type="monotone" dataKey="precision" name="precision"
-                    stroke="var(--color-warn)" strokeWidth={1.5} strokeDasharray="4 3"
-                    dot={false} isAnimationActive={false} connectNulls={false} />
+              <Line type="monotone" dataKey="precision" stroke="var(--color-warn)"
+                    strokeWidth={1.5} strokeDasharray="4 3" dot={false}
+                    isAnimationActive={false} connectNulls={false} />
             </LineChart>
           </ResponsiveContainer>
         </ChartFrame>
       </Section>
 
-      <Section
-        title="Rotating devices alone does not help the operator"
-        lede={`Device reuse swept across its whole range with everything else held at the moderate tier. Blocked recall moves by ${deviceSpread.toFixed(3)} end to end, and the review queue does not move at all.`}
-      >
-        <ChartFrame
-          legend={
-            <Legend
-              items={[
-                { label: "blocked or reviewed", color: "var(--color-ok)" },
-                { label: "blocked", color: "var(--color-info)" },
-              ]}
-            />
-          }
-          readout={
-            <Readout
-              active={!!bpt}
-              resting="Move across the chart to read either curve at any level of device reuse."
-              items={bpt ? [
-                { label: "Device reuse", value: bpt.reuse.toFixed(2) },
-                { label: "Blocked", value: dp4(bpt.blocked), color: "var(--color-info)" },
-                { label: "With review", value: dp4(bpt.withReview), color: "var(--color-ok)" },
-              ] : []}
-            />
-          }
-          xLabel="device reuse"
-          yLabel="rate"
-          footer="Rotating delivery addresses is what defeats this system, not rotating phones."
+      {blocking.data && (
+        <Section
+          title="What survives an operator who adapts"
+          lede="Each blocking rule against each tier, left to right. Device and address are perfect against a careless operator and worthless against a careful one. The rules built on pincode and card BIN are the ones still standing."
         >
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart
-              data={device}
-              margin={{ top: 8, right: 16, bottom: 4, left: 0 }}
-              onMouseMove={(s) =>
-                setHoverB(s?.isTooltipActive ? s.activeTooltipIndex ?? null : null)}
-              onMouseLeave={() => setHoverB(null)}
-            >
-              <CartesianGrid {...gridProps} />
-              <XAxis dataKey="reuse" ticks={TICKS}
-                     tickFormatter={(v) => v.toFixed(1)} {...axisProps} />
-              <YAxis domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} width={42} {...axisProps} />
-              <Tooltip content={() => null} cursor={crosshair} />
-              <Line type="monotone" dataKey="withReview" name="blocked or reviewed"
-                    stroke="var(--color-ok)" strokeWidth={1.5} dot={false}
-                    isAnimationActive={false}
-                    activeDot={{ r: 3.5, fill: "var(--color-ok)", stroke: "var(--color-base)", strokeWidth: 2 }} />
-              <Line type="monotone" dataKey="blocked" name="blocked"
-                    stroke="var(--color-info)" strokeWidth={1.5} dot={false}
-                    isAnimationActive={false}
-                    activeDot={{ r: 3.5, fill: "var(--color-info)", stroke: "var(--color-base)", strokeWidth: 2 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartFrame>
-      </Section>
+          <SignalDecay blocking={blocking.data} />
+        </Section>
+      )}
+
+      {mechanism.data && (
+        <Section
+          title="One change at a time"
+          lede={`Each row moves a single generator knob and leaves the rest at the moderate tier, over ${count(mechanism.data.n_worlds)} worlds. It answers which evasion actually pays.`}
+        >
+          <OneChangeAtATime mechanism={mechanism.data} />
+        </Section>
+      )}
 
       {holdout.lookalike_stress && <Lookalikes stress={holdout.lookalike_stress} />}
 
       <Section
         title="Failure catalogue"
-        lede="Every way this system is known to fail, each with a real cluster from a real seed. Open one for why it happens, what it costs, and which stage it belongs to."
+        lede="Every way this system is known to fail, each with a real cluster from a real seed. Open one for why it happens and what it costs."
         meta={
           <span className="inline-flex items-center gap-2.5 text-[12.5px] text-fg-muted">
             <Status tone="bad" />
@@ -319,7 +363,7 @@ export default function Failure({ holdout, loading }) {
       >
         <div className="border-t border-line-strong">
           {holdout.failure_catalogue.map((f, i) => (
-            <FailureEntry key={i} f={f} index={i} stage={stageOf(f)} />
+            <FailureEntry key={f.failure} f={f} index={i} />
           ))}
         </div>
       </Section>

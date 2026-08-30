@@ -224,7 +224,7 @@ function TimingBars({ sizes }) {
 }
 
 
-export default function Integrate() {
+export default function Integrate({ bare = false }) {
   const holdout = useJson("holdout");
   const decisions = useJson("decisions");
   const link = useJson("link_params");
@@ -248,21 +248,23 @@ export default function Integrate() {
   const full = profiles.find((r) => r.name === "full");
 
   return (
-    <div className="pt-14">
-      <PageHeader
-        title="Using Jaal"
-        lede="What you send it, where it sits, what it costs to run. Every figure here is read from the same result files as the rest of the site."
-      >
-        <Metadata
-          className="mt-8"
-          items={[
-            ["Columns", 12],
-            ["Hashable", 5],
-            ["Review load", pct(p.review_rate, 2)],
-            ...(big ? [["12,000 accounts", `${(big.total_ms / 1000).toFixed(2)}s`]] : []),
-          ]}
-        />
-      </PageHeader>
+    <div className={bare ? undefined : "pt-14"}>
+      {!bare && (
+        <PageHeader
+          title="Using Jaal"
+          lede="What you send it, where it sits, what it costs to run. Every figure here is read from the same result files as the rest of the site."
+        >
+          <Metadata
+            className="mt-8"
+            items={[
+              ["Columns", 12],
+              ["Hashable", 5],
+              ["Review load", pct(p.review_rate, 2)],
+              ...(big ? [["12,000 accounts", `${(big.total_ms / 1000).toFixed(2)}s`]] : []),
+            ]}
+          />
+        </PageHeader>
+      )}
 
       <div className="grid gap-x-16 gap-y-8 pt-10 md:grid-cols-[200px_minmax(0,1fr)]">
         <TableOfContents

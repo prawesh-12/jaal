@@ -4,25 +4,27 @@ import { Mark } from "@/components/mark";
 import { useJson } from "@/lib/useJson";
 import { compactRupees, count } from "@/lib/format";
 import Overview from "@/views/Overview";
-import Cost from "@/views/Cost";
+import Simulation from "@/views/Simulation";
+import Results from "@/views/Results";
 import Failure from "@/views/Failure";
-import Pipeline from "@/views/Pipeline";
-import Integrate from "@/views/Integrate";
-import Queue from "@/views/Queue";
-import Charts from "@/views/Charts";
+import DeepDive from "@/views/DeepDive";
 
 const TABS = [
   ["overview", "Overview"],
-  ["cost", "Cost"],
-  ["failure", "Failures"],
-  ["pipeline", "Pipeline"],
-  ["queue", "Queue"],
-  ["charts", "Charts"],
-  ["use", "Using Jaal"],
+  ["simulation", "Simulation"],
+  ["results", "Results"],
+  ["failures", "Failures"],
+  ["deep", "Deep Dive"],
 ];
 
 const KEYS = TABS.map(([k]) => k);
-const ALIASES = { results: "overview" };
+
+// The old five-page layout is linked from the docs, so its hashes still land
+// somewhere sensible rather than silently falling back to the overview.
+const ALIASES = {
+  failure: "failures",
+  cost: "deep", pipeline: "deep", queue: "deep", charts: "deep", use: "deep",
+};
 
 function TopNav({ holdout }) {
   const net = holdout?.pooled?.net_vs_nothing_rupees;
@@ -141,7 +143,9 @@ export default function App() {
   const holdout = useJson("holdout");
   const decisions = useJson("decisions");
   const baseline = useJson("baseline");
-  const explanations = useJson("explanations");
+  const blocking = useJson("blocking");
+  const clustering = useJson("clustering");
+  const model = useJson("model");
 
   return (
     <Tabs value={tab} onValueChange={setTab} className="relative z-10 flex min-h-screen flex-col">
@@ -152,28 +156,29 @@ export default function App() {
         <TabsContent value="overview">
           <Overview
             holdout={holdout.data}
-            baseline={baseline.data}
             decisions={decisions.data}
+            blocking={blocking.data}
+            clustering={clustering.data}
+            model={model.data}
+            loading={holdout.loading}
+            onSimulate={() => setTab("simulation")}
+          />
+        </TabsContent>
+        <TabsContent value="simulation">
+          <Simulation />
+        </TabsContent>
+        <TabsContent value="results">
+          <Results
+            holdout={holdout.data}
+            baseline={baseline.data}
             loading={holdout.loading}
           />
         </TabsContent>
-        <TabsContent value="cost">
-          <Cost decisions={decisions.data} loading={decisions.loading} />
-        </TabsContent>
-        <TabsContent value="failure">
+        <TabsContent value="failures">
           <Failure holdout={holdout.data} loading={holdout.loading} />
         </TabsContent>
-        <TabsContent value="pipeline">
-          <Pipeline />
-        </TabsContent>
-        <TabsContent value="queue">
-          <Queue explanations={explanations.data} loading={explanations.loading} />
-        </TabsContent>
-        <TabsContent value="charts">
-          <Charts />
-        </TabsContent>
-        <TabsContent value="use">
-          <Integrate />
+        <TabsContent value="deep">
+          <DeepDive />
         </TabsContent>
       </main>
 

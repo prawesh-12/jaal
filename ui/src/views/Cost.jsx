@@ -14,7 +14,7 @@ import { count, pct, rupees, signedRupees } from "@/lib/format";
 const M = 1e6;
 const TICKS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
-export default function Cost({ decisions, loading }) {
+export default function Cost({ decisions, loading, bare = false }) {
   const [hover, setHover] = useState(null);
 
   if (loading) return <Skeleton className="mt-16 h-96 w-full" />;
@@ -38,21 +38,23 @@ export default function Cost({ decisions, loading }) {
   const delta = point ? nothingRupees - point.rupees : 0;
 
   return (
-    <div className="pt-14">
-      <PageHeader
-        title="What a decision costs"
-        lede="Three prices decide everything on this page. Blocking a real customer, missing an abuser, and putting one cluster in front of an analyst. All three belong to the merchant's finance team, not to the model."
-      >
-        <Metadata
-          className="mt-8"
-          items={[
-            ["Wrong block", rupees(decisions.cost_blocked_innocent)],
-            ["Missed abuser", rupees(decisions.cost_missed_abuser)],
-            ["Analyst review", rupees(decisions.cost_analyst_review)],
-            ["Break-even precision", pct(decisions.breakeven_precision, 2)],
-          ]}
-        />
-      </PageHeader>
+    <div className={bare ? undefined : "pt-14"}>
+      {!bare && (
+        <PageHeader
+          title="What a decision costs"
+          lede="Three prices decide everything on this page. Blocking a real customer, missing an abuser, and putting one cluster in front of an analyst. All three belong to the merchant's finance team, not to the model."
+        >
+          <Metadata
+            className="mt-8"
+            items={[
+              ["Wrong block", rupees(decisions.cost_blocked_innocent)],
+              ["Missed abuser", rupees(decisions.cost_missed_abuser)],
+              ["Analyst review", rupees(decisions.cost_analyst_review)],
+              ["Break-even precision", pct(decisions.breakeven_precision, 2)],
+            ]}
+          />
+        </PageHeader>
+      )}
 
       <Section title="The decision that pays">
         <div className="grid gap-x-16 gap-y-10 border-y border-line-strong py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">

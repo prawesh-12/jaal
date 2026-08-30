@@ -61,21 +61,23 @@ function Lightbox({ chart, onClose }) {
   );
 }
 
-export default function Charts() {
+export default function Charts({ bare = false }) {
   const [open, setOpen] = useState(null);
   const total = GROUPS.reduce((n, [, c]) => n + c.length, 0);
 
   return (
-    <div className="pt-14">
-      <PageHeader
-        title="Charts the pipeline drew"
-        lede="Written to results/ by the pipeline itself, not by this page. If a number here disagrees with a number elsewhere on the site, the pipeline is the one to trust."
-      >
-        <Metadata
-          className="mt-8"
-          items={[["Figures", total], ["Drawn by", "matplotlib, during the run"]]}
-        />
-      </PageHeader>
+    <div className={bare ? undefined : "pt-14"}>
+      {!bare && (
+        <PageHeader
+          title="Charts the pipeline drew"
+          lede="Written to results/ by the pipeline itself, not by this page. If a number here disagrees with a number elsewhere on the site, the pipeline is the one to trust."
+        >
+          <Metadata
+            className="mt-8"
+            items={[["Figures", total], ["Drawn by", "matplotlib, during the run"]]}
+          />
+        </PageHeader>
+      )}
 
       {GROUPS.map(([heading, charts]) => (
         <Section key={heading} title={heading}>
