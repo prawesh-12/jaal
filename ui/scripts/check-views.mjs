@@ -10,6 +10,15 @@ const root = process.cwd();
 const tmp = join(root, "node_modules/.cache/jaal-check");
 mkdirSync(tmp, { recursive: true });
 
+// A stylesheet without this line still compiles, and every page renders with
+// no CSS at all. Cheap to assert, expensive to notice by eye.
+const css = readFileSync(join(root, "src/index.css"), "utf8");
+if (!/^@import\s+["']tailwindcss["'];/m.test(css)) {
+  console.error("src/index.css is missing its `@import \"tailwindcss\";` line, "
+                + "so the build would emit no utilities.");
+  process.exit(1);
+}
+
 const data = {};
 for (const f of readdirSync(join(root, "public/data"))) {
   if (f.endsWith(".json")) {
