@@ -1,0 +1,1281 @@
+{
+ "source": "results/features_holdout.csv",
+ "model": "results/model.pkl",
+ "calibration": "isotonic",
+ "costs_rupees": {
+  "blocked_innocent": 15000,
+  "missed_abuser": 200,
+  "analyst_review": 150
+ },
+ "n_clusters_scored": 75402,
+ "cases": {
+  "ring": {
+   "obvious": [
+    {
+     "seed": 975,
+     "tier": "obvious",
+     "cluster_id": 4,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.9996,
+     "true_ring_purity": 1.0,
+     "ring_members": 50,
+     "innocent_members": 0,
+     "action": "block",
+     "strongest_signal": "device",
+     "expected_cost_rupees": {
+      "block": 300,
+      "allow": 9996,
+      "review": 7500
+     },
+     "shape": {
+      "size": 50.0,
+      "edge_density": 1.0,
+      "mean_edge_bits": 56.3778,
+      "min_edge_bits": 48.096,
+      "weight_spread": 8.4186,
+      "diameter": 1.0,
+      "degree_gini": 0.0,
+      "top_signal_share": 0.2487
+     },
+     "behaviour": {
+      "signup_span_days": 0.0389,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.02,
+      "distinct_address_ratio": 0.04,
+      "distinct_bin_ratio": 0.02,
+      "total_discount": 10000.0
+     }
+    },
+    {
+     "seed": 932,
+     "tier": "obvious",
+     "cluster_id": 2,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.9036,
+     "true_ring_purity": 0.9184,
+     "ring_members": 45,
+     "innocent_members": 4,
+     "action": "review",
+     "strongest_signal": "device",
+     "expected_cost_rupees": {
+      "block": 70854,
+      "allow": 8855,
+      "review": 7350
+     },
+     "shape": {
+      "size": 49.0,
+      "edge_density": 0.8835,
+      "mean_edge_bits": 51.2189,
+      "min_edge_bits": 16.053,
+      "weight_spread": 11.3914,
+      "diameter": 4.0,
+      "degree_gini": 0.0601,
+      "top_signal_share": 0.2638
+     },
+     "behaviour": {
+      "signup_span_days": 391.0175,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.0816,
+      "distinct_address_ratio": 0.1224,
+      "distinct_bin_ratio": 0.0816,
+      "total_discount": 9800.0
+     }
+    },
+    {
+     "seed": 973,
+     "tier": "obvious",
+     "cluster_id": 5,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.9617,
+     "true_ring_purity": 0.9375,
+     "ring_members": 45,
+     "innocent_members": 3,
+     "action": "review",
+     "strongest_signal": "device",
+     "expected_cost_rupees": {
+      "block": 27576,
+      "allow": 9232,
+      "review": 7200
+     },
+     "shape": {
+      "size": 48.0,
+      "edge_density": 0.8918,
+      "mean_edge_bits": 50.7178,
+      "min_edge_bits": 17.3541,
+      "weight_spread": 10.6764,
+      "diameter": 3.0,
+      "degree_gini": 0.0584,
+      "top_signal_share": 0.2661
+     },
+     "behaviour": {
+      "signup_span_days": 1.0998,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 0.9375,
+      "distinct_device_ratio": 0.0833,
+      "distinct_address_ratio": 0.1042,
+      "distinct_bin_ratio": 0.0625,
+      "total_discount": 9600.0
+     }
+    },
+    {
+     "seed": 996,
+     "tier": "obvious",
+     "cluster_id": 3,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.881,
+     "true_ring_purity": 0.875,
+     "ring_members": 42,
+     "innocent_members": 6,
+     "action": "review",
+     "strongest_signal": "device",
+     "expected_cost_rupees": {
+      "block": 85680,
+      "allow": 8458,
+      "review": 7200
+     },
+     "shape": {
+      "size": 48.0,
+      "edge_density": 0.8262,
+      "mean_edge_bits": 43.342,
+      "min_edge_bits": 14.9137,
+      "weight_spread": 11.9061,
+      "diameter": 4.0,
+      "degree_gini": 0.0939,
+      "top_signal_share": 0.2928
+     },
+     "behaviour": {
+      "signup_span_days": 417.9576,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.1458,
+      "distinct_address_ratio": 0.1667,
+      "distinct_bin_ratio": 0.0625,
+      "total_discount": 9600.0
+     }
+    }
+   ],
+   "moderate": [
+    {
+     "seed": 943,
+     "tier": "moderate",
+     "cluster_id": 1,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.9328,
+     "true_ring_purity": 0.9444,
+     "ring_members": 51,
+     "innocent_members": 3,
+     "action": "review",
+     "strongest_signal": "card_bin",
+     "expected_cost_rupees": {
+      "block": 54432,
+      "allow": 10074,
+      "review": 8100
+     },
+     "shape": {
+      "size": 54.0,
+      "edge_density": 0.8938,
+      "mean_edge_bits": 24.7109,
+      "min_edge_bits": 14.323,
+      "weight_spread": 10.3775,
+      "diameter": 4.0,
+      "degree_gini": 0.0547,
+      "top_signal_share": 0.2472
+     },
+     "behaviour": {
+      "signup_span_days": 356.6944,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.537,
+      "distinct_address_ratio": 0.1667,
+      "distinct_bin_ratio": 0.037,
+      "total_discount": 10800.0
+     }
+    },
+    {
+     "seed": 983,
+     "tier": "moderate",
+     "cluster_id": 3,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.863,
+     "true_ring_purity": 0.9231,
+     "ring_members": 48,
+     "innocent_members": 4,
+     "action": "review",
+     "strongest_signal": "device",
+     "expected_cost_rupees": {
+      "block": 106860,
+      "allow": 8975,
+      "review": 7800
+     },
+     "shape": {
+      "size": 52.0,
+      "edge_density": 0.6614,
+      "mean_edge_bits": 27.327,
+      "min_edge_bits": 14.0152,
+      "weight_spread": 9.4827,
+      "diameter": 5.0,
+      "degree_gini": 0.157,
+      "top_signal_share": 0.2328
+     },
+     "behaviour": {
+      "signup_span_days": 414.8079,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 0.9423,
+      "distinct_device_ratio": 0.4423,
+      "distinct_address_ratio": 0.1923,
+      "distinct_bin_ratio": 0.0577,
+      "total_discount": 10400.0
+     }
+    },
+    {
+     "seed": 992,
+     "tier": "moderate",
+     "cluster_id": 2,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.8242,
+     "true_ring_purity": 0.7451,
+     "ring_members": 38,
+     "innocent_members": 13,
+     "action": "review",
+     "strongest_signal": "device",
+     "expected_cost_rupees": {
+      "block": 134487,
+      "allow": 8407,
+      "review": 7650
+     },
+     "shape": {
+      "size": 51.0,
+      "edge_density": 0.4008,
+      "mean_edge_bits": 26.9339,
+      "min_edge_bits": 14.1047,
+      "weight_spread": 10.1121,
+      "diameter": 6.0,
+      "degree_gini": 0.3384,
+      "top_signal_share": 0.284
+     },
+     "behaviour": {
+      "signup_span_days": 8.7099,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 0.9804,
+      "distinct_device_ratio": 0.5294,
+      "distinct_address_ratio": 0.3529,
+      "distinct_bin_ratio": 0.1569,
+      "total_discount": 10200.0
+     }
+    },
+    {
+     "seed": 923,
+     "tier": "moderate",
+     "cluster_id": 1,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.9895,
+     "true_ring_purity": 1.0,
+     "ring_members": 49,
+     "innocent_members": 0,
+     "action": "review",
+     "strongest_signal": "card_bin",
+     "expected_cost_rupees": {
+      "block": 7717,
+      "allow": 9697,
+      "review": 7350
+     },
+     "shape": {
+      "size": 49.0,
+      "edge_density": 1.0,
+      "mean_edge_bits": 25.6259,
+      "min_edge_bits": 15.4381,
+      "weight_spread": 10.5087,
+      "diameter": 1.0,
+      "degree_gini": 0.0,
+      "top_signal_share": 0.2629
+     },
+     "behaviour": {
+      "signup_span_days": 2.8708,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.4694,
+      "distinct_address_ratio": 0.1224,
+      "distinct_bin_ratio": 0.0204,
+      "total_discount": 9800.0
+     }
+    }
+   ],
+   "sophisticated": [
+    {
+     "seed": 990,
+     "tier": "sophisticated",
+     "cluster_id": 1,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.8008,
+     "true_ring_purity": 0.7895,
+     "ring_members": 45,
+     "innocent_members": 12,
+     "action": "review",
+     "strongest_signal": "card_bin",
+     "expected_cost_rupees": {
+      "block": 170316,
+      "allow": 9129,
+      "review": 8550
+     },
+     "shape": {
+      "size": 57.0,
+      "edge_density": 0.1523,
+      "mean_edge_bits": 20.1967,
+      "min_edge_bits": 14.8458,
+      "weight_spread": 6.6125,
+      "diameter": 7.0,
+      "degree_gini": 0.2707,
+      "top_signal_share": 0.2648
+     },
+     "behaviour": {
+      "signup_span_days": 330.2693,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 0.9825,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.4561,
+      "distinct_bin_ratio": 0.1228,
+      "total_discount": 11400.0
+     }
+    },
+    {
+     "seed": 977,
+     "tier": "sophisticated",
+     "cluster_id": 0,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.8175,
+     "true_ring_purity": 0.75,
+     "ring_members": 42,
+     "innocent_members": 14,
+     "action": "review",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 153300,
+      "allow": 9156,
+      "review": 8400
+     },
+     "shape": {
+      "size": 56.0,
+      "edge_density": 0.1442,
+      "mean_edge_bits": 20.4487,
+      "min_edge_bits": 14.1751,
+      "weight_spread": 6.1123,
+      "diameter": 6.0,
+      "degree_gini": 0.3767,
+      "top_signal_share": 0.249
+     },
+     "behaviour": {
+      "signup_span_days": 138.6793,
+      "coupon_rate": 0.9821,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.9107,
+      "distinct_address_ratio": 0.4286,
+      "distinct_bin_ratio": 0.125,
+      "total_discount": 11000.0
+     }
+    },
+    {
+     "seed": 967,
+     "tier": "sophisticated",
+     "cluster_id": 1,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.8357,
+     "true_ring_purity": 0.7636,
+     "ring_members": 42,
+     "innocent_members": 13,
+     "action": "review",
+     "strongest_signal": "pincode",
+     "expected_cost_rupees": {
+      "block": 135548,
+      "allow": 9193,
+      "review": 8250
+     },
+     "shape": {
+      "size": 55.0,
+      "edge_density": 0.1515,
+      "mean_edge_bits": 19.9221,
+      "min_edge_bits": 14.2496,
+      "weight_spread": 6.8128,
+      "diameter": 7.0,
+      "degree_gini": 0.2839,
+      "top_signal_share": 0.2426
+     },
+     "behaviour": {
+      "signup_span_days": 22.6148,
+      "coupon_rate": 0.9818,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 0.9455,
+      "distinct_device_ratio": 0.9455,
+      "distinct_address_ratio": 0.4909,
+      "distinct_bin_ratio": 0.0727,
+      "total_discount": 10800.0
+     }
+    },
+    {
+     "seed": 925,
+     "tier": "sophisticated",
+     "cluster_id": 1,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.884,
+     "true_ring_purity": 0.8824,
+     "ring_members": 45,
+     "innocent_members": 6,
+     "action": "review",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 88740,
+      "allow": 9017,
+      "review": 7650
+     },
+     "shape": {
+      "size": 51.0,
+      "edge_density": 0.2063,
+      "mean_edge_bits": 22.0933,
+      "min_edge_bits": 14.8085,
+      "weight_spread": 7.4416,
+      "diameter": 6.0,
+      "degree_gini": 0.2567,
+      "top_signal_share": 0.2246
+     },
+     "behaviour": {
+      "signup_span_days": 631.048,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.902,
+      "distinct_address_ratio": 0.3725,
+      "distinct_bin_ratio": 0.0588,
+      "total_discount": 10200.0
+     }
+    }
+   ],
+   "adaptive": [
+    {
+     "seed": 977,
+     "tier": "adaptive",
+     "cluster_id": 1,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.7774,
+     "true_ring_purity": 0.7288,
+     "ring_members": 43,
+     "innocent_members": 16,
+     "action": "review",
+     "strongest_signal": "card_bin",
+     "expected_cost_rupees": {
+      "block": 197001,
+      "allow": 9173,
+      "review": 8850
+     },
+     "shape": {
+      "size": 59.0,
+      "edge_density": 0.1718,
+      "mean_edge_bits": 15.4814,
+      "min_edge_bits": 14.1199,
+      "weight_spread": 1.7138,
+      "diameter": 11.0,
+      "degree_gini": 0.3215,
+      "top_signal_share": 0.3184
+     },
+     "behaviour": {
+      "signup_span_days": 542.1061,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 0.7966,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 1.0,
+      "distinct_bin_ratio": 0.0339,
+      "total_discount": 11800.0
+     }
+    },
+    {
+     "seed": 976,
+     "tier": "adaptive",
+     "cluster_id": 2,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.7833,
+     "true_ring_purity": 0.7,
+     "ring_members": 35,
+     "innocent_members": 15,
+     "action": "review",
+     "strongest_signal": "card_bin",
+     "expected_cost_rupees": {
+      "block": 162525,
+      "allow": 7833,
+      "review": 7500
+     },
+     "shape": {
+      "size": 50.0,
+      "edge_density": 0.1567,
+      "mean_edge_bits": 16.7266,
+      "min_edge_bits": 14.349,
+      "weight_spread": 2.6534,
+      "diameter": 8.0,
+      "degree_gini": 0.3685,
+      "top_signal_share": 0.3876
+     },
+     "behaviour": {
+      "signup_span_days": 42.1124,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.02,
+      "pincode_concentration": 0.98,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 1.0,
+      "distinct_bin_ratio": 0.16,
+      "total_discount": 10000.0
+     }
+    },
+    {
+     "seed": 973,
+     "tier": "adaptive",
+     "cluster_id": 1,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.8722,
+     "true_ring_purity": 0.7755,
+     "ring_members": 38,
+     "innocent_members": 11,
+     "action": "review",
+     "strongest_signal": "card_bin",
+     "expected_cost_rupees": {
+      "block": 93933,
+      "allow": 8548,
+      "review": 7350
+     },
+     "shape": {
+      "size": 49.0,
+      "edge_density": 0.2066,
+      "mean_edge_bits": 17.4604,
+      "min_edge_bits": 14.0669,
+      "weight_spread": 3.8261,
+      "diameter": 7.0,
+      "degree_gini": 0.3523,
+      "top_signal_share": 0.3435
+     },
+     "behaviour": {
+      "signup_span_days": 796.1638,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0204,
+      "pincode_concentration": 0.9796,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 1.0,
+      "distinct_bin_ratio": 0.1224,
+      "total_discount": 9800.0
+     }
+    },
+    {
+     "seed": 976,
+     "tier": "adaptive",
+     "cluster_id": 3,
+     "is_ring": true,
+     "benign_kind": null,
+     "probability": 1.0,
+     "predicted_ring_purity": 0.8936,
+     "true_ring_purity": 0.8696,
+     "ring_members": 40,
+     "innocent_members": 6,
+     "action": "review",
+     "strongest_signal": "pincode",
+     "expected_cost_rupees": {
+      "block": 73416,
+      "allow": 8221,
+      "review": 6900
+     },
+     "shape": {
+      "size": 46.0,
+      "edge_density": 0.2425,
+      "mean_edge_bits": 16.4286,
+      "min_edge_bits": 14.4827,
+      "weight_spread": 1.7962,
+      "diameter": 9.0,
+      "degree_gini": 0.2682,
+      "top_signal_share": 0.3403
+     },
+     "behaviour": {
+      "signup_span_days": 42.3691,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0435,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 1.0,
+      "distinct_bin_ratio": 0.087,
+      "total_discount": 9200.0
+     }
+    }
+   ]
+  },
+  "lookalike": {
+   "obvious": [
+    {
+     "seed": 928,
+     "tier": "obvious",
+     "cluster_id": 23,
+     "is_ring": false,
+     "benign_kind": "family",
+     "probability": 0.1188,
+     "predicted_ring_purity": 0.1917,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 10,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 121245,
+      "allow": 383,
+      "review": 1500
+     },
+     "shape": {
+      "size": 10.0,
+      "edge_density": 0.3778,
+      "mean_edge_bits": 24.3934,
+      "min_edge_bits": 14.4176,
+      "weight_spread": 9.0819,
+      "diameter": 3.0,
+      "degree_gini": 0.2412,
+      "top_signal_share": 0.2399
+     },
+     "behaviour": {
+      "signup_span_days": 221.2214,
+      "coupon_rate": 0.8,
+      "repeat_rate": 0.3,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.6,
+      "distinct_address_ratio": 0.6,
+      "distinct_bin_ratio": 0.1,
+      "total_discount": 1600.0
+     }
+    },
+    {
+     "seed": 917,
+     "tier": "obvious",
+     "cluster_id": 23,
+     "is_ring": false,
+     "benign_kind": "flatmates",
+     "probability": 0.0009,
+     "predicted_ring_purity": 0.0039,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 8,
+     "action": "allow",
+     "strongest_signal": "pincode",
+     "expected_cost_rupees": {
+      "block": 119532,
+      "allow": 6,
+      "review": 1200
+     },
+     "shape": {
+      "size": 8.0,
+      "edge_density": 0.2857,
+      "mean_edge_bits": 17.1123,
+      "min_edge_bits": 15.0274,
+      "weight_spread": 3.0336,
+      "diameter": 5.0,
+      "degree_gini": 0.1875,
+      "top_signal_share": 0.3441
+     },
+     "behaviour": {
+      "signup_span_days": 53.3684,
+      "coupon_rate": 0.875,
+      "repeat_rate": 0.125,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.625,
+      "distinct_bin_ratio": 0.625,
+      "total_discount": 1400.0
+     }
+    },
+    {
+     "seed": 987,
+     "tier": "obvious",
+     "cluster_id": 0,
+     "is_ring": false,
+     "benign_kind": "hostel",
+     "probability": 0.0079,
+     "predicted_ring_purity": 0.0524,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 76,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 1080264,
+      "allow": 796,
+      "review": 11400
+     },
+     "shape": {
+      "size": 76.0,
+      "edge_density": 0.0723,
+      "mean_edge_bits": 18.1838,
+      "min_edge_bits": 14.083,
+      "weight_spread": 3.1872,
+      "diameter": 11.0,
+      "degree_gini": 0.4682,
+      "top_signal_share": 0.3385
+     },
+     "behaviour": {
+      "signup_span_days": 399.278,
+      "coupon_rate": 0.8553,
+      "repeat_rate": 0.1711,
+      "pincode_concentration": 0.9868,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.3553,
+      "distinct_bin_ratio": 0.3158,
+      "total_discount": 13000.0
+     }
+    },
+    {
+     "seed": 943,
+     "tier": "obvious",
+     "cluster_id": 7,
+     "is_ring": false,
+     "benign_kind": "office",
+     "probability": 0.0002,
+     "predicted_ring_purity": 0.0009,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 44,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 659406,
+      "allow": 8,
+      "review": 6600
+     },
+     "shape": {
+      "size": 44.0,
+      "edge_density": 0.1438,
+      "mean_edge_bits": 18.6144,
+      "min_edge_bits": 14.2085,
+      "weight_spread": 3.9565,
+      "diameter": 6.0,
+      "degree_gini": 0.3738,
+      "top_signal_share": 0.3999
+     },
+     "behaviour": {
+      "signup_span_days": 13.9703,
+      "coupon_rate": 0.6818,
+      "repeat_rate": 0.5455,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.1364,
+      "distinct_bin_ratio": 0.4091,
+      "total_discount": 6000.0
+     }
+    }
+   ],
+   "moderate": [
+    {
+     "seed": 938,
+     "tier": "moderate",
+     "cluster_id": 22,
+     "is_ring": false,
+     "benign_kind": "family",
+     "probability": 0.1188,
+     "predicted_ring_purity": 0.079,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 10,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 138150,
+      "allow": 158,
+      "review": 1500
+     },
+     "shape": {
+      "size": 10.0,
+      "edge_density": 0.3333,
+      "mean_edge_bits": 27.5259,
+      "min_edge_bits": 15.9785,
+      "weight_spread": 9.9035,
+      "diameter": 5.0,
+      "degree_gini": 0.2467,
+      "top_signal_share": 0.242
+     },
+     "behaviour": {
+      "signup_span_days": 228.3346,
+      "coupon_rate": 0.8,
+      "repeat_rate": 0.2,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.6,
+      "distinct_address_ratio": 0.6,
+      "distinct_bin_ratio": 0.3,
+      "total_discount": 1600.0
+     }
+    },
+    {
+     "seed": 903,
+     "tier": "moderate",
+     "cluster_id": 24,
+     "is_ring": false,
+     "benign_kind": "flatmates",
+     "probability": 0.0042,
+     "predicted_ring_purity": 0.0218,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 8,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 117384,
+      "allow": 35,
+      "review": 1200
+     },
+     "shape": {
+      "size": 8.0,
+      "edge_density": 0.25,
+      "mean_edge_bits": 18.1289,
+      "min_edge_bits": 14.882,
+      "weight_spread": 2.2478,
+      "diameter": 5.0,
+      "degree_gini": 0.25,
+      "top_signal_share": 0.2656
+     },
+     "behaviour": {
+      "signup_span_days": 140.8627,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.25,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.625,
+      "distinct_bin_ratio": 0.375,
+      "total_discount": 1600.0
+     }
+    },
+    {
+     "seed": 959,
+     "tier": "moderate",
+     "cluster_id": 0,
+     "is_ring": false,
+     "benign_kind": "hostel",
+     "probability": 0.0042,
+     "predicted_ring_purity": 0.0328,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 77,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 1117116,
+      "allow": 505,
+      "review": 11550
+     },
+     "shape": {
+      "size": 77.0,
+      "edge_density": 0.2245,
+      "mean_edge_bits": 18.9883,
+      "min_edge_bits": 14.2062,
+      "weight_spread": 3.8361,
+      "diameter": 8.0,
+      "degree_gini": 0.472,
+      "top_signal_share": 0.3535
+     },
+     "behaviour": {
+      "signup_span_days": 67.9631,
+      "coupon_rate": 0.7013,
+      "repeat_rate": 0.1039,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.2857,
+      "distinct_bin_ratio": 0.3506,
+      "total_discount": 10800.0
+     }
+    },
+    {
+     "seed": 909,
+     "tier": "moderate",
+     "cluster_id": 5,
+     "is_ring": false,
+     "benign_kind": "office",
+     "probability": 0.0002,
+     "predicted_ring_purity": 0.0014,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 33,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 494307,
+      "allow": 9,
+      "review": 4950
+     },
+     "shape": {
+      "size": 33.0,
+      "edge_density": 0.2216,
+      "mean_edge_bits": 19.0038,
+      "min_edge_bits": 14.2545,
+      "weight_spread": 3.3461,
+      "diameter": 5.0,
+      "degree_gini": 0.3968,
+      "top_signal_share": 0.4028
+     },
+     "behaviour": {
+      "signup_span_days": 11.2416,
+      "coupon_rate": 0.7879,
+      "repeat_rate": 0.4242,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.2727,
+      "distinct_bin_ratio": 0.4242,
+      "total_discount": 5200.0
+     }
+    }
+   ],
+   "sophisticated": [
+    {
+     "seed": 909,
+     "tier": "sophisticated",
+     "cluster_id": 23,
+     "is_ring": false,
+     "benign_kind": "family",
+     "probability": 0.0042,
+     "predicted_ring_purity": 0.0222,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 8,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 117336,
+      "allow": 36,
+      "review": 1200
+     },
+     "shape": {
+      "size": 8.0,
+      "edge_density": 0.4643,
+      "mean_edge_bits": 34.2036,
+      "min_edge_bits": 14.4953,
+      "weight_spread": 11.1512,
+      "diameter": 3.0,
+      "degree_gini": 0.2692,
+      "top_signal_share": 0.2255
+     },
+     "behaviour": {
+      "signup_span_days": 627.0294,
+      "coupon_rate": 0.75,
+      "repeat_rate": 0.25,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.5,
+      "distinct_address_ratio": 0.5,
+      "distinct_bin_ratio": 0.25,
+      "total_discount": 1200.0
+     }
+    },
+    {
+     "seed": 947,
+     "tier": "sophisticated",
+     "cluster_id": 26,
+     "is_ring": false,
+     "benign_kind": "flatmates",
+     "probability": 0.0042,
+     "predicted_ring_purity": 0.0169,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 7,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 103225,
+      "allow": 24,
+      "review": 1050
+     },
+     "shape": {
+      "size": 7.0,
+      "edge_density": 0.381,
+      "mean_edge_bits": 16.5431,
+      "min_edge_bits": 14.0546,
+      "weight_spread": 2.3844,
+      "diameter": 4.0,
+      "degree_gini": 0.25,
+      "top_signal_share": 0.3056
+     },
+     "behaviour": {
+      "signup_span_days": 68.486,
+      "coupon_rate": 0.7143,
+      "repeat_rate": 0.1429,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.5714,
+      "distinct_bin_ratio": 0.4286,
+      "total_discount": 1000.0
+     }
+    },
+    {
+     "seed": 981,
+     "tier": "sophisticated",
+     "cluster_id": 0,
+     "is_ring": false,
+     "benign_kind": "hostel",
+     "probability": 0.0042,
+     "predicted_ring_purity": 0.0365,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 74,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 1069485,
+      "allow": 540,
+      "review": 11100
+     },
+     "shape": {
+      "size": 74.0,
+      "edge_density": 0.1525,
+      "mean_edge_bits": 17.9746,
+      "min_edge_bits": 14.0381,
+      "weight_spread": 3.1912,
+      "diameter": 6.0,
+      "degree_gini": 0.5234,
+      "top_signal_share": 0.3284
+     },
+     "behaviour": {
+      "signup_span_days": 281.4329,
+      "coupon_rate": 0.7973,
+      "repeat_rate": 0.1892,
+      "pincode_concentration": 0.9459,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.3108,
+      "distinct_bin_ratio": 0.3514,
+      "total_discount": 11800.0
+     }
+    },
+    {
+     "seed": 938,
+     "tier": "sophisticated",
+     "cluster_id": 5,
+     "is_ring": false,
+     "benign_kind": "office",
+     "probability": 0.0009,
+     "predicted_ring_purity": 0.0,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 36,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 540000,
+      "allow": 0,
+      "review": 5400
+     },
+     "shape": {
+      "size": 36.0,
+      "edge_density": 0.3095,
+      "mean_edge_bits": 18.4317,
+      "min_edge_bits": 14.0071,
+      "weight_spread": 4.7081,
+      "diameter": 4.0,
+      "degree_gini": 0.3098,
+      "top_signal_share": 0.3836
+     },
+     "behaviour": {
+      "signup_span_days": 8.5018,
+      "coupon_rate": 0.6667,
+      "repeat_rate": 0.4722,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.1389,
+      "distinct_bin_ratio": 0.4722,
+      "total_discount": 4800.0
+     }
+    }
+   ],
+   "adaptive": [
+    {
+     "seed": 948,
+     "tier": "adaptive",
+     "cluster_id": 21,
+     "is_ring": false,
+     "benign_kind": "family",
+     "probability": 0.0183,
+     "predicted_ring_purity": 0.1693,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 10,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 124605,
+      "allow": 339,
+      "review": 1500
+     },
+     "shape": {
+      "size": 10.0,
+      "edge_density": 0.3778,
+      "mean_edge_bits": 24.1478,
+      "min_edge_bits": 15.7064,
+      "weight_spread": 6.5549,
+      "diameter": 4.0,
+      "degree_gini": 0.2471,
+      "top_signal_share": 0.2346
+     },
+     "behaviour": {
+      "signup_span_days": 512.1964,
+      "coupon_rate": 0.8,
+      "repeat_rate": 0.4,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 0.6,
+      "distinct_address_ratio": 0.6,
+      "distinct_bin_ratio": 0.1,
+      "total_discount": 1600.0
+     }
+    },
+    {
+     "seed": 998,
+     "tier": "adaptive",
+     "cluster_id": 23,
+     "is_ring": false,
+     "benign_kind": "flatmates",
+     "probability": 0.0183,
+     "predicted_ring_purity": 0.0097,
+     "true_ring_purity": 0.0,
+     "ring_members": 0,
+     "innocent_members": 8,
+     "action": "allow",
+     "strongest_signal": "signup_gap",
+     "expected_cost_rupees": {
+      "block": 118836,
+      "allow": 16,
+      "review": 1200
+     },
+     "shape": {
+      "size": 8.0,
+      "edge_density": 0.3571,
+      "mean_edge_bits": 17.9571,
+      "min_edge_bits": 15.9667,
+      "weight_spread": 3.1936,
+      "diameter": 4.0,
+      "degree_gini": 0.1875,
+      "top_signal_share": 0.3029
+     },
+     "behaviour": {
+      "signup_span_days": 26.6792,
+      "coupon_rate": 1.0,
+      "repeat_rate": 0.0,
+      "pincode_concentration": 1.0,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.75,
+      "distinct_bin_ratio": 0.5,
+      "total_discount": 1600.0
+     }
+    },
+    {
+     "seed": 905,
+     "tier": "adaptive",
+     "cluster_id": 0,
+     "is_ring": false,
+     "benign_kind": "hostel",
+     "probability": 0.0042,
+     "predicted_ring_purity": 0.0382,
+     "true_ring_purity": 0.0133,
+     "ring_members": 1,
+     "innocent_members": 74,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 1082025,
+      "allow": 573,
+      "review": 11250
+     },
+     "shape": {
+      "size": 75.0,
+      "edge_density": 0.1456,
+      "mean_edge_bits": 17.9993,
+      "min_edge_bits": 14.0609,
+      "weight_spread": 3.1244,
+      "diameter": 6.0,
+      "degree_gini": 0.5469,
+      "top_signal_share": 0.3283
+     },
+     "behaviour": {
+      "signup_span_days": 570.9143,
+      "coupon_rate": 0.7333,
+      "repeat_rate": 0.1733,
+      "pincode_concentration": 0.9867,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.28,
+      "distinct_bin_ratio": 0.32,
+      "total_discount": 11000.0
+     }
+    },
+    {
+     "seed": 913,
+     "tier": "adaptive",
+     "cluster_id": 5,
+     "is_ring": false,
+     "benign_kind": "office",
+     "probability": 0.001,
+     "predicted_ring_purity": 0.0109,
+     "true_ring_purity": 0.3333,
+     "ring_members": 14,
+     "innocent_members": 28,
+     "action": "allow",
+     "strongest_signal": "address",
+     "expected_cost_rupees": {
+      "block": 623133,
+      "allow": 92,
+      "review": 6300
+     },
+     "shape": {
+      "size": 42.0,
+      "edge_density": 0.1765,
+      "mean_edge_bits": 18.5096,
+      "min_edge_bits": 14.1148,
+      "weight_spread": 3.6137,
+      "diameter": 7.0,
+      "degree_gini": 0.3739,
+      "top_signal_share": 0.3192
+     },
+     "behaviour": {
+      "signup_span_days": 27.0977,
+      "coupon_rate": 0.7381,
+      "repeat_rate": 0.3095,
+      "pincode_concentration": 0.9762,
+      "distinct_device_ratio": 1.0,
+      "distinct_address_ratio": 0.4762,
+      "distinct_bin_ratio": 0.3333,
+      "total_discount": 6200.0
+     }
+    }
+   ]
+  }
+ }
+}

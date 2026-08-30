@@ -121,6 +121,11 @@ if [ -f results/features_holdout.csv ]; then
       --features results/features_holdout.csv
 fi
 
+if [ -f results/features_holdout.csv ]; then
+  run "Cases the site replays"        -m detector.sim_cases \
+      --features results/features_holdout.csv
+fi
+
 run "Every measured number, in one file"     -m detector.report \
     --out results/metrics.md \
     --integration docs/06-run-and-integrate.md
