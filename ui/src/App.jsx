@@ -71,9 +71,46 @@ function DefenceLine() {
   );
 }
 
+function Footer({ onGoTo }) {
+  const links = [["simulation", "Simulation"], ["results", "Results"],
+                 ["use", "Using Jaal"], ["deep", "Deep Dive"]];
+  return (
+    <footer className="mt-24 border-t border-line">
+      <div className="shell flex flex-wrap items-start justify-between gap-x-16 gap-y-8 py-10">
+        <div>
+          <div className="flex items-center gap-2.5 text-fg">
+            <Mark size={16} />
+            <span className="text-[14px] font-medium">Jaal</span>
+          </div>
+          <p className="mt-3 text-[13.5px] text-fg-muted">
+            Fraud and promo-abuse risk intelligence
+          </p>
+        </div>
+
+        <nav aria-label="Footer" className="flex flex-wrap gap-x-8 gap-y-2">
+          {links.map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onGoTo(key)}
+              className="interactive text-[13.5px] text-fg-muted hover:text-fg"
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <p className="text-[12.5px] text-fg-faint">
+          Synthetic evaluation data · Razorpay Buildathon 2026
+        </p>
+      </div>
+    </footer>
+  );
+}
+
 function useHashTab() {
   const read = () => {
-    const raw = window.location.hash.replace("#", "");
+    const raw = window.location.hash.replace("#", "").split("?")[0];
     const h = ALIASES[raw] ?? raw;
     return KEYS.includes(h) ? h : "overview";
   };
@@ -114,7 +151,7 @@ export default function App() {
           />
         </TabsContent>
         <TabsContent value="simulation">
-          <Simulation />
+          <Simulation onGoTo={setTab} />
         </TabsContent>
         <TabsContent value="results">
           <Results
@@ -134,6 +171,8 @@ export default function App() {
           <DeepDive />
         </TabsContent>
       </main>
+
+      <Footer onGoTo={setTab} />
 
     </Tabs>
   );

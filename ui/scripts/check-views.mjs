@@ -59,9 +59,11 @@ const views = [
   ["Queue", <Queue explanations={all.explanations} loading={false} bare />],
   ["Charts", <Charts bare />],
   ["Integrate", <Integrate bare />],
-  // Every branch of the simulation, since a tier decides which figures it reads.
-  ...TIERS.flatMap((t) => ["ring", "benign"].map((m) =>
-    ["Simulation " + t + "/" + m, <Simulation __tier={t} __mode={m} __step={6} />])),
+  // Every branch of the simulation, since a tier and a scenario decide which
+  // case it replays.
+  ...TIERS.flatMap((t) => ["ring", "lookalike"].map((m) =>
+    ["Simulation " + t + "/" + m,
+     <Simulation __tier={t} __scenario={m} __step={6} onGoTo={() => {}} />])),
 ];
 
 let bad = 0;
@@ -98,10 +100,10 @@ await esbuild.build({
       build.onLoad({ filter: /views[/\\]Simulation\.jsx$/ }, (a) => ({
         loader: "jsx",
         contents: readFileSync(a.path, "utf8")
-          .replace("export default function Simulation() {",
-                   "export default function Simulation({ __tier, __mode, __step }) {")
+          .replace("export default function Simulation({ onGoTo }) {",
+                   "export default function Simulation({ onGoTo, __tier, __scenario, __step }) {")
           .replace('useState("moderate")', 'useState(__tier ?? "moderate")')
-          .replace('useState("ring")', 'useState(__mode ?? "ring")')
+          .replace('useState("ring")', 'useState(__scenario ?? "ring")')
           .replace("const [step, setStep] = useState(0)",
                    "const [step, setStep] = useState(__step ?? 0)"),
       }));

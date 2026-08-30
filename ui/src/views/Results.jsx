@@ -3,7 +3,7 @@ import { Disclosure } from "@/components/disclosure";
 import { Note } from "@/components/ui/panel";
 import { Bar } from "@/components/metric";
 import {
-  Empty, PageHeader, Section, Skeleton, Status, SubHead, TierLegend, TIER_TONE,
+  Empty, Section, Skeleton, Status, SubHead, TierLegend, TIER_TONE,
 } from "@/components/section";
 import {
   TIERS, TIER_COLOR, compactRupees, count, dp4, isUndefinedPrecision, pct,
@@ -30,63 +30,45 @@ function Precision({ value }) {
   safe, then what it costs to run. Reading downward should feel like zooming in.
 */
 function Headline({ pooled, holdout }) {
-  const second = [
+  const rest = [
     ["Blocking precision", pct(pooled.precision, 2),
-     `${count(pooled.fp)} wrong block in ${count(pooled.accounts_blocked)} accounts blocked`],
-    ["Real customers wrongly blocked", count(pooled.fp),
-     `out of ${count(pooled.n_accounts)} accounts scored`],
-  ];
-  const third = [
-    ["Accounts blocked", count(pooled.accounts_blocked), "no human asked"],
-    ["Recall, blocked or reviewed", pct(pooled.recall_including_review, 2),
-     "ring accounts stopped or put in front of a person"],
+     `of ${count(pooled.accounts_blocked)} blocked accounts, the share that really were a ring`],
+    ["Wrong blocks", count(pooled.fp),
+     `real customers stopped, out of ${count(pooled.n_accounts)} scored`],
+    ["Accounts blocked", count(pooled.accounts_blocked), "stopped with no human asked"],
+    ["Recall including review", pct(pooled.recall_including_review, 2),
+     `of ${count(pooled.n_ring_accounts)} ring accounts, blocked or sent to a person`],
     ["Review load", pct(pooled.review_rate, 2),
-     `${count(pooled.clusters_reviewed)} clusters of ${count(holdout.n_clusters)}`],
-    ["Ring accounts that walked through", count(pooled.missed), "untouched"],
+     `${count(pooled.clusters_reviewed)} of ${count(holdout.n_clusters)} clusters need a human`],
   ];
 
   return (
-    <div>
-      <div className="border-b border-line pt-12 pb-12">
-        <div className="label">Net benefit against doing nothing</div>
-        <div className="tnum mt-5 text-[clamp(3.25rem,2rem+4.5vw,5.5rem)] leading-[0.95] font-medium tracking-[-0.035em] text-fg">
-          {compactRupees(pooled.net_vs_nothing_rupees)}
+    <div className="border-b border-line-strong pb-14">
+      <div className="grid gap-x-20 gap-y-10 pt-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <div>
+          <div className="label">Net benefit against doing nothing</div>
+          <div className="tnum mt-4 text-[clamp(3.5rem,2rem+5vw,6rem)] leading-[0.92] font-medium tracking-[-0.04em] text-ok">
+            {compactRupees(pooled.net_vs_nothing_rupees)}
+          </div>
+          <p className="mt-6 max-w-[46ch] text-[15px] leading-[1.6] text-fg-muted">
+            {signedRupees(pooled.net_vs_nothing_rupees)} exactly. Promo abuse costs
+            this merchant {rupees(pooled.do_nothing_rupees)} with nothing deployed
+            and {rupees(pooled.cost_rupees)} with Jaal running.
+          </p>
         </div>
-        <p className="t-meta mt-5 max-w-[56ch]">
-          {signedRupees(pooled.net_vs_nothing_rupees)} exactly. Abuse costs{" "}
-          {rupees(pooled.do_nothing_rupees)} if nothing is deployed and{" "}
-          {rupees(pooled.cost_rupees)} with Jaal running, so{" "}
-          {pct(1 - pooled.cost_rupees / pooled.do_nothing_rupees, 1)} of it is removed.
-        </p>
+
+        <dl className="grid gap-x-10 gap-y-9 self-center sm:grid-cols-2 lg:border-l lg:border-line lg:pl-20">
+          {rest.map(([label, value, note]) => (
+            <div key={label} className="min-w-0">
+              <dt className="label">{label}</dt>
+              <dd className="tnum mt-3 text-[30px] leading-none font-medium tracking-[-0.025em] text-fg">
+                {value}
+              </dd>
+              <dd className="t-meta mt-2.5 max-w-[32ch] text-fg-faint">{note}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
-
-      <dl className="grid gap-y-9 border-b border-line py-10 sm:grid-cols-2">
-        {second.map(([label, value, note], i) => (
-          <div key={label} className={cn("min-w-0", i > 0 && "sm:border-l sm:border-line sm:pl-10")}>
-            <dt className="label">{label}</dt>
-            <dd className="tnum mt-3.5 text-[40px] leading-none font-medium tracking-[-0.03em] text-fg">
-              {value}
-            </dd>
-            <dd className="t-meta mt-3 max-w-[34ch] text-fg-faint">{note}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <dl className="grid gap-y-8 border-b border-line py-8 sm:grid-cols-2 lg:grid-cols-4">
-        {third.map(([label, value, note], i) => (
-          <div
-            key={label}
-            className={cn("min-w-0", i > 0 && "sm:border-l sm:border-line sm:pl-8",
-                          i === 2 && "sm:border-l-0 sm:pl-0 lg:border-l lg:pl-8")}
-          >
-            <dt className="label">{label}</dt>
-            <dd className="tnum mt-3 text-[22px] leading-none font-medium tracking-[-0.02em] text-fg">
-              {value}
-            </dd>
-            <dd className="t-meta mt-2.5 max-w-[28ch] text-fg-faint">{note}</dd>
-          </div>
-        ))}
-      </dl>
     </div>
   );
 }
@@ -341,10 +323,12 @@ export default function Results({ holdout, baseline, decisions, loading }) {
 
   return (
     <div className="pt-14">
-      <PageHeader
-        title="Does it work?"
-        lede={`Sealed holdout, ${holdout.opened}. Nothing on this page was tuned against these seeds.`}
-      />
+      <header className="pb-2">
+        <div className="label">Sealed holdout, {holdout.opened}</div>
+        <h1 className="mt-5 text-[38px] leading-[1.08] font-medium tracking-[-0.03em] text-fg sm:text-[44px]">
+          Does it work?
+        </h1>
+      </header>
 
       <Headline pooled={pooled} holdout={holdout} />
 
@@ -375,9 +359,7 @@ export default function Results({ holdout, baseline, decisions, loading }) {
         <div className="mt-10 border-t border-line-strong">
           <Disclosure
             summary={
-              <span className="text-[14px] text-fg">
-                Every measured column, per tier
-              </span>
+              <span className="text-[14px] text-fg">View exact measurements</span>
             }
           >
             <TierTable matrix={m} />

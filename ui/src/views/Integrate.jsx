@@ -52,108 +52,62 @@ const GROUPS = [
   },
 ];
 
-function CallFlow() {
-  const boxes = [
-    ["Your system", "one row per account"],
-    ["POST /v1/scan", "twelve columns, five of them hashable"],
-    ["Jaal", "block, link, cluster, score, price"],
+function Architecture() {
+  const chain = [
+    ["Merchant account and order data", "one row per account, twelve columns"],
+    ["Account relationships", "every candidate pair scored in bits"],
+    ["Clusters", "the graph cut into groups"],
+    ["Risk, purity and cost", "two models, then three prices"],
   ];
-  const actions = [["block", "bad"], ["review", "warn"], ["allow", "ok"]];
+  const actions = [
+    ["BLOCK", "bad", "stop the whole cluster"],
+    ["REVIEW", "warn", "put it in front of a person"],
+    ["ALLOW", "ok", "leave it alone"],
+  ];
 
   return (
-    <figure className="m-0 border-y border-line py-8">
-      <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:items-center">
-        {boxes.map((box, i) => (
-          <div key={box[0]} className="flex items-center gap-4 lg:flex-1">
-            <div className="min-w-0 flex-1 border border-line bg-surface px-4 py-3.5">
-              <div className="text-[13.5px] text-fg">{box[0]}</div>
-              <div className="t-meta mt-1.5 text-fg-faint">{box[1]}</div>
-            </div>
-            <span aria-hidden="true" className="shrink-0 text-fg-dim">
-              &rarr;
+    <figure className="m-0">
+      <div className="border border-line-strong">
+        {chain.map(([title, note], i) => (
+          <div key={title}
+               className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line px-6 py-4">
+            <span className="flex items-baseline gap-4">
+              <span className="tnum text-[11px] text-fg-dim">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="text-[15px] text-fg">{title}</span>
             </span>
+            <span className="t-meta text-fg-faint">{note}</span>
           </div>
         ))}
-        <div className="flex shrink-0 flex-wrap gap-2">
-          {actions.map(([name, tone]) => (
-            <span key={name}
-                  className="inline-flex items-center gap-2 border border-line px-3 py-1.5 text-[12.5px] text-fg-2">
-              <Status tone={tone} />
-              {name}
-            </span>
+
+        <div className="grid gap-px bg-line sm:grid-cols-3">
+          {actions.map(([name, tone, what]) => (
+            <div key={name} className="bg-surface px-6 py-5">
+              <span className="inline-flex items-center gap-2.5">
+                <Status tone={tone} />
+                <span className="text-[15px] font-medium tracking-[0.02em] text-fg">
+                  {name}
+                </span>
+              </span>
+              <p className="t-meta mt-2.5">{what}</p>
+            </div>
           ))}
         </div>
+
+        <div className="border-t border-line-strong px-6 py-4">
+          <span className="text-[15px] text-fg">
+            Merchant risk and review workflow
+          </span>
+          <p className="t-meta mt-1.5">
+            block and review land in your queue. Allow is the silent majority.
+          </p>
+        </div>
       </div>
-      <figcaption className="t-meta mt-6 text-fg-faint">
-        One decision per cluster, never per transaction. A cluster the model has
-        nothing to say about comes back as allow and is dropped from the response
-        unless you ask for it.
-      </figcaption>
-    </figure>
-  );
-}
 
-function WhereDiagram({ timing }) {
-  const stages = ["Block", "Link", "Cluster", "Features", "Score", "Decide"];
-  const online = new Set(["Block", "Link"]);
-
-  return (
-    <figure className="m-0 border-y border-line py-8">
-      <svg viewBox="0 0 900 190" className="w-full min-w-[620px]" role="img"
-           aria-label="Batch discovery touches every stage; online assignment touches only blocking and linking">
-        {stages.map((s, i) => {
-          const x = 176 + i * 118;
-          return (
-            <g key={s}>
-              <rect x={x} y="34" width="98" height="34" rx="3"
-                    fill="var(--color-raised)" stroke="var(--color-line-strong)" />
-              <text x={x + 49} y="56" textAnchor="middle" fontSize="12"
-                    fill="var(--color-fg)" fontFamily="var(--font-sans)">{s}</text>
-
-              <rect x={x} y="118" width="98" height="34" rx="3"
-                    fill={online.has(s) ? "var(--color-raised)" : "transparent"}
-                    stroke={online.has(s) ? "var(--color-line-strong)" : "var(--color-line)"}
-                    strokeDasharray={online.has(s) ? undefined : "3 4"} />
-              <text x={x + 49} y="140" textAnchor="middle" fontSize="12"
-                    fill={online.has(s) ? "var(--color-fg)" : "var(--color-fg-dim)"}
-                    fontFamily="var(--font-sans)">{s}</text>
-
-              {i < stages.length - 1 && (
-                <>
-                  <line x1={x + 98} y1="51" x2={x + 112} y2="51"
-                        stroke="var(--color-line-strong)" strokeWidth="1" />
-                  <line x1={x + 98} y1="135" x2={x + 112} y2="135"
-                        stroke={online.has(s) && online.has(stages[i + 1])
-                          ? "var(--color-line-strong)" : "var(--color-line)"}
-                        strokeWidth="1" strokeDasharray={
-                          online.has(s) && online.has(stages[i + 1]) ? undefined : "3 4"} />
-                </>
-              )}
-            </g>
-          );
-        })}
-
-        <text x="20" y="44" fontSize="11.5" fill="var(--color-fg-2)"
-              fontFamily="var(--font-sans)">Batch</text>
-        <text x="20" y="62" fontSize="10.5" fill="var(--color-fg-faint)"
-              fontFamily="var(--font-sans)">nightly</text>
-        <text x="20" y="128" fontSize="11.5" fill="var(--color-fg-2)"
-              fontFamily="var(--font-sans)">Online</text>
-        <text x="20" y="146" fontSize="10.5" fill="var(--color-fg-faint)"
-              fontFamily="var(--font-sans)">per account</text>
-
-        {timing && (
-          <text x="176" y="180" fontSize="10.5" fill="var(--color-fg-faint)"
-                fontFamily="var(--font-sans)">
-            a full pass over {count(timing.n_accounts)} accounts takes{" "}
-            {(timing.total_ms / 1000).toFixed(2)}s
-          </text>
-        )}
-      </svg>
-      <figcaption className="mt-5 t-meta text-fg-faint">
-        Clustering has to see the whole graph, so discovery is a batch job.
-        Attaching one new account is blocking and linking only, which is why
-        that half can be online.
+      <figcaption className="mt-7 max-w-[74ch] border-l-2 border-line-loud pl-6 text-[17px] leading-[1.45] text-fg">
+        Jaal is a triage layer that fills a review queue. It is not a checkout
+        authorisation gate.
       </figcaption>
     </figure>
   );
@@ -321,7 +275,7 @@ export default function Integrate({ bare = false }) {
         <div className="min-w-0">
           <Anchored id="start" icon={ICON.start} title="Quick start"
                     lede="A batch of accounts in, one priced decision per cluster out. Nothing else to wire up.">
-            <CallFlow />
+            <Architecture />
 
             <div className="mt-10 grid gap-x-10 gap-y-8 lg:grid-cols-2">
               <div>
@@ -388,6 +342,28 @@ export default function Integrate({ bare = false }) {
               ))}
             </dl>
 
+            <div className="mt-12">
+              <h3 className="label">Every endpoint</h3>
+              <ul className="mt-4 grid gap-x-10 gap-y-2.5 sm:grid-cols-2">
+                {[
+                  ["GET /health", "is the model loaded"],
+                  ["GET /v1/schema", "columns, features and the three prices"],
+                  ["GET /v1/profiles", "column sets, and what each one reaches"],
+                  ["POST /v1/coverage", "your column names in, what you would get out"],
+                  ["POST /v1/scan", "a batch of accounts in, priced decisions out"],
+                  ["POST /v1/score", "one cluster you already featurised"],
+                  ["GET /features", "the cluster features the model reads"],
+                  ["GET /runs/<id>", "a saved result file, for example /runs/holdout"],
+                ].map(([route, what]) => (
+                  <li key={route}
+                      className="flex items-baseline justify-between gap-4 border-b border-line pb-2">
+                    <span className="ident text-[12.5px] text-fg">{route}</span>
+                    <span className="text-[12.5px] text-fg-faint">{what}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <Code language="bash" className="mt-10">{`# what you would get from the columns you already have, no account data sent
 curl -s localhost:5001/v1/coverage -X POST \\
   -H 'content-type: application/json' \\
@@ -423,9 +399,53 @@ curl -s localhost:5001/v1/coverage -X POST \\
 
           <Anchored id="where" icon={ICON.where} title="Where it sits"
                     lede="Two jobs, two shapes. Mixing them up is the usual way an integration goes wrong.">
-            <WhereDiagram timing={big} />
+            <div className="grid gap-x-12 gap-y-8 border-y border-line py-8 lg:grid-cols-2">
+              <div>
+                <h3 className="text-[15px] font-medium text-fg">Batch discovery</h3>
+                <p className="t-meta mt-2 max-w-[44ch]">
+                  Nightly or hourly over the whole population. Clustering has to
+                  see the entire graph, so this half cannot be synchronous.
+                </p>
+                <ol className="mt-5 space-y-2">
+                  {["whole account population", "candidate pairs and edges",
+                    "graph and clustering", "scores, prices, review queue"].map((t, i) => (
+                    <li key={t} className="flex items-baseline gap-4 border-b border-line pb-2.5">
+                      <span className="tnum text-[11px] text-fg-dim">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="text-[13.5px] text-fg-2">{t}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div className="lg:border-l lg:border-line lg:pl-12">
+                <h3 className="text-[15px] font-medium text-fg">Online cluster assignment</h3>
+                <p className="t-meta mt-2 max-w-[44ch]">
+                  One new account against the clusters that already exist. Blocking
+                  and linking only, which is the half that can run in a request.
+                </p>
+                <ol className="mt-5 space-y-2">
+                  {["one new account", "blocking rules against existing members",
+                    "pair evidence in bits", "attach to a cluster, or stand alone"].map((t, i) => (
+                    <li key={t} className="flex items-baseline gap-4 border-b border-line pb-2.5">
+                      <span className="tnum text-[11px] text-fg-dim">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="text-[13.5px] text-fg-2">{t}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+            {big && (
+              <p className="t-meta mt-6">
+                A full pass over {count(big.n_accounts)} accounts takes{" "}
+                <span className="tnum text-fg-2">{(big.total_ms / 1000).toFixed(2)}s</span>,
+                measured, not estimated.
+              </p>
+            )}
             <Note className="mt-6">
-              Not a checkout gate. It fills a review queue.
+              Cluster discovery is a batch job. Do not put it in the checkout path.
             </Note>
           </Anchored>
 

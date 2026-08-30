@@ -5,7 +5,7 @@ import {
 } from "recharts";
 import { Note } from "@/components/ui/panel";
 import { Disclosure } from "@/components/disclosure";
-import { Empty, PageHeader, Section, Skeleton, Status } from "@/components/section";
+import { Empty, Section, Skeleton, Status, SubHead } from "@/components/section";
 import {
   ChartFrame, Legend, Readout, axisProps, crosshair, gridProps,
 } from "@/components/chart";
@@ -224,36 +224,44 @@ export default function Failure({ holdout, loading }) {
 
   return (
     <div className="pt-14">
-      <PageHeader
-        title="Where this stops working"
-        lede="Automatic blocking fails first. The review queue survives longer. Both statements are measured, and this page is how the system says so."
-      />
+      <header className="pb-10">
+        <div className="label">Measured, not caveated</div>
+        <h1 className="mt-5 max-w-[24ch] text-[38px] leading-[1.08] font-medium tracking-[-0.03em] text-fg text-balance sm:text-[44px]">
+          A sufficiently adaptive operator defeats automatic blocking.
+        </h1>
+        <p className="mt-6 max-w-[62ch] text-[17px] leading-[1.55] text-fg-2">
+          Blocking fails first. The review queue survives longer. Both halves of
+          that sentence are swept and plotted below.
+        </p>
+      </header>
 
-      <div className="grid gap-x-16 gap-y-10 border-y border-line-strong py-10 sm:grid-cols-3">
+      <div className="grid gap-x-16 gap-y-10 border-y border-line-strong py-12 sm:grid-cols-3">
         <div>
-          <div className="label">Blocking is finished by</div>
-          <div className="tnum mt-4 text-[46px] leading-none font-medium tracking-[-0.03em] text-warn">
+          <div className="label">Blocking stops contributing at</div>
+          <div className="tnum mt-4 text-[52px] leading-none font-medium tracking-[-0.035em] text-warn">
             {dead !== null ? dead.toFixed(2) : "n/a"}
           </div>
-          <p className="t-meta mt-3.5 max-w-[30ch]">
-            operator sophistication, on a scale from the obvious tier at 0 to the
-            adaptive tier at 1
+          <p className="t-meta mt-4 max-w-[30ch]">
+            operator sophistication, 0 is the obvious tier and 1 is the adaptive
+            one
           </p>
         </div>
-        <div className="sm:border-l sm:border-line sm:pl-10">
-          <div className="label">Blocked recall at the far end</div>
-          <div className="tnum mt-4 text-[46px] leading-none font-medium tracking-[-0.03em] text-bad">
+        <div className="sm:border-l sm:border-line sm:pl-16">
+          <div className="label">Blocked recall at sophistication 1.0</div>
+          <div className="tnum mt-4 text-[52px] leading-none font-medium tracking-[-0.035em] text-bad">
             {dp4(last.blocked)}
           </div>
-          <p className="t-meta mt-3.5 max-w-[30ch]">nothing is blocked at all</p>
+          <p className="t-meta mt-4 max-w-[30ch]">
+            nothing is blocked, and precision there is undefined rather than zero
+          </p>
         </div>
-        <div className="sm:border-l sm:border-line sm:pl-10">
+        <div className="sm:border-l sm:border-line sm:pl-16">
           <div className="label">Blocked or reviewed, same point</div>
-          <div className="tnum mt-4 text-[46px] leading-none font-medium tracking-[-0.03em] text-ok">
+          <div className="tnum mt-4 text-[52px] leading-none font-medium tracking-[-0.035em] text-ok">
             {dp4(last.withReview)}
           </div>
-          <p className="t-meta mt-3.5 max-w-[30ch]">
-            the queue still reaches most of the ring
+          <p className="t-meta mt-4 max-w-[30ch]">
+            the queue still puts most of the ring in front of a person
           </p>
         </div>
       </div>
@@ -331,23 +339,52 @@ export default function Failure({ holdout, loading }) {
         </ChartFrame>
       </Section>
 
-      {blocking.data && (
-        <Section
-          title="What survives an operator who adapts"
-          lede="Each blocking rule against each tier, left to right. Device and address are perfect against a careless operator and worthless against a careful one. The rules built on pincode and card BIN are the ones still standing."
-        >
-          <SignalDecay blocking={blocking.data} />
-        </Section>
-      )}
+      <Section title="Why it fails, in detail" lede="Open what you want to check.">
+        <div className="border-t border-line-strong">
+          {blocking.data && (
+            <Disclosure
+              summary={
+                <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  <span className="text-[14.5px] text-fg">
+                    What survives an operator who adapts
+                  </span>
+                  <span className="t-meta ml-auto text-fg-faint">
+                    six blocking rules against four tiers
+                  </span>
+                </span>
+              }
+            >
+              <div className="-ml-[30px]">
+                <p className="t-meta mb-6 max-w-[76ch]">
+                  Device and address are perfect against a careless operator and
+                  worthless against a careful one. The rules built on pincode and
+                  card BIN are the ones still standing.
+                </p>
+                <SignalDecay blocking={blocking.data} />
+              </div>
+            </Disclosure>
+          )}
 
-      {mechanism.data && (
-        <Section
-          title="One change at a time"
-          lede={`Each row moves a single generator knob and leaves the rest at the moderate tier, over ${count(mechanism.data.n_worlds)} worlds. It answers which evasion actually pays.`}
-        >
-          <OneChangeAtATime mechanism={mechanism.data} />
-        </Section>
-      )}
+          {mechanism.data && (
+            <Disclosure
+              summary={
+                <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  <span className="text-[14.5px] text-fg">
+                    Which single evasion actually pays
+                  </span>
+                  <span className="t-meta ml-auto text-fg-faint">
+                    one knob at a time, {count(mechanism.data.n_worlds)} worlds each
+                  </span>
+                </span>
+              }
+            >
+              <div className="-ml-[30px]">
+                <OneChangeAtATime mechanism={mechanism.data} />
+              </div>
+            </Disclosure>
+          )}
+        </div>
+      </Section>
 
       {holdout.lookalike_stress && <Lookalikes stress={holdout.lookalike_stress} />}
 

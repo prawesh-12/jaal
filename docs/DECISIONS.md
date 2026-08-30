@@ -1100,3 +1100,52 @@ One thing this pass did not follow. The audit suggests a dataset-size control
 on the simulation. The result files are all measured at 12,000 accounts per
 world, so a size control would have nothing true to show. The tier and the case
 are the two controls that change a real number.
+
+## D-050: Third UI pass, and the browser check that should have come first
+Date: 2026-08-30
+
+`extras/improvement_plan.md` is an audit of what D-049 shipped. Its verdict was
+that the site still read as a research presentation with a visualisation bolted
+on. Two things came out of it that matter more than the layout work.
+
+**The simulation replays real clusters now.** It was drawing a schematic and
+quoting per-tier aggregates beside it, and it had no per-cluster purity because
+`results/explanations.json` does not store one. `detector/sim_cases.py` is new:
+it reads `results/features_holdout.csv`, scores it with the shipped model
+exactly as `detector/explain.py` does, and writes four ring cases and one of
+each benign kind per tier to `results/sim_cases.json`. Each case carries the
+calibrated probability, the predicted purity, the true purity from the answer
+key, the expected cost of all three actions, the strongest signal and the
+cluster's measured shape. `tests/test_sim_cases.py` asserts the stored action is
+the one `decide.best_action` picks and the stored costs are the published
+formula, so the page cannot drift from the pipeline.
+
+That also fixed the benign side honestly. There was no real family cluster to
+show, because `explanations.json` only keeps block and review. The feature table
+has every allowed cluster with a `dominant_benign_kind`, so the lookalike
+scenario is now a real ten-account family from seed 938 that scores 0.119, is
+predicted 7.9% ring, and is allowed at ₹158 against ₹138,150 to block it.
+
+Scoring runs in 5,000-row slices on one thread. A forest predicting over the
+whole holdout at once asks for more address space than `resources.budget()`
+allows and joblib dies trying to start a thread.
+
+**Headless Chrome is the check.** D-049 shipped a site with no CSS at all
+because `npm run build` still succeeded and I read that as proof. Chrome is
+installed on this machine, so screenshots at 1920x1200 are one command, and
+every claim in this entry was looked at rather than inferred. The simulation
+grew `#simulation?tier=adaptive&group=lookalike` deep links, which are useful
+for sharing a case and are also how both scenarios get verified in a browser
+without a click driver.
+
+Layout, briefly: the overview is a ten-second pitch with the result beside the
+headline; the simulation opens on the pipeline and auto-plays; results leads
+with six figures and hides the eleven-column table behind "View exact
+measurements"; failures leads with the finding and puts the rest behind
+disclosures; Using Jaal opens with the layered triage architecture, the real
+request and response, and every endpoint; a minimal product footer replaced the
+one D-049 deleted.
+
+One number in the plan does not match the data. It quotes the rules baseline at
+-₹4.80 Cr. Summing the four tiers in `results/baseline.json` gives -₹4.96 Cr,
+and that is what the site shows.

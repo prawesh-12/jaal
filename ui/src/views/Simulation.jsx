@@ -1,302 +1,448 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Play, RotateCcw } from "lucide-react";
-import { PairScorer } from "@/components/pairScorer";
-import { WorldCanvas, CanvasLegend } from "@/components/worldCanvas";
-import { Disclosure } from "@/components/disclosure";
-import { Empty, PageHeader, Section, Skeleton, Status, TIER_TONE } from "@/components/section";
+import { ArrowRight, Play, RotateCcw } from "lucide-react";
+import { ClusterGraph } from "@/components/clusterGraph";
+import { Empty, Skeleton, Status } from "@/components/section";
 import { useJson } from "@/lib/useJson";
 import { usePrefersReducedMotion } from "@/lib/motion";
-import {
-  TIERS, compactRupees, count, dp2, dp4, pct, rupees,
-} from "@/lib/format";
+import { bitsFor, SCORED } from "@/lib/pipelineStages";
+import { TIERS, count, dp4, pct, rupees } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const STEP_MS = 1500;
-const BENIGN_KINDS = ["family", "flatmates", "hostel", "office"];
+const STEP_MS = 1600;
+const LAST = 6;
 
 /*
-  Nothing here runs a model. Every figure is read from the result files for the
-  tier and case picked. Two things are derived, both arithmetic on published
-  constants: possible pairs is n choose 2, and the purity bands come from the
-  expected cost formula in detector/decide.py with the three prices in
-  decisions.json. The graph beside them is a schematic and says so.
+  A replay, not a run. Every case on this page is a cluster that went through
+  the real pipeline: results/sim_cases.json holds its size, its measured edge
+  density, its calibrated probability, its predicted purity, the expected cost
+  of all three actions and the action taken. The browser draws them. It does
+  not compute them.
 */
 
-const STAGES = [
-  ["Accounts", "Every account looks ordinary on its own."],
-  ["Blocking", "Most pairs are never worth comparing, so they never are."],
-  ["Linking", "Evidence in bits. Enough of it draws an edge."],
-  ["Clustering", "The graph is cut into groups."],
-  ["Scoring", "Is this a ring, and how much of it is?"],
-  ["Decision", "Block, review or allow, on expected cost."],
+const SCHEMA = [
+  ["account_id", "string", "returned untouched", false],
+  ["device_id", "identifier", "9f2c…a71e", true],
+  ["address_id", "identifier", "4b81…02cd", true],
+  ["pincode", "identifier", "1a77…9e30", true],
+  ["card_bin", "identifier", "c204…5fb1", true],
+  ["ip_prefix", "identifier", "e8d0…7a22", true],
+  ["signup_ts", "timestamp", "2026-03-04T11:22:31Z", false],
+  ["n_orders", "integer", "1", false],
+  ["coupon_used", "boolean", "true", false],
+  ["first_order_value", "rupees", "1499", false],
+  ["total_order_value", "rupees", "1499", false],
+  ["days_to_second_order", "integer or null", "null", false],
 ];
 
-/* The agreement pattern a ring pair shows at each tier, taken from the
-   generator audit: device and address collisions inside rings, and the median
-   signup span. Nothing is guessed. */
+const TONE_FOR = { block: "bad", review: "warn", allow: "ok" };
+
+const STEPS = [
+  ["Accounts", "One row per account. No account is judged on its own."],
+  ["Blocking", "Most pairs are never worth scoring, so they are never scored."],
+  ["Link", "Weak signals add up. Enough of them draw an edge."],
+  ["Graph", "Accounts become nodes. Edges make the unit of detection a group."],
+  ["Cluster", "The group is scored twice: is it a ring, and how much of it is."],
+  ["Decision", "Each action is priced. The cheapest one wins."],
+];
+
+/* The agreement pattern a ring pair shows at this tier, from the generator
+   audit: device and address collisions inside rings, and the signup span. */
 function ringLevels(gen, tier) {
   const g = gen.tiers[tier];
   const days = g.ring_signup_span_days_median;
   const gap = days <= 0.042 ? 0 : days <= 1 ? 1 : days <= 7 ? 2 : days <= 30 ? 3 : 4;
   return {
-    levels: {
-      device: g.device_collisions_within_rings > 0 ? 0 : 1,
-      address: g.address_collisions_within_rings > 0 ? 0 : 1,
-      pincode: 0,
-      card_bin: 0,
-      ip_prefix: 1,
-      signup_gap: gap,
-      hour_of_day: 2,
-      order_count: 0,
-      coupon_used: 0,
-    },
-    evidence: [
-      ["Devices shared inside rings", count(g.device_collisions_within_rings)],
-      ["Addresses shared inside rings", count(g.address_collisions_within_rings)],
-      ["Median ring signup span", `${g.ring_signup_span_days_median} days`],
-    ],
+    device: g.device_collisions_within_rings > 0 ? 0 : 1,
+    address: g.address_collisions_within_rings > 0 ? 0 : 1,
+    pincode: 0,
+    card_bin: 0,
+    ip_prefix: 1,
+    signup_gap: gap,
+    hour_of_day: 2,
+    order_count: 0,
+    coupon_used: 0,
   };
 }
 
-/* A benign group that shares a phone, a flat and a connection, and whose
-   members both happen to be new customers using the coupon. */
+/* A group that shares a phone, a flat and a connection, and whose members are
+   both new customers using the coupon. The hard case for any rule. */
 const BENIGN_LEVELS = {
   device: 0, address: 0, pincode: 0, card_bin: 1, ip_prefix: 0,
   signup_gap: 4, hour_of_day: 2, order_count: 0, coupon_used: 0,
 };
 
-/* Straight out of detector/decide.py:
-     block  (1 - purity) * n * 15,000
-     allow  purity * n * 200
-     review n * 150
-   Every term scales with n, so the winner depends only on purity. */
-function purityBands(d) {
-  return [
-    { action: "allow", from: 0, to: d.cost_analyst_review / d.cost_missed_abuser, tone: "ok" },
-    {
-      action: "review",
-      from: d.cost_analyst_review / d.cost_missed_abuser,
-      to: (d.cost_blocked_innocent - d.cost_analyst_review) / d.cost_blocked_innocent,
-      tone: "warn",
-    },
-    {
-      action: "block",
-      from: (d.cost_blocked_innocent - d.cost_analyst_review) / d.cost_blocked_innocent,
-      to: 1,
-      tone: "bad",
-    },
-  ];
+const LABEL = {
+  device: "same device", address: "same address", pincode: "same pincode",
+  card_bin: "same card BIN", ip_prefix: "same IP prefix",
+  signup_gap: "signed up together", hour_of_day: "same hour of day",
+  order_count: "both one order", coupon_used: "both used the coupon",
+};
+
+function param(name, allowed, fallback) {
+  if (typeof window === "undefined") return fallback;
+  const query = window.location.hash.split("?")[1] ?? "";
+  const value = new URLSearchParams(query).get(name);
+  return allowed.includes(value) ? value : fallback;
 }
 
-function Segmented({ options, value, onChange, label }) {
+function Control({ label, options, value, onChange }) {
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap items-center border border-line">
-      {options.map((o) => {
-        const key = typeof o === "string" ? o : o.value;
-        return (
-          <button
-            key={key}
-            type="button"
-            onClick={() => onChange(key)}
-            aria-pressed={value === key}
-            className={cn(
-              "interactive inline-flex h-9 items-center gap-2 border-l border-line px-3.5 text-[12.5px] first:border-l-0",
-              value === key ? "bg-active text-fg" : "text-fg-faint hover:bg-surface hover:text-fg-muted"
-            )}
-          >
-            {typeof o === "string" ? o : o.label}
-          </button>
-        );
-      })}
+    <div>
+      <div className="label mb-2.5">{label}</div>
+      <div role="group" aria-label={label} className="flex flex-wrap items-center border border-line">
+        {options.map((o) => {
+          const key = typeof o === "string" ? o : o.value;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onChange(key)}
+              aria-pressed={value === key}
+              className={cn(
+                "interactive inline-flex h-10 items-center gap-2 border-l border-line px-4 text-[13px] first:border-l-0",
+                value === key ? "bg-active font-medium text-fg"
+                              : "text-fg-muted hover:bg-surface hover:text-fg"
+              )}
+            >
+              {typeof o === "string" ? o : o.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-/* A row of figures. The divider only appears at the breakpoint where the row
-   is genuinely one row, or the second item on a wrapped line gets a stray
-   border down its left. */
-const STRIP = {
-  3: ["sm:grid-cols-3", "sm:border-l sm:border-line sm:pl-8"],
-  4: ["sm:grid-cols-2 lg:grid-cols-4", "lg:border-l lg:border-line lg:pl-8"],
-  5: ["sm:grid-cols-2 lg:grid-cols-5", "lg:border-l lg:border-line lg:pl-7"],
-};
-
-function Strip({ items, cols = 3, className }) {
-  const [grid, divider] = STRIP[cols];
+function Figure({ label, value, note, tone, size = "md" }) {
+  const colour = tone ? `var(--color-${tone})` : "var(--color-fg)";
   return (
-    <dl className={cn("grid gap-y-7 border-y border-line py-7", grid, className)}>
-      {items.map(([label, value, note], i) => (
-        <div key={label} className={cn("min-w-0", i > 0 && divider)}>
-          <dt className="label">{label}</dt>
-          <dd className="tnum mt-3 text-[24px] leading-none font-medium tracking-[-0.02em] text-fg">
-            {value}
-          </dd>
-          {note && <dd className="t-meta mt-2.5 max-w-[28ch] text-fg-faint">{note}</dd>}
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-function StageRail({ step, onPick }) {
-  return (
-    <ol className="border-t border-line">
-      {STAGES.map(([name, caption], i) => {
-        const n = i + 1;
-        const current = step === n;
-        const passed = step > n;
-        return (
-          <li key={name}>
-            <button
-              type="button"
-              onClick={() => onPick(n)}
-              aria-current={current ? "step" : undefined}
-              className={cn(
-                "interactive block w-full border-b border-line px-3 py-3.5 text-left",
-                current ? "bg-active" : "hover:bg-surface"
-              )}
-            >
-              <span className="flex items-baseline gap-3">
-                <span className={cn("tnum text-[11px]", current ? "text-fg-2" : "text-fg-dim")}>
-                  {String(n).padStart(2, "0")}
-                </span>
-                <span className={cn("text-[13.5px] font-medium",
-                                    current ? "text-fg" : passed ? "text-fg-muted" : "text-fg-faint")}>
-                  {name}
-                </span>
-              </span>
-              {current && (
-                <span className="mt-2 block pl-[26px] text-[12.5px] leading-[1.55] text-fg-muted">
-                  {caption}
-                </span>
-              )}
-            </button>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
-function DecisionBands({ decisions, action }) {
-  const bands = purityBands(decisions);
-  const TONE = { ok: "var(--color-ok)", warn: "var(--color-warn)", bad: "var(--color-bad)" };
-
-  return (
-    <div>
-      {/* Widths are the real proportions, so no label goes inside: the block
-          band is one percent of the axis and any text would stretch it. */}
+    <div className="min-w-0">
+      <div className="label">{label}</div>
       <div
-        className="flex h-4 w-full overflow-hidden border border-line"
-        role="img"
-        aria-label={bands
-          .map((b) => `${b.action} from ${b.from.toFixed(4)} to ${b.to.toFixed(4)} purity`)
-          .join(", ")}
+        className={cn("tnum mt-2.5 leading-none font-medium tracking-[-0.025em]",
+                      size === "lg" ? "text-[34px]" : "text-[24px]")}
+        style={{ color: colour }}
       >
-        {bands.map((b) => (
-          <span
-            key={b.action}
-            style={{
-              width: `${(b.to - b.from) * 100}%`,
-              background: TONE[b.tone],
-              opacity: b.action === action ? 1 : 0.22,
-            }}
-          />
-        ))}
+        {value}
       </div>
-      <div className="mt-2 flex justify-between text-[11.5px] text-fg-faint">
-        <span className="tnum">purity 0</span>
-        {bands.slice(1).map((b) => (
-          <span key={b.action} className="tnum">{b.from.toFixed(4)}</span>
-        ))}
-        <span className="tnum">1</span>
+      {note && <div className="t-meta mt-2.5 max-w-[30ch] text-fg-faint">{note}</div>}
+    </div>
+  );
+}
+
+/* Step 1. The real twelve columns, their types, and which ones a merchant may
+   send as a salted digest. */
+function Schema({ n, prevalence }) {
+  return (
+    <div className="grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="border border-line">
+        <div className="flex items-baseline justify-between gap-4 border-b border-line bg-surface px-4 py-3">
+          <span className="text-[13px] font-medium text-fg">Jaal input data</span>
+          <span className="tnum text-[12.5px] text-fg-muted">
+            {count(n)} accounts · {SCHEMA.length} fields
+          </span>
+        </div>
+        <table className="w-full text-[12.5px]">
+          <tbody>
+            {SCHEMA.map(([name, type, example, hashable]) => (
+              <tr key={name} className="border-b border-line last:border-b-0">
+                <td className="ident py-2 pl-4 text-fg-2">{name}</td>
+                <td className="py-2 pl-4 text-fg-faint">{type}</td>
+                <td className="ident py-2 pl-4 text-fg-muted">{example}</td>
+                <td className="py-2 pr-4 pl-4 text-right">
+                  {hashable && (
+                    <span className="inline-flex items-center gap-1.5 text-[11.5px] text-ok">
+                      <Status tone="ok" /> hashable
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <dl className="mt-6 grid gap-px border border-line bg-line sm:grid-cols-3">
-        {bands.map((b) => {
-          const on = b.action === action;
-          return (
-            <div key={b.action} className={cn("px-4 py-3.5", on ? "bg-active" : "bg-surface")}>
-              <dt className="flex items-center gap-2.5 text-[13.5px]">
-                <Status tone={b.tone} />
-                <span className={on ? "text-fg" : "text-fg-faint"}>{b.action}</span>
-                {on && <span className="label ml-auto">taken</span>}
-              </dt>
-              <dd className={cn("tnum mt-2 text-[12.5px]", on ? "text-fg-2" : "text-fg-dim")}>
-                purity {b.from.toFixed(2)} to {b.to.toFixed(2)}
-              </dd>
-            </div>
-          );
-        })}
+      <dl className="space-y-7 self-start">
+        {[
+          ["Dataset scale", `${count(n)} accounts per world`],
+          ["Account-level ring prevalence", pct(prevalence, 1)],
+          ["Adversary tiers", TIERS.join(" · ")],
+          ["Benign lookalikes", "family · flatmates · hostel · office"],
+        ].map(([k, v]) => (
+          <div key={k} className="border-b border-line pb-4">
+            <dt className="label">{k}</dt>
+            <dd className="mt-2.5 text-[15px] text-fg">{v}</dd>
+          </div>
+        ))}
+        <p className="t-meta max-w-[40ch]">
+          The five identity fields are only ever tested for equality, so a
+          merchant can salt and hash them before sending.
+        </p>
       </dl>
     </div>
   );
 }
 
-function ScoreBars({ probability, purityLabel }) {
+/* Step 2. Two bars on a log scale, because 72 million against half a million
+   is invisible on a linear one. */
+function Blocking({ possible, candidates, cut, rules, recall }) {
+  const top = Math.log10(possible);
+  const bar = (v, colour) => (
+    <span className="mt-3 block h-3 w-full bg-raised">
+      <span className="block h-full transition-[width] duration-700 ease-out"
+            style={{ width: `${(Math.log10(v) / top) * 100}%`, background: colour }} />
+    </span>
+  );
+
   return (
-    <div className="grid gap-x-12 gap-y-7 sm:grid-cols-2">
+    <div>
+      <div className="grid gap-x-12 gap-y-8 sm:grid-cols-2">
+        <div>
+          <div className="label">Pairs a naive scan would score</div>
+          <div className="tnum mt-2.5 text-[30px] leading-none font-medium text-fg-muted">
+            {count(possible)}
+          </div>
+          {bar(possible, "var(--color-fg-dim)")}
+        </div>
+        <div>
+          <div className="label">Pairs Jaal actually scores</div>
+          <div className="tnum mt-2.5 text-[30px] leading-none font-medium text-fg">
+            {count(candidates)}
+          </div>
+          {bar(candidates, "var(--color-ok)")}
+        </div>
+      </div>
+      <p className="mt-8 max-w-[70ch] text-[15px] leading-[1.55] text-fg-2">
+        <span className="tnum font-medium text-fg">{pct(cut, 2)}</span> of the
+        search space never gets scored, and{" "}
+        <span className="tnum font-medium text-fg">{dp4(recall)}</span> of the
+        pairs that matter survive. Log scale on both bars.
+      </p>
+      <p className="t-meta mt-4">
+        Six rules: {rules.join(", ")}. A true pair no rule produces cannot be
+        recovered later, so that recall is a ceiling on everything downstream.
+      </p>
+    </div>
+  );
+}
+
+/* Step 3. Only the agreements that add evidence, then the total against the
+   threshold. Every weight is measured, from results/link_params.json. */
+function Evidence({ params, levels, threshold, meanBits, minBits }) {
+  const rows = SCORED.map((field) => ({
+    field,
+    level: params.levels[field][levels[field] ?? params.levels[field].length - 1],
+    bits: bitsFor(params, field, levels[field] ?? params.levels[field].length - 1),
+  }));
+  const positive = rows.filter((r) => r.bits > 0).sort((a, b) => b.bits - a.bits);
+  const negative = rows.filter((r) => r.bits <= 0);
+  const drag = negative.reduce((s, r) => s + r.bits, 0);
+  const total = rows.reduce((s, r) => s + r.bits, 0);
+  const edge = total >= threshold;
+  const widest = Math.max(...positive.map((r) => r.bits), threshold);
+
+  return (
+    <div className="grid gap-x-14 gap-y-10 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div>
-        <div className="flex items-baseline justify-between gap-4">
-          <span className="label">Ring probability</span>
-          <span className="tnum text-[22px] leading-none text-fg">
-            {probability == null ? "low" : probability.toFixed(2)}
+        <div className="label mb-3">What this pair agrees on</div>
+        {positive.map((r) => (
+          <div key={r.field}
+               className="grid grid-cols-[minmax(0,190px)_minmax(0,1fr)_86px] items-center gap-4 border-b border-line py-2.5">
+            <span className="text-[13.5px] text-fg-2">{LABEL[r.field]}</span>
+            <span className="block h-2 w-full bg-raised">
+              <span className="block h-full transition-[width] duration-500 ease-out"
+                    style={{ width: `${(r.bits / widest) * 100}%`,
+                             background: "var(--color-info)" }} />
+            </span>
+            <span className="tnum text-right text-[13px] text-fg">
+              +{r.bits.toFixed(2)}
+            </span>
+          </div>
+        ))}
+        <div className="grid grid-cols-[minmax(0,190px)_minmax(0,1fr)_86px] items-center gap-4 border-b border-line py-2.5">
+          <span className="text-[13.5px] text-fg-faint">
+            everything else disagrees
+          </span>
+          <span />
+          <span className="tnum text-right text-[13px] text-fg-faint">
+            {drag.toFixed(2)}
           </span>
         </div>
-        <span className="mt-3 block h-2.5 w-full bg-raised">
-          <span className="block h-full transition-[width] duration-700 ease-out"
-                style={{ width: `${(probability ?? 0.06) * 100}%`, background: "var(--color-warn)" }} />
-        </span>
-        <p className="t-meta mt-3 max-w-[34ch]">Is this cluster a ring?</p>
+      </div>
+
+      <div className="self-start">
+        <div className="label">Total evidence</div>
+        <div className="tnum mt-3 text-[40px] leading-none font-medium tracking-[-0.03em]"
+             style={{ color: edge ? "var(--color-ok)" : "var(--color-bad)" }}>
+          {total.toFixed(2)}
+          <span className="ml-2 text-[14px] font-normal text-fg-faint">bits</span>
+        </div>
+        <div className="t-meta mt-3">
+          Edge threshold {threshold.toFixed(2)} bits.
+        </div>
+        <p className="mt-5 border-t border-line pt-4 text-[13.5px] leading-[1.6] text-fg-2">
+          {edge
+            ? "Enough. An edge is drawn between these two accounts."
+            : "Not enough. No edge, and these two are never compared again."}
+        </p>
+        <dl className="mt-6 space-y-2.5 border-t border-line pt-4">
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="t-meta">This cluster's average edge</dt>
+            <dd className="tnum text-[13px] text-fg">{meanBits.toFixed(1)} bits</dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="t-meta">Its weakest link</dt>
+            <dd className="tnum text-[13px] text-fg">{minBits.toFixed(1)} bits</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  );
+}
+
+/* Step 5. Two questions, two answers, never conflated. */
+function Scores({ c }) {
+  const meter = (value, colour) => (
+    <span className="mt-3 block h-3 w-full bg-raised">
+      <span className="block h-full transition-[width] duration-700 ease-out"
+            style={{ width: `${value * 100}%`, background: colour }} />
+    </span>
+  );
+
+  return (
+    <div className="grid gap-x-14 gap-y-10 sm:grid-cols-2">
+      <div>
+        <div className="label">Ring probability</div>
+        <p className="t-meta mt-2 max-w-[38ch]">Is this cluster a ring?</p>
+        <div className="tnum mt-5 text-[40px] leading-none font-medium tracking-[-0.03em] text-fg">
+          {c.probability.toFixed(3)}
+        </div>
+        {meter(c.probability, "var(--color-info)")}
       </div>
       <div>
-        <div className="flex items-baseline justify-between gap-4">
-          <span className="label">Ring purity</span>
-          <span className="tnum text-[22px] leading-none text-fg">{purityLabel}</span>
+        <div className="label">Predicted ring purity</div>
+        <p className="t-meta mt-2 max-w-[38ch]">
+          What fraction of its {Math.round(c.shape.size)} accounts are ring
+          accounts?
+        </p>
+        <div className="tnum mt-5 text-[40px] leading-none font-medium tracking-[-0.03em] text-fg">
+          {c.predicted_ring_purity.toFixed(3)}
         </div>
-        <span className="mt-3 block h-2.5 w-full bg-raised" />
-        <p className="t-meta mt-3 max-w-[34ch]">
-          What fraction of its accounts are ring accounts? Not the same question,
-          and it is the one the price depends on.
+        {meter(c.predicted_ring_purity, "var(--color-warn)")}
+        <p className="t-meta mt-3">
+          True purity once the answer key is opened:{" "}
+          <span className="tnum text-fg-2">{c.true_ring_purity.toFixed(2)}</span>
         </p>
       </div>
     </div>
   );
 }
 
-export default function Simulation() {
+/* Step 6. Three prices, the cheapest wins, and you can see by how much. */
+function Decision({ c }) {
+  const costs = c.expected_cost_rupees;
+  const worst = Math.max(...Object.values(costs));
+  const order = ["block", "review", "allow"];
+
+  return (
+    <div>
+      <div className="grid gap-px border border-line bg-line sm:grid-cols-3">
+        {order.map((a) => {
+          const on = a === c.action;
+          return (
+            <div key={a} className={cn("px-5 py-5", on ? "bg-active" : "bg-surface")}>
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2.5">
+                  <Status tone={TONE_FOR[a]} />
+                  <span className={cn("text-[15px] font-medium uppercase tracking-[0.02em]",
+                                      on ? "text-fg" : "text-fg-faint")}>
+                    {a}
+                  </span>
+                </span>
+                {on && <span className="label">chosen</span>}
+              </div>
+              <div className={cn("tnum mt-4 text-[24px] leading-none font-medium",
+                                 on ? "text-fg" : "text-fg-muted")}>
+                {rupees(costs[a])}
+              </div>
+              <span className="mt-3 block h-2 w-full bg-raised">
+                <span className="block h-full"
+                      style={{ width: `${(costs[a] / worst) * 100}%`,
+                               background: on ? `var(--color-${TONE_FOR[a]})`
+                                              : "var(--color-fg-dim)" }} />
+              </span>
+              <p className="t-meta mt-3">expected cost of this action</p>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-6 max-w-[76ch] text-[15px] leading-[1.55] text-fg-2">
+        {c.action === "block"
+          ? "Purity is high enough that stopping the whole cluster costs less than letting it run."
+          : c.action === "review"
+          ? "Too risky to allow, not certain enough to block. A person decides, for the price of their time."
+          : "Blocking this group would cost far more than the discount it could ever farm."}
+      </p>
+    </div>
+  );
+}
+
+function Step({ n, title, caption, active, children }) {
+  return (
+    <section
+      className={cn("border-t border-line-strong pt-8 transition-opacity duration-500",
+                    active ? "opacity-100" : "pointer-events-none opacity-0")}
+      hidden={!active}
+    >
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+        <span className="tnum text-[12px] text-fg-dim">
+          {String(n).padStart(2, "0")} / {String(LAST).padStart(2, "0")}
+        </span>
+        <h3 className="text-[19px] font-medium tracking-[-0.015em] text-fg">{title}</h3>
+      </div>
+      <p className="mt-2.5 max-w-[70ch] text-[15px] leading-[1.55] text-fg-muted">
+        {caption}
+      </p>
+      <div className="mt-9">{children}</div>
+    </section>
+  );
+}
+
+export default function Simulation({ onGoTo }) {
+  const sim = useJson("sim_cases");
   const blocking = useJson("blocking");
   const clustering = useJson("clustering");
-  const model = useJson("model");
-  const decisions = useJson("decisions");
   const link = useJson("link_params");
   const holdout = useJson("holdout");
-  const explanations = useJson("explanations");
   const generator = useJson("generator_check");
 
-  const [tier, setTier] = useState("moderate");
-  const [mode, setMode] = useState("ring");
-  const [kind, setKind] = useState("flatmates");
+  // #simulation?tier=adaptive&group=lookalike deep-links one case, so a run
+  // can be sent to somebody rather than described to them.
+  const [tier, setTier] = useState(() => param("tier", TIERS, "moderate"));
+  const [scenario, setScenario] = useState(
+    () => param("group", ["ring", "lookalike"], "ring"));
   const [pick, setPick] = useState(0);
-  const [step, setStep] = useState(0);
+  // Runs on arrival. A judge should not have to find a button to see the
+  // product work, and changing tier or case restarts it.
+  const [step, setStep] = useState(1);
   const timer = useRef(null);
   const reduced = usePrefersReducedMotion();
 
-  const notes = explanations.data?.notes ?? [];
-  const examples = useMemo(
-    () => notes.filter((n) => n.tier === tier).slice(0, 6), [notes, tier]
-  );
+  const cases = sim.data?.cases?.[scenario]?.[tier] ?? [];
+  const other = sim.data?.cases?.[scenario === "ring" ? "lookalike" : "ring"]?.[tier] ?? [];
+  const c = cases[Math.min(pick, cases.length - 1)];
+  const companion = other[0];
 
   useEffect(() => {
-    setStep(0);
     setPick(0);
+    setStep(1);
     clearTimeout(timer.current);
-  }, [tier, mode, kind]);
+  }, [tier, scenario]);
 
   useEffect(() => {
-    if (step === 0 || step >= STAGES.length) return undefined;
+    if (step === 0 || step >= LAST) return undefined;
     if (reduced) {
-      setStep(STAGES.length);
+      setStep(LAST);
       return undefined;
     }
     timer.current = setTimeout(() => setStep((s) => s + 1), STEP_MS);
@@ -305,330 +451,244 @@ export default function Simulation() {
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const ready = blocking.data && clustering.data && model.data && link.data
-    && decisions.data && holdout.data && generator.data;
-  if (blocking.loading || clustering.loading) {
-    return <Skeleton className="mt-16 h-96 w-full" />;
+  useEffect(() => {
+    const route = window.location.hash.replace("#", "").split("?")[0] || "simulation";
+    window.history.replaceState(null, "", `#${route}?tier=${tier}&group=${scenario}`);
+  }, [tier, scenario]);
+
+  const levels = useMemo(
+    () => (generator.data
+      ? (scenario === "ring" ? ringLevels(generator.data, tier) : BENIGN_LEVELS)
+      : null),
+    [generator.data, scenario, tier]
+  );
+
+  if (sim.loading || blocking.loading) return <Skeleton className="mt-16 h-96 w-full" />;
+  if (!sim.data || !blocking.data || !clustering.data || !link.data || !generator.data) {
+    return <Empty>No results/sim_cases.json yet. Run ./run.sh.</Empty>;
   }
-  if (!ready) return <Empty>Pipeline results are missing. Run ./run.sh.</Empty>;
+  if (!c) return <Empty>No case for this tier yet. Run python -m detector.sim_cases.</Empty>;
 
   const b = blocking.data.tiers[tier];
-  const c = clustering.data.tiers[tier];
-  const d = decisions.data;
-  const g = generator.data.tiers[tier];
-  const out = holdout.data.results_matrix[tier];
+  const cl = clustering.data.tiers[tier];
   const n = blocking.data.n_accounts_per_world;
   const possible = (n * (n - 1)) / 2;
-  const stress = holdout.data.lookalike_stress;
-  const kindStats = stress?.by_kind?.[kind];
-
-  const ring = ringLevels(generator.data, tier);
-  const levels = mode === "ring" ? ring.levels : BENIGN_LEVELS;
-  const example = examples[pick % Math.max(examples.length, 1)];
-  const action = mode === "ring" ? example?.action ?? "review" : "allow";
-  const ringLinked = tier !== "adaptive";
-  const done = step >= STAGES.length;
+  const prevalence = holdout.data?.results_matrix?.[tier]?.account_prevalence ?? 0.008;
+  const done = step >= LAST;
 
   return (
-    <div className="pt-14">
-      <PageHeader
-        title="Watch it run"
-        lede="One world, one tier, one group. Nothing is re-run in your browser. Every figure is read from the files ./run.sh wrote for exactly the case you pick."
-      />
+    <div className="pt-12">
+      <header className="pb-8">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="text-[34px] leading-[1.08] font-medium tracking-[-0.03em] text-fg sm:text-[40px]">
+            Watch one cluster get decided.
+          </h1>
+          <span className="inline-flex items-center gap-2.5 border border-line px-3 py-1.5 text-[12px] text-fg-muted">
+            <Status tone="info" />
+            Deterministic replay of a real Jaal run
+          </span>
+        </div>
+        <p className="mt-4 max-w-[76ch] text-[16px] leading-[1.55] text-fg-muted">
+          Every number below belongs to a real cluster that went through the
+          pipeline on the sealed holdout. The browser draws them, it does not
+          compute them.
+        </p>
+      </header>
 
-      <div className="sticky top-[52px] z-30 -mx-1 mt-8 border-y border-line bg-base/95 px-1 py-4 backdrop-blur-sm">
-        <div className="flex flex-wrap items-center gap-3">
-          <Segmented
+      <div className="border-y border-line-strong py-7">
+        <div className="flex flex-wrap items-end gap-x-10 gap-y-7">
+          <Control
             label="Adversary tier"
             value={tier}
             onChange={setTier}
-            options={TIERS.map((t) => ({
-              value: t,
-              label: (
-                <span className="inline-flex items-center gap-2">
-                  <Status tone={TIER_TONE[t]} />
-                  {t}
-                </span>
-              ),
-            }))}
+            options={TIERS.map((t) => ({ value: t, label: t }))}
           />
-          <Segmented
+          <Control
             label="Group"
-            value={mode}
-            onChange={setMode}
+            value={scenario}
+            onChange={setScenario}
             options={[
-              { value: "ring", label: "a coordinated ring" },
-              { value: "benign", label: "a benign lookalike" },
+              { value: "ring", label: "coordinated ring" },
+              { value: "lookalike", label: "benign lookalike" },
             ]}
           />
-          {mode === "benign" && (
-            <Segmented label="Kind" value={kind} onChange={setKind} options={BENIGN_KINDS} />
-          )}
-
-          {mode === "ring" && examples.length > 0 && (
-            <label className="flex items-center gap-2.5">
-              <span className="label">Cluster</span>
-              <select
-                value={pick}
-                onChange={(e) => setPick(Number(e.target.value))}
-                className="interactive h-9 border border-line bg-base px-2.5 text-[12.5px] text-fg-2 hover:border-line-strong"
-              >
-                {examples.map((e, i) => (
-                  <option key={`${e.seed}-${e.cluster_id}`} value={i}>
-                    seed {e.seed} · cluster {e.cluster_id} · {e.size} accounts
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+          <div>
+            <div className="label mb-2.5">Case</div>
+            <select
+              value={pick}
+              onChange={(e) => { setPick(Number(e.target.value)); setStep(1); }}
+              className="interactive h-10 border border-line bg-base px-3 text-[13px] text-fg-2 hover:border-line-strong"
+            >
+              {cases.map((x, i) => (
+                <option key={`${x.seed}-${x.cluster_id}`} value={i}>
+                  seed {x.seed} · cluster {x.cluster_id} ·{" "}
+                  {Math.round(x.shape.size)} accounts
+                  {x.benign_kind ? ` · ${x.benign_kind}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <button
             type="button"
             onClick={() => setStep(1)}
-            className="interactive ml-auto inline-flex h-9 shrink-0 items-center gap-2.5 border border-line-loud px-5 text-[13px] text-fg hover:bg-active"
+            className="interactive ml-auto inline-flex h-11 shrink-0 items-center gap-2.5 bg-fg px-6 text-[14px] font-medium text-base hover:opacity-90"
           >
-            {step > 0 ? <RotateCcw size={13} /> : <Play size={13} />}
-            {step > 0 ? "Run again" : "Run simulation"}
+            <RotateCcw size={15} />
+            Replay
           </button>
         </div>
       </div>
 
-      <Section
-        title="The world it runs on"
-        lede={`One generated world at the ${tier} tier. The answer key is hidden from the detector and opened only to score it.`}
-      >
-        <Strip
-          cols={4}
-          items={[
-            ["Accounts", count(n), "one merchant, one batch"],
-            ["Ring accounts", count(Math.round(out.account_prevalence * n)),
-             `${pct(out.account_prevalence, 2)} of the batch`],
-            ["Rings hidden in it", `${g.rings_min} to ${g.rings_max}`,
-             "each one operator"],
-            ["Benign lookalike groups", count(g.lookalike_groups_max),
-             "families, flatmates, hostels, offices"],
-          ]}
-        />
-      </Section>
-
-      <Section
-        title="The pipeline"
-        lede="Six stages. Pick one to jump to it, or let it run."
-      >
-        <div className="grid gap-x-10 gap-y-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-          <div className="lg:sticky lg:top-[140px] lg:self-start">
-            <StageRail step={step} onPick={setStep} />
-          </div>
-
-          <div className="min-w-0">
-            <div className="border border-line bg-surface/60 p-4 sm:p-6">
-              {step === 0 ? (
-                <div className="flex h-[300px] flex-col items-center justify-center gap-4 text-center">
-                  <p className="max-w-[42ch] text-[15px] leading-[1.6] text-fg-muted">
-                    Pick a tier and a group above, then run it.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="interactive inline-flex h-10 items-center gap-2.5 border border-line-loud px-5 text-[13.5px] text-fg hover:bg-active"
-                  >
-                    <Play size={13} />
-                    Run simulation
-                  </button>
-                </div>
-              ) : (
-                <WorldCanvas step={step} ringLinked={ringLinked} focus={null} />
-              )}
-            </div>
-
-            {step > 0 && (
-              <>
-                <CanvasLegend step={step} className="mt-5" />
-                <p className="t-meta mt-4 max-w-[80ch]">
-                  A schematic, not a measured world: one ring, three ordinary
-                  groups and some accounts that link to nobody. The counts beside
-                  each stage below are the measured ones.
-                </p>
-              </>
-            )}
-
-            {step >= 2 && (
-              <Strip
-                cols={3}
-                className="mt-8"
-                items={[
-                  ["Possible pairs", count(possible), "every account against every other"],
-                  ["Candidate pairs", count(b.candidate_pairs_mean),
-                   `${blocking.data.rules.length} blocking rules`],
-                  ["Search space cut", pct(b.pair_reduction_ratio, 2),
-                   `blocking recall ${dp4(b.blocking_recall)}`],
-                ]}
-              />
-            )}
-
-            {step >= 4 && (
-              <Strip
-                cols={3}
-                className="mt-8"
-                items={[
-                  ["Edges above threshold", count(c.edges),
-                   `worth ${clustering.data.edge_threshold_bits} bits or more`],
-                  ["Clusters found", count(c.n_clusters),
-                   `Leiden at resolution ${clustering.data.resolution}`],
-                  ["Mean of a ring recovered", dp4(c.mean_ring_recovered),
-                   ringLinked ? "most of a ring survives" : "most of a ring is lost"],
-                ]}
-              />
-            )}
-
-            {step >= 5 && (
-              <div className="mt-8 border-y border-line py-8">
-                <ScoreBars
-                  probability={mode === "ring" && example ? example.p : null}
-                  purityLabel={mode === "ring" ? "in the band below" : "low"}
-                />
-              </div>
-            )}
-
-            {done && (
-              <div className="mt-10 border-t border-line-strong pt-8">
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-                  <span className="label">Action taken</span>
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-3 border px-5 py-2.5 text-[22px] tracking-[-0.02em]",
-                      action === "block" ? "border-bad text-bad"
-                        : action === "review" ? "border-warn text-warn"
-                        : "border-ok text-ok"
-                    )}
-                  >
-                    {action.toUpperCase()}
-                  </span>
-                  {mode === "ring" && example && (
-                    <span className="t-meta">
-                      seed {example.seed}, cluster {example.cluster_id},{" "}
-                      {example.size} accounts
-                    </span>
+      <div className="mt-12 flex flex-wrap gap-x-1 gap-y-2">
+            {STEPS.map(([name], i) => {
+              const nStep = i + 1;
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setStep(nStep)}
+                  aria-current={step === nStep ? "step" : undefined}
+                  className={cn(
+                    "interactive h-9 border-b-2 px-4 text-[13px]",
+                    step === nStep ? "border-fg font-medium text-fg"
+                      : step > nStep ? "border-line-loud text-fg-muted hover:text-fg"
+                      : "border-line text-fg-faint hover:text-fg-muted"
                   )}
-                </div>
-
-                {mode === "ring" && example ? (
-                  <p className="mt-6 max-w-[92ch] border-l-2 border-line-loud pl-5 text-[13.5px] leading-[1.7] text-fg-2">
-                    {example.note.replace(/\*\*/g, "").split("\n")[0]}
-                  </p>
-                ) : (
-                  <p className="mt-6 max-w-[84ch] text-[13.5px] leading-[1.7] text-fg-2">
-                    Across {count(stress?.worlds ?? 0)} worlds containing no rings
-                    at all, {count(stress?.n_clusters ?? 0)} clusters were scored
-                    and {count(stress?.accounts_wrongly_blocked ?? 0)} accounts
-                    were blocked. {count(kindStats?.clusters ?? 0)} of those
-                    clusters were {kind}, and{" "}
-                    {count(kindStats?.wrongly_blocked ?? 0)} of them were blocked.
-                    Sharing identifiers is not evidence of fraud. It is evidence
-                    of living together.
-                  </p>
-                )}
-              </div>
-            )}
+                >
+                  {name}
+                </button>
+              );
+            })}
           </div>
-        </div>
-      </Section>
+
+          <div className="mt-8">
+            <Step n={1} title="Accounts" caption={STEPS[0][1]} active={step === 1}>
+              <Schema n={n} prevalence={prevalence} />
+              <p className="mt-9 max-w-[74ch] text-[15px] leading-[1.55] text-fg-2">
+                Each row is one account with a real payment, a real delivery and
+                one valid first-order coupon.{" "}
+                <span className="tnum text-fg">{count(Math.round(prevalence * n))}</span>{" "}
+                of the {count(n)} belong to a ring, and the detector is not told
+                which. Nothing in a single row is wrong, which is why nothing is
+                judged row by row.
+              </p>
+            </Step>
+
+            <Step n={2} title="Blocking" caption={STEPS[1][1]} active={step === 2}>
+              <Blocking
+                possible={possible}
+                candidates={b.candidate_pairs_mean}
+                cut={b.pair_reduction_ratio}
+                rules={blocking.data.rules}
+                recall={b.blocking_recall}
+              />
+            </Step>
+
+            <Step n={3} title="Link" caption={STEPS[2][1]} active={step === 3}>
+              <Evidence
+                params={link.data}
+                levels={levels}
+                threshold={clustering.data.edge_threshold_bits}
+                meanBits={c.shape.mean_edge_bits}
+                minBits={c.shape.min_edge_bits}
+              />
+            </Step>
+
+            <Step n={4} title="Graph" caption={STEPS[3][1]} active={step === 4}>
+              <div className="border border-line bg-surface/50 p-4 sm:p-6">
+                <ClusterGraph focus={c} companion={companion} step={4}
+                              focusTone={scenario === "ring" ? "warn" : "ok"} />
+              </div>
+              <div className="mt-8 grid gap-x-12 gap-y-8 sm:grid-cols-3">
+                <Figure label="Edges above the threshold" value={count(cl.edges)}
+                        note={`across the whole world, worth ${clustering.data.edge_threshold_bits} bits or more`} />
+                <Figure label="Clusters found" value={count(cl.n_clusters)}
+                        note={`Leiden at resolution ${clustering.data.resolution}`} />
+                <Figure label="This cluster's edge density"
+                        value={c.shape.edge_density.toFixed(2)}
+                        note={`1.00 means every account links to every other`} />
+              </div>
+            </Step>
+
+            <Step n={5} title="Cluster" caption={STEPS[4][1]} active={step === 5}>
+              <div className="border border-line bg-surface/50 p-4 sm:p-6">
+                <ClusterGraph focus={c} companion={companion} step={5}
+                              focusTone={scenario === "ring" ? "warn" : "ok"} />
+              </div>
+              <div className="mt-10">
+                <Scores c={c} />
+              </div>
+            </Step>
+
+            <Step n={6} title="Decision" caption={STEPS[5][1]} active={step === 6}>
+              <Decision c={c} />
+            </Step>
+      </div>
 
       {done && (
-        <Section
-          title={`What that run is worth, ${tier} tier`}
-          lede="Measured over the sealed holdout, not over the schematic above."
-        >
-          <Strip
-            cols={5}
-            items={[
-              ["Accounts blocked", count(out.accounts_blocked)],
-              ["Wrong blocks", count(out.fp)],
-              ["Recall with review", pct(out.recall_including_review, 2)],
-              ["Review load", pct(out.review_rate, 2)],
-              ["Net benefit", compactRupees(out.net_vs_nothing_rupees)],
-            ]}
-          />
-        </Section>
-      )}
-
-      {step > 0 && (
-        <Section title="Under the animation" lede="The measured detail behind each stage.">
-          <div className="border-t border-line-strong">
-            <Disclosure
-              summary={
-                <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                  <span className="text-[14.5px] text-fg">What the evidence adds up to</span>
-                  <span className="t-meta ml-auto text-fg-faint">
-                    one pair, in bits, against the{" "}
-                    {dp2(clustering.data.edge_threshold_bits)}-bit threshold
-                  </span>
-                </span>
-              }
-            >
-              <div className="-ml-[30px]">
-                <PairScorer
-                  params={link.data}
-                  threshold={clustering.data.edge_threshold_bits}
-                  levels={levels}
-                  verdict={
-                    mode === "ring"
-                      ? ringLinked
-                        ? `Past ${dp2(clustering.data.edge_threshold_bits)} bits, so an edge is drawn between these two ring accounts.`
-                        : `Under ${dp2(clustering.data.edge_threshold_bits)} bits. No edge for this pair. At this tier only ${dp4(c.mean_ring_recovered)} of a ring is recovered on average, and the accounts that never link are invisible to every stage after this one.`
-                      : `Past ${dp2(clustering.data.edge_threshold_bits)} bits. These two are linked, and they are not a ring.`
-                  }
-                />
-                <dl className="mt-9 grid gap-x-10 gap-y-3 border-t border-line pt-6 sm:grid-cols-3">
-                  {(mode === "ring"
-                    ? ring.evidence
-                    : [
-                        ["Kind", kind],
-                        ["Clusters in ring-free worlds", count(kindStats?.clusters ?? 0)],
-                        ["Shared", "phone, flat and connection"],
-                      ]
-                  ).map(([k, v]) => (
-                    <div key={k} className="flex items-baseline justify-between gap-4 border-b border-line pb-2.5">
-                      <dt className="text-[13px] text-fg-muted">{k}</dt>
-                      <dd className="tnum text-[13.5px] text-fg">{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <p className="t-meta mt-5 max-w-[76ch]">
-                  {mode === "ring"
-                    ? `Agreements taken from the generator audit for the ${tier} tier. Pincode and card BIN stay on at every tier because the pin_bin blocking rule still reaches ${dp4(b.recall_by_rule.pin_bin)} of true pairs there.`
-                    : "Both members are new customers using the coupon, which is the hard case: the identifiers look exactly like a ring."}
-                </p>
-              </div>
-            </Disclosure>
-
-            <Disclosure
-              summary={
-                <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                  <span className="text-[14.5px] text-fg">Why that action and not another</span>
-                  <span className="t-meta ml-auto text-fg-faint">
-                    {rupees(d.cost_blocked_innocent)} · {rupees(d.cost_analyst_review)} ·{" "}
-                    {rupees(d.cost_missed_abuser)}
-                  </span>
-                </span>
-              }
-            >
-              <div className="-ml-[30px]">
-                <DecisionBands decisions={d} action={action} />
-                <p className="t-meta mt-6 max-w-[80ch]">
-                  Every term scales with the number of accounts, so the cheapest
-                  action depends only on predicted purity. Review is cheaper than a
-                  wrong block all the way up to {purityBands(d)[2].from.toFixed(4)}.
-                  Take review away and blocking would have to clear{" "}
-                  {pct(d.breakeven_precision, 2)} to beat allowing, which is why the
-                  third action exists at all. The per-cluster purity is computed by
-                  the pipeline but not written to results/, so the band its action
-                  implies is shown rather than a number invented here.
-                </p>
-              </div>
-            </Disclosure>
+        <section className="mt-16 border border-line-strong">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line-strong bg-surface px-6 py-4">
+            <h2 className="text-[15px] font-medium text-fg">Simulation result</h2>
+            <span className="t-meta">
+              {tier} tier · seed {c.seed} · cluster {c.cluster_id} ·{" "}
+              {scenario === "ring" ? "coordinated ring" : c.benign_kind}
+            </span>
           </div>
-        </Section>
+
+          <dl className="grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ["Accounts in cluster", Math.round(c.shape.size), null],
+              ["Ring probability", c.probability.toFixed(3), null],
+              ["Predicted ring purity", c.predicted_ring_purity.toFixed(3), null],
+              ["Action", c.action.toUpperCase(), TONE_FOR[c.action]],
+              ["Discount at risk", rupees(c.behaviour.total_discount), null],
+              ["Strongest signal", c.strongest_signal, null],
+              ["Cheapest action costs", rupees(c.expected_cost_rupees[c.action]), null],
+              ["Human needed", c.action === "review" ? "yes" : "no", null],
+            ].map(([k, v, tone]) => (
+              <div key={k} className="bg-base px-6 py-5">
+                <dt className="label">{k}</dt>
+                <dd className="tnum mt-3 text-[22px] leading-none font-medium tracking-[-0.02em]"
+                    style={{ color: tone ? `var(--color-${tone})` : "var(--color-fg)" }}>
+                  {v}
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          <div className="flex flex-wrap items-center gap-3 border-t border-line-strong px-6 py-5">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="interactive inline-flex h-10 items-center gap-2.5 border border-line-loud px-4 text-[13px] text-fg hover:bg-active"
+            >
+              <RotateCcw size={13} /> Run again
+            </button>
+            <button
+              type="button"
+              onClick={() => setScenario(scenario === "ring" ? "lookalike" : "ring")}
+              className="interactive inline-flex h-10 items-center gap-2.5 border border-line-loud px-4 text-[13px] text-fg hover:bg-active"
+            >
+              {scenario === "ring" ? "Try a benign lookalike" : "Try a coordinated ring"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTier(TIERS[Math.min(TIERS.indexOf(tier) + 1, TIERS.length - 1)])}
+              disabled={tier === "adaptive"}
+              className="interactive inline-flex h-10 items-center gap-2.5 border border-line-loud px-4 text-[13px] text-fg hover:bg-active disabled:cursor-not-allowed disabled:border-line disabled:text-fg-dim"
+            >
+              Try a harder operator
+            </button>
+            <button
+              type="button"
+              onClick={() => onGoTo?.("results")}
+              className="interactive ml-auto inline-flex h-10 items-center gap-2.5 text-[13px] text-fg-muted hover:text-fg"
+            >
+              See the holdout results <ArrowRight size={14} />
+            </button>
+          </div>
+        </section>
       )}
     </div>
   );
