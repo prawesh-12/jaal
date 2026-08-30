@@ -315,7 +315,7 @@ function Scores({ c }) {
         <div className="label">Ring probability</div>
         <p className="t-meta mt-2 max-w-[38ch]">Is this cluster a ring?</p>
         <div className="tnum mt-5 text-[40px] leading-none font-medium tracking-[-0.03em] text-fg">
-          {c.probability.toFixed(3)}
+          {c.probability.toFixed(4)}
         </div>
         {meter(c.probability, "var(--color-info)")}
       </div>
@@ -326,7 +326,7 @@ function Scores({ c }) {
           accounts?
         </p>
         <div className="tnum mt-5 text-[40px] leading-none font-medium tracking-[-0.03em] text-fg">
-          {c.predicted_ring_purity.toFixed(3)}
+          {c.predicted_ring_purity.toFixed(4)}
         </div>
         {meter(c.predicted_ring_purity, "var(--color-warn)")}
         <p className="t-meta mt-3">
@@ -639,8 +639,8 @@ export default function Simulation({ onGoTo }) {
           <dl className="grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
             {[
               ["Accounts in cluster", Math.round(c.shape.size), null],
-              ["Ring probability", c.probability.toFixed(3), null],
-              ["Predicted ring purity", c.predicted_ring_purity.toFixed(3), null],
+              ["Ring probability", c.probability.toFixed(4), null],
+              ["Predicted ring purity", c.predicted_ring_purity.toFixed(4), null],
               ["Action", c.action.toUpperCase(), TONE_FOR[c.action]],
               ["Discount at risk", rupees(c.behaviour.total_discount), null],
               ["Strongest signal", c.strongest_signal, null],
@@ -656,6 +656,13 @@ export default function Simulation({ onGoTo }) {
               </div>
             ))}
           </dl>
+
+          <p className="border-t border-line px-6 py-4 text-[12.5px] leading-[1.6] text-fg-faint">
+            Probability and purity are per cluster, out of{" "}
+            {Math.round(c.shape.size)} accounts. Discount at risk is what this
+            cluster actually extracted in rupees. The three costs are expected
+            rupees for this cluster, not for the whole world.
+          </p>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-line-strong px-6 py-5">
             <button
