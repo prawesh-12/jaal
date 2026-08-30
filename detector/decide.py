@@ -60,7 +60,6 @@ def expected_costs(purity: float | np.ndarray, n_accounts: int | np.ndarray,
 
 
 def best_action(purity, n_accounts, **kw) -> np.ndarray:
-    """The cheapest action per cluster. No threshold, just arithmetic."""
     ec = expected_costs(purity, n_accounts, **kw)
     stacked = np.vstack([np.broadcast_to(ec[a], np.shape(purity))
                          for a in ACTIONS])
@@ -95,7 +94,6 @@ def unclustered_ring_accounts(table: pd.DataFrame) -> int:
 
 
 def score_policy(table: pd.DataFrame, action: np.ndarray, **kw) -> dict:
-    """Account level outcome and total cost of one set of decisions."""
     n_ring = table["n_ring_members"].to_numpy()
     n_innocent = table["n_innocent_members"].to_numpy()
 
@@ -142,7 +140,6 @@ def score_policy(table: pd.DataFrame, action: np.ndarray, **kw) -> dict:
 
 
 def threshold_policy(p: np.ndarray, threshold: float) -> np.ndarray:
-    """Two actions: block above the threshold, allow below. No review queue."""
     return np.where(p >= threshold, "block", "allow")
 
 
@@ -187,7 +184,6 @@ def plot_cost_curve(rows: list[dict], three_action: dict, path: str) -> None:
     t = [r["threshold"] for r in rows]
     cost = [r["cost_rupees"] for r in rows]
     f1 = [r["f1"] for r in rows]
-    cost_best = int(np.argmin(cost))
     f1_best = int(np.argmax(f1))
     nothing = rows[0]["do_nothing_rupees"]
 

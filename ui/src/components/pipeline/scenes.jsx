@@ -1,20 +1,5 @@
 import { count, dp2, rupees } from "@/lib/format";
 
-/*
-  One SVG scene per pipeline stage. Each shows the same three things the
-  detail panel names in words: what goes in, what happens to it, what comes
-  out. A scene plays once when its stage becomes current and then holds.
-  Nothing loops.
-
-  The reveals are CSS animations rather than JS ones. animation-fill-mode
-  guarantees the finished state, so a stalled frame loop or a slow device
-  leaves the diagram fully drawn instead of blank. That matters more here than
-  anywhere else on the site, because this diagram is the explanation.
-
-  Node positions are illustrative. Every figure printed is from the stage
-  model, which reads the results files.
-*/
-
 const W = 900;
 const H = 250;
 const INK = "var(--color-fg-faint)";
@@ -71,7 +56,6 @@ function grid(n, x0, y0, w, h, cols) {
   ]);
 }
 
-/* A labelled result, to the right of every scene. */
 function Outcome({ x, label, value, sub, delay }) {
   return (
     <g>
@@ -88,8 +72,6 @@ function Outcome({ x, label, value, sub, delay }) {
     </g>
   );
 }
-
-/* 01 INPUT ---------------------------------------------------------------- */
 
 export function InputScene({ stage }) {
   const nodes = grid(40, 90, 62, 250, 132, 8);
@@ -109,8 +91,6 @@ export function InputScene({ stage }) {
     </Scene>
   );
 }
-
-/* 02 BLOCK ---------------------------------------------------------------- */
 
 export function BlockScene({ stage }) {
   const left = Array.from({ length: 22 }, (_, i) => [70 + (i % 2) * 16, 58 + i * 6.4]);
@@ -158,8 +138,6 @@ export function BlockScene({ stage }) {
   );
 }
 
-/* 03 LINK ----------------------------------------------------------------- */
-
 export function LinkScene({ stage }) {
   const shown = stage.weights.slice(0, 7);
   const threshold = stage.output.value;
@@ -201,7 +179,6 @@ export function LinkScene({ stage }) {
         );
       })}
 
-      {/* The line an edge has to clear. */}
       <line x1={scale(threshold)} y1="46" x2={scale(threshold)} y2="222"
             stroke="var(--color-fg-faint)" strokeWidth="1" strokeDasharray="3 3" />
       <Caption x={scale(threshold)} y={238} size={10}>
@@ -218,8 +195,6 @@ export function LinkScene({ stage }) {
     </Scene>
   );
 }
-
-/* 04 CLUSTER -------------------------------------------------------------- */
 
 export function ClusterScene({ stage }) {
   const groupA = [[120, 86], [180, 58], [232, 100], [186, 144], [124, 138]];
@@ -245,7 +220,6 @@ export function ClusterScene({ stage }) {
         />
       ))}
 
-      {/* Below the threshold, so it never becomes an edge. */}
       <line x1="232" y1="100" x2="352" y2="146" stroke={LINE} strokeWidth="1"
             strokeDasharray="3 4" opacity="0.18" />
 
@@ -264,8 +238,6 @@ export function ClusterScene({ stage }) {
     </Scene>
   );
 }
-
-/* 05 FEATURES ------------------------------------------------------------- */
 
 export function FeaturesScene({ stage }) {
   const top = Math.max(...stage.features.map((f) => f.value));
@@ -311,8 +283,6 @@ export function FeaturesScene({ stage }) {
   );
 }
 
-/* 06 SCORE ---------------------------------------------------------------- */
-
 export function ScoreScene({ stage }) {
   const rows = [70, 100, 128, 156, 186];
 
@@ -341,7 +311,6 @@ export function ScoreScene({ stage }) {
           calibrated probability
         </Caption>
       </g>
-      {/* Under the box, not inside it: the sentence is wider than the box. */}
       <Caption x={481} y={176} tone="var(--color-fg-2)" size={10.5} delay={680}>
         {stage.process}
       </Caption>
@@ -357,11 +326,7 @@ export function ScoreScene({ stage }) {
   );
 }
 
-/* 07 DECIDE --------------------------------------------------------------- */
-
 export function DecideScene({ stage }) {
-  // One action is taken per cluster. Review is what this system does most, and
-  // is the action the whole project argues for, so it is the one that resolves.
   const chosen = "review";
   const y = { block: 74, review: 128, allow: 182 };
 

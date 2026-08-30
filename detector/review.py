@@ -52,7 +52,6 @@ def breakeven_accuracy(net_when_perfect: int, ring_accounts_reviewed: int,
 
 
 def accuracy_curve(result: dict, accuracies=ACCURACIES) -> dict:
-    """The table, for one policy result that carries the counts it needs."""
     net = result["net_vs_nothing_rupees"]
     reviewed = result["ring_accounts_reviewed"]
     return {
@@ -109,10 +108,6 @@ def print_accuracy(report: dict) -> None:
     print("\n'never' means the tier stays ahead even if the reviewer resolves "
           "nothing at all.")
 
-
-# --------------------------------------------------------------------------
-# how many clusters can a person actually get through?
-# --------------------------------------------------------------------------
 
 def expected_value_of_review(purity, n_accounts,
                              c_fn: int = config.COST_MISSED_ABUSER,

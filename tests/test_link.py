@@ -12,12 +12,6 @@ SMALL = 3000
 
 
 @pytest.fixture(scope="module")
-def params():
-    with open("results/link_params.json") as f:
-        return json.load(f)
-
-
-@pytest.fixture(scope="module")
 def world():
     return gen.generate(701, "moderate", SMALL)
 

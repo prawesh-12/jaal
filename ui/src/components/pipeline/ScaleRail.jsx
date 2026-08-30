@@ -2,11 +2,8 @@
 import { cn } from "@/lib/utils";
 
 /*
-  What the pipeline is actually for: turning an enormous search space into a
-  small number of decisions. Log scale, because the values span 72 million
-  down to three, and the scale is named so nobody reads the lengths as linear.
-
-  The row for the stage on screen is brought forward. The rest stay quiet.
+  Log scale, because the values span 72 million down to three. The scale is
+  named so nobody reads the lengths as linear.
 */
 export function ScaleRail({ stages, activeId, onSelect }) {
   /*

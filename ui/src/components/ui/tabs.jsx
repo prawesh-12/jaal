@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 
 export const Tabs = TabsPrimitive.Root;
 
-/* Sits on the header's bottom rule, so the active item cuts into it. */
 export function TabsList({ className, ...props }) {
   return (
     <TabsPrimitive.List

@@ -11,25 +11,21 @@ from config import (COST_ANALYST_REVIEW, COST_BLOCKED_INNOCENT,
 
 def decision_cost(n_missed_abusers: int, n_blocked_innocents: int,
                   n_reviewed: int = 0) -> int:
-    """Total rupees lost by a set of decisions. Correct decisions cost nothing."""
     return (n_missed_abusers * COST_MISSED_ABUSER
             + n_blocked_innocents * COST_BLOCKED_INNOCENT
             + n_reviewed * COST_ANALYST_REVIEW)
 
 
 def do_nothing_cost(n_abuser_accounts: int) -> int:
-    """The floor. Deploy nothing, block nobody, lose every coupon."""
     return n_abuser_accounts * COST_MISSED_ABUSER
 
 
 def block_everyone_cost(n_abusers: int, n_innocents: int) -> int:
-    """The ceiling. The whole bill is the innocent customers you blocked."""
     del n_abusers
     return n_innocents * COST_BLOCKED_INNOCENT
 
 
 def net_vs_nothing(cost: int, n_abuser_accounts: int) -> int:
-    """Rupees saved against deploying nothing. Negative means it lost money."""
     return do_nothing_cost(n_abuser_accounts) - cost
 
 
@@ -43,7 +39,6 @@ def breakeven_precision() -> float:
 
 def summarise(n_abusers: int, n_innocents: int, n_missed: int,
               n_blocked_innocents: int, n_reviewed: int = 0) -> dict:
-    """One decision set, priced against both reference lines."""
     cost = decision_cost(n_missed, n_blocked_innocents, n_reviewed)
     return {
         "cost_rupees": cost,

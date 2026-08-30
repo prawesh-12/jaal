@@ -2,11 +2,6 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/*
-  A code block. Comments and strings are dimmed and everything else is left
-  alone, which is enough to make a snippet scannable without turning it into a
-  colour chart. No library: the snippets here are short and the rules are two.
-*/
 const RULES = [
   // Order matters. Strings are matched before comments so a # inside a string
   // is not mistaken for the start of one.

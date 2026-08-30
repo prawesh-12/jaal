@@ -90,7 +90,6 @@ def best_threshold(sweep_out: dict, n_worlds: int,
 
 def ablation(seeds, n_accounts, params, threshold: float, tiers=None,
              tf_weight=link.TF_WEIGHT) -> dict:
-    """Drop one comparison at a time and record what recall loses."""
     full = sweep(seeds, n_accounts, params, tf_weight, thresholds=(threshold,),
                  tiers=tiers)
     base = {t: rows[0] for t, rows in full.items()}

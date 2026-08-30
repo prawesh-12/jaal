@@ -31,7 +31,6 @@ function parseNote(text) {
   return { lead: lead.join(" "), heading, bullets };
 }
 
-/* One queued cluster, which is a discrete object an analyst works. Panel earned. */
 function NoteEntry({ n }) {
   const { lead, heading, bullets } = parseNote(n.note);
   return (
@@ -84,7 +83,6 @@ function NoteEntry({ n }) {
   );
 }
 
-/* A segmented control drawn with rules rather than fills. */
 function Segmented({ options, value, onChange, label }) {
   return (
     <div role="group" aria-label={label} className="flex items-center border border-line">

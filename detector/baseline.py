@@ -41,7 +41,6 @@ FLAG_THRESHOLD = 0.50       # rule score at or above this gets blocked
 
 
 class UnionFind:
-    """Every account starts alone. Sharing an identifier merges two groups."""
 
     def __init__(self, items):
         self.parent = {x: x for x in items}
@@ -97,7 +96,6 @@ def exact_match_groups(accounts: pd.DataFrame,
 
 
 def cluster_features(accounts: pd.DataFrame, rows: list[int]) -> dict:
-    """Turn one group of accounts into the numbers the rules read."""
     block = accounts.iloc[rows]
     first = block["first_order_value"].to_numpy()
     span = (block["signup_ts"].max() - block["signup_ts"].min()) / 86_400
@@ -131,7 +129,6 @@ def rule_score(f: dict) -> float:
 
 
 def score_world(world: World, threshold: float = FLAG_THRESHOLD) -> dict:
-    """Run the baseline over one world and count what it got right and wrong."""
     groups, skipped = exact_match_groups(world.accounts)
     is_ring = world.truth["is_ring"].to_numpy()
     group_type = world.truth["group_type"].to_numpy()

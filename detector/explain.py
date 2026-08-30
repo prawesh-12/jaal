@@ -94,7 +94,6 @@ def template_explanation(facts: dict, p: float, action: str,
 
 
 def call_ollama(prompt: str, timeout: float = 90.0) -> tuple[str, str]:
-    """Live call, primary model then fallback. Raises if both fail."""
     from ollama import Client
 
     key = os.environ.get("OLLAMA_API_KEY")
@@ -117,7 +116,6 @@ def call_ollama(prompt: str, timeout: float = 90.0) -> tuple[str, str]:
 def explain(facts: dict, p: float, action: str,
             top_signals: list[tuple[str, float]], live: bool = False,
             cache_dir: str = CACHE_DIR) -> dict:
-    """One review note, with the source it came from recorded."""
     key = cache_key(facts, p, action, top_signals)
     path = os.path.join(cache_dir, f"{key}.json")
 
@@ -167,7 +165,6 @@ def top_signals(row) -> list[tuple[str, float]]:
 
 
 def numbers_in(text: str) -> set[str]:
-    """Every numeric token in a note, for the invented-number check."""
     import re
     return set(re.findall(r"\d[\d,]*(?:\.\d+)?", text.replace("Rs.", "")))
 

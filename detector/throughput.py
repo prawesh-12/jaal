@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import time
 
 import config
 from detector.generate_accounts import generate, load_priors

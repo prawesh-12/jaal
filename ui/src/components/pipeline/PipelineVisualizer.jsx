@@ -3,19 +3,6 @@ import { usePrefersReducedMotion } from "@/lib/motion";
 import { SCENES } from "./scenes";
 import { cn } from "@/lib/utils";
 
-/*
-  The pipeline runs itself. Each stage plays its scene, holds it long enough to
-  read, then hands on to the next and starts again at the top.
-
-  The stage rail is the only control, and it is there because a reader who
-  wants to sit on one stage should be able to. Selecting a stage shows it and
-  the run carries on from there rather than fighting the click.
-
-  Reduced motion stops the advance entirely: the rail still selects a stage,
-  and every scene holds its finished state, so the page stays complete without
-  anything moving on its own.
-*/
-
 const DWELL_MS = 4200;
 
 export function PipelineVisualizer({ stages, tier, index, onIndex }) {
@@ -74,10 +61,6 @@ export function PipelineVisualizer({ stages, tier, index, onIndex }) {
   );
 }
 
-/*
-  The stage indicator, and the way to sit on a stage. The bar under the current
-  one runs for as long as that stage holds, so the rail doubles as the clock.
-*/
 function StageRail({ stages, index, onSelect, reduced }) {
   return (
     <ol className="flex overflow-x-auto" aria-label="Pipeline stages">

@@ -1,15 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/*
-  Grouping is done with rules, headings and space. A bordered box is the last
-  resort, not the default, so almost nothing in here draws one.
-
-  The rule for a box, applied everywhere: use one only when the content is a
-  discrete object the reader compares against peers or acts on. A box never
-  contains another box.
-*/
-
-/* The top of a page. One statement, one explanation, optional right-hand meta. */
 export function PageHeader({ title, lede, meta, children }) {
   return (
     <header className="border-b border-line pb-10">
@@ -31,7 +21,6 @@ export function PageHeader({ title, lede, meta, children }) {
   );
 }
 
-/* A major division of a page. Separated by space, and by one hairline. */
 export function Section({ title, lede, meta, children, className }) {
   return (
     <section className={cn("pt-16", className)}>
@@ -57,7 +46,6 @@ export function Section({ title, lede, meta, children, className }) {
   );
 }
 
-/* A heading one level below Section, inside it. */
 export function SubHead({ title, lede, meta }) {
   return (
     <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
@@ -74,15 +62,6 @@ export function SubHead({ title, lede, meta }) {
   );
 }
 
-export function Rule({ className }) {
-  return <hr className={cn("border-0 border-t border-line", className)} />;
-}
-
-/*
-  Compact metadata. Plain text, not a row of pills. Items are [label, value]
-  so the pairing reads on its own; a separator between them would lead the
-  line whenever the row wraps.
-*/
 export function Metadata({ items, className }) {
   return (
     <dl className={cn("flex flex-wrap items-baseline gap-x-8 gap-y-2.5", className)}>
@@ -96,7 +75,6 @@ export function Metadata({ items, className }) {
   );
 }
 
-/* A small square marker. Colour carries state; the text beside it carries the name. */
 export function Status({ tone = "neutral", className }) {
   const color = {
     ok: "var(--color-ok)",
@@ -114,10 +92,6 @@ export function Status({ tone = "neutral", className }) {
   );
 }
 
-/*
-  The tier selector. One control, used identically wherever a page is scoped
-  to a tier, so the tier colour appears once per option and nowhere else.
-*/
 export function TierPicker({ value, onChange, tiers = TIER_ORDER }) {
   return (
     <div role="group" aria-label="Tier" className="flex items-center border border-line">
@@ -140,16 +114,11 @@ export function TierPicker({ value, onChange, tiers = TIER_ORDER }) {
   );
 }
 
-/* Which tiers exist, and which state colour each one borrows. */
 const TIER_ORDER = ["obvious", "moderate", "sophisticated", "adaptive"];
 export const TIER_TONE = {
   obvious: "ok", moderate: "info", sophisticated: "warn", adaptive: "bad",
 };
 
-/*
-  A legend, shown wherever more than one tier is on screen at once so the
-  colours never have to be guessed.
-*/
 export function TierLegend({ tiers = TIER_ORDER, className }) {
   return (
     <div className={cn("flex flex-wrap items-center gap-x-6 gap-y-2", className)}>

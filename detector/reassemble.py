@@ -47,7 +47,6 @@ def cluster_shape(accounts: pd.DataFrame, members: list[int]) -> dict:
 
 def candidate_merges(accounts: pd.DataFrame, clusters: list[list[int]],
                      window_days: float = MERGE_WINDOW_DAYS) -> list[tuple[int, int]]:
-    """Pairs of clusters that share a pincode and overlap closely in time."""
     shapes = [cluster_shape(accounts, c) for c in clusters]
     by_pincode: dict[str, list[int]] = {}
     for i, s in enumerate(shapes):
@@ -78,7 +77,6 @@ def _purity_of(accounts, graph, members, model) -> tuple[float, dict]:
 def reassemble(accounts: pd.DataFrame, graph, clusters: list[list[int]],
                model: dict, window_days: float = MERGE_WINDOW_DAYS
                ) -> tuple[list[list[int]], dict]:
-    """Merge what looks like one ring split in two, if purity survives it."""
     if len(clusters) < 2:
         return clusters, {"proposed": 0, "accepted": 0, "rejected_purity": 0,
                           "rejected_size": 0}

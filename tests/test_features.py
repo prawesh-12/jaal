@@ -1,21 +1,13 @@
 """Features, and the leakage audit that keeps them honest."""
 
 import inspect
-import json
 
 import numpy as np
 import pandas as pd
 import pytest
 
 import config
-from detector import cluster, features
-from detector import generate_accounts as gen
-
-
-@pytest.fixture(scope="module")
-def params():
-    with open("results/link_params.json") as f:
-        return json.load(f)
+from detector import features
 
 
 @pytest.fixture(scope="module")

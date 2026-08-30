@@ -21,13 +21,6 @@ SEED = 704
 
 
 @pytest.fixture(scope="module")
-def params():
-    import json
-    with open("results/link_params.json") as f:
-        return json.load(f)
-
-
-@pytest.fixture(scope="module")
 def world():
     return generate(SEED, "moderate", ACCOUNTS, load_priors())
 

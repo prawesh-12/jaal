@@ -22,11 +22,6 @@ function deadZoneStart(curve) {
   return hit ? hit.sophistication : null;
 }
 
-/*
-  One catalogue entry. Collapsed it gives the failure and where it was seen;
-  opened it gives why, what it costs, and which stage it belongs to. The red
-  marker is one 2px rule, never a red component.
-*/
 function FailureEntry({ f, index, stage }) {
   return (
     <Disclosure
@@ -68,10 +63,6 @@ function FailureEntry({ f, index, stage }) {
   );
 }
 
-/*
-  Which stage a failure belongs to, decided from the wording the pipeline
-  already uses in the catalogue entry rather than from a new field.
-*/
 function stageOf(f) {
   const text = `${f.failure} ${f.why}`.toLowerCase();
   if (text.includes("cluster") && text.includes("never")) return "Link, then Cluster";

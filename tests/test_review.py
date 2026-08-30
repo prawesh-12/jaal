@@ -70,9 +70,7 @@ def test_the_harder_tiers_lean_harder_on_the_reviewer(report):
     assert b["adaptive"] > b["moderate"]
 
 
-# --------------------------------------------------------------------------
 # bounded review capacity
-# --------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
 def capacity():

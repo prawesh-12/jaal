@@ -170,7 +170,6 @@ def cluster_features(accounts: pd.DataFrame, graph: ig.Graph, rows: list[int],
 
 
 def dominant_signal(graph: ig.Graph, rows: list[int], comparisons=None) -> str:
-    """Which comparison carried most weight here. Feeds the review note."""
     comparisons = link.SCORED_COMPARISONS if comparisons is None else comparisons
     sub = graph.subgraph(rows)
     if not sub.ecount() or "contributions" not in graph.es.attributes():
@@ -201,8 +200,6 @@ def world_rows(world: World, params: dict, rules=None,
                comparisons=None) -> list[dict]:
     clusters, graph, contributions = cluster.cluster_world(
         world, params, rules=rules, comparisons=comparisons)
-    keep = np.asarray(graph.es["weight"]) >= 0
-    del keep
 
     # Ring accounts in no cluster still cost money, so carry the world totals.
     world_ring_accounts = int(world.truth["is_ring"].sum())

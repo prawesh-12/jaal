@@ -57,7 +57,6 @@ function TopNav({ holdout }) {
   );
 }
 
-/* One line, on every page, because the reader should never have to go looking. */
 function DefenceLine() {
   return (
     <div className="border-b border-line bg-sunken">
@@ -117,7 +116,6 @@ function Footer() {
   );
 }
 
-/* The hash keeps a tab linkable, so a reviewer can send someone straight to it. */
 function useHashTab() {
   const read = () => {
     const raw = window.location.hash.replace("#", "");

@@ -15,7 +15,6 @@ export const SCORED = ["device", "address", "pincode", "card_bin", "ip_prefix",
 export const bitsFor = (params, field, level) =>
   Math.log2(params.m[field][level] / params.u[field][level]);
 
-/* The strongest agreeing level of every comparison, ranked. */
 export function agreementWeights(params) {
   const out = [];
   for (const field of SCORED) {

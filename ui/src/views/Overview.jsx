@@ -26,11 +26,6 @@ function Precision({ value }) {
   return <span className="tnum">{dp4(value)}</span>;
 }
 
-/*
-  The hero. Headline and context on the left, the result the page is about on
-  the right. The two numbers underneath it are the comparison that gives the
-  result its meaning, so they sit with it rather than in a section below.
-*/
 function Hero({ pooled, holdout, decisions }) {
   const share = pooled.cost_rupees / pooled.do_nothing_rupees;
 
@@ -59,7 +54,6 @@ function Hero({ pooled, holdout, decisions }) {
         <Metadata className="mt-9" items={meta} />
       </div>
 
-      {/* The anchor of the page. */}
       <div className="lg:border-l lg:border-line lg:pl-16">
         <div className="label">Primary outcome · money kept against doing nothing</div>
         <div className="tnum t-hero scene-fade mt-5">
@@ -94,7 +88,6 @@ function Hero({ pooled, holdout, decisions }) {
   );
 }
 
-/* The honest half of the result, kept next to the result rather than buried. */
 function Caveats({ pooled }) {
   return (
     <div className="grid gap-x-10 gap-y-6 border-y border-line py-8 sm:grid-cols-2">
@@ -121,7 +114,6 @@ function Caveats({ pooled }) {
 }
 
 function TierTable({ matrix }) {
-  // The tier that keeps the most money, read from the data rather than assumed.
   const best = TIERS.filter((t) => matrix[t])
     .reduce((a, t) => (matrix[t].net_vs_nothing_rupees > matrix[a].net_vs_nothing_rupees ? t : a),
             TIERS.find((t) => matrix[t]));
@@ -160,8 +152,6 @@ function TierTable({ matrix }) {
                 <Precision value={m.precision} />
               </TD>
               <TD className="text-fg-muted">{m.brier.toFixed(5)}</TD>
-              {/* One bar, two segments: what it blocks alone, and what it
-                  reaches once a human works the queue. The gap is the point. */}
               <TD align="left" numeric={false} className="pl-6">
                 <Bar
                   value={m.recall}
@@ -186,10 +176,6 @@ function TierTable({ matrix }) {
   );
 }
 
-/*
-  Both sides on one scale around a shared zero. The rules bars are long because
-  the rules lose roughly ten times more than Jaal gains, which is the comparison.
-*/
 function Baseline({ baseline, matrix }) {
   const rows = TIERS.map((t) => ({
     tier: t,

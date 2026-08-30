@@ -80,7 +80,6 @@ class World:
 
 
 def _zipf_weights(n: int, alpha: float = ZIPF_ALPHA) -> np.ndarray:
-    """Skewed weights so a few values are common and most are rare."""
     w = 1.0 / np.power(np.arange(1, n + 1), alpha)
     return w / w.sum()
 
@@ -107,7 +106,6 @@ def _make_pools(rng: np.random.Generator) -> dict:
 
 
 class _Counter:
-    """Hands out unique ids so no two accounts collide by accident."""
 
     def __init__(self) -> None:
         self.device = 0
@@ -164,7 +162,6 @@ def _signup_times(rng: np.random.Generator, n: int, priors: dict,
 
 
 def _group_start(rng: np.random.Generator, priors: dict, span_days: float) -> int:
-    """A start time for a group, leaving room for its whole window in the year."""
     room = max(1, int(WORLD_DAYS - span_days))
     day = int(rng.integers(0, room))
     hour = int(_sample_hours(rng, 1, priors)[0])
@@ -174,7 +171,6 @@ def _group_start(rng: np.random.Generator, priors: dict, span_days: float) -> in
 def _order_history(rng: np.random.Generator, n: int, priors: dict,
                    repeat_rate: float, first: np.ndarray
                    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """How many times each account ordered, what they spent, and the gap."""
     repeats = rng.random(n) < repeat_rate
     n_orders = np.where(repeats, rng.integers(2, MAX_ORDERS + 1, n), 1)
     total = first.copy()
@@ -216,7 +212,6 @@ def ring_sizes(rng: np.random.Generator, n_total: int, prevalence: float) -> lis
 
 
 def lookalike_plan(rng: np.random.Generator, n_groups: int) -> list[tuple[str, int]]:
-    """Which benign groups exist in this world, and how big each one is."""
     kinds = list(config.LOOKALIKE_KINDS)
     plan: list[tuple[str, int]] = []
     for i in range(n_groups):
@@ -266,7 +261,6 @@ def _singletons(rng, n, priors, pools, ids) -> tuple[dict, dict]:
 
 def _ring(rng, size, tier, priors, pools, ids, index,
           tier_params=None) -> tuple[dict, dict]:
-    """One operator running `size` accounts to farm the coupon `size` times."""
     t = tier_params or config.TIERS[tier]
     account_id = ids.accounts(size)
 
@@ -332,7 +326,6 @@ def _ring(rng, size, tier, priors, pools, ids, index,
 
 
 def _lookalike(rng, kind, size, priors, pools, ids, index) -> tuple[dict, dict]:
-    """A benign group that shares what a ring shares, for a different reason."""
     spec = config.LOOKALIKE_KINDS[kind]
     shares = spec["shares"]
     account_id = ids.accounts(size)

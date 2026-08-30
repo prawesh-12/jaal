@@ -26,16 +26,10 @@ function TierName({ tier }) {
   );
 }
 
-/* ------------------------------------------------------------- the scorer */
-
 /*
-  Every weight here is measured. The reader picks what a pair agrees on and
-  watches the total move, which is the only way the claim that six weak
-  signals can outweigh one device match becomes checkable rather than
-  asserted.
-
-  Level indices into params.levels. Every preset total below was checked
-  against results/link_params.json before it was written here.
+  Every weight here is measured. Level indices into params.levels, and every
+  preset total was checked against results/link_params.json before it was
+  written here.
 */
 const PRESETS = {
   "a ring, same phone": {
@@ -139,8 +133,6 @@ function Scorer({ params, threshold }) {
         </div>
 
         <div className="relative mt-6 h-2 bg-raised">
-          {/* Transitions on width, so it slides as the reader toggles a level
-              and still lands correctly if the transition never runs. */}
           <div
             className="h-full transition-[width] duration-300 ease-out"
             style={{
@@ -167,13 +159,7 @@ function Scorer({ params, threshold }) {
   );
 }
 
-/* ------------------------------------------------------ the cluster graph */
-
-/*
-  Schematic, not a measured world. The bits quoted underneath are real. Hover
-  a group and the other one drops back, which is the only way to see that the
-  two are structurally the same shape.
-*/
+/* Schematic, not a measured world. The bits quoted underneath are real. */
 function GraphSchematic({ threshold, params }) {
   const [focus, setFocus] = useState(null);
   const device = bitsFor(params, "device", 0);
@@ -211,7 +197,6 @@ function GraphSchematic({ threshold, params }) {
             </g>
           )
         )}
-        {/* The edge that is never drawn, and the reason the two stay apart. */}
         <line x1="180" y1="58" x2="300" y2="66" stroke="var(--color-line-strong)"
               strokeWidth="1" strokeDasharray="3 4" />
       </svg>
@@ -244,7 +229,6 @@ function GraphSchematic({ threshold, params }) {
   );
 }
 
-/* -------------------------------------------------------------------- page */
 
 export default function Pipeline() {
   const blocking = useJson("blocking");

@@ -2,11 +2,6 @@ import { useId, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/*
-  An expandable row. The open state is a real layout rather than a measured
-  height, so the content is present and readable whether or not the transition
-  runs. No rounded accordion card, and the summary stays fully readable closed.
-*/
 export function Disclosure({ summary, children, defaultOpen = false, className }) {
   const [open, setOpen] = useState(defaultOpen);
   const id = useId();

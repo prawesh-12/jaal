@@ -139,8 +139,6 @@ def detection_curve(fitted: dict, n_accounts: int, seeds: list[int],
     rows = []
     for s_val in np.round(np.arange(0.0, 1.001, 0.05), 2):
         tp = interpolate_tier(float(s_val))
-        blocks = []
-        del blocks
         r = sweep_worlds(fitted, n_accounts, seeds, tp, base_tier)
         if not r:
             continue
@@ -209,7 +207,6 @@ def lookalike_stress(fitted: dict, n_accounts: int, seeds: list[int]) -> dict:
 
 def failure_catalogue(table: pd.DataFrame, fitted: dict, stress: dict,
                       curve: list[dict]) -> list[dict]:
-    """Concrete failures, each with a named example."""
     p, purity = score_table(table, fitted)
     action = decide.best_action(purity, table["size"].to_numpy())
     t = table.assign(action=action, purity=purity, p=p)
@@ -413,7 +410,7 @@ def main() -> None:
               f"{r['accounts_reviewed']:<10,} "
               f"{'+' if net >= 0 else '-'}Rs.{abs(net):,}")
 
-    p_all, purity_all = score_table(table, fitted)
+    _, purity_all = score_table(table, fitted)
     pooled = decide.score_policy(
         table, decide.best_action(purity_all, table["size"].to_numpy()))
     print(f"\npooled across tiers: cost Rs.{pooled['cost_rupees']:,}, "

@@ -61,7 +61,6 @@ TF_WEIGHT = 0.75
 
 
 class PairView:
-    """Column values for the left and right side of every candidate pair."""
 
     def __init__(self, accounts: pd.DataFrame, pairs: np.ndarray):
         self.n = len(accounts)
@@ -136,16 +135,6 @@ def weight_table(params: dict) -> dict[str, np.ndarray]:
     return table
 
 
-def value_frequencies(accounts: pd.DataFrame) -> dict[str, dict]:
-    """How common each value of each term frequency field is, in this world."""
-    n = len(accounts)
-    out = {}
-    for name, col in TF_FIELDS.items():
-        counts = accounts[col].value_counts()
-        out[name] = (counts / n).to_dict()
-    return out
-
-
 def score_pairs(accounts: pd.DataFrame, pairs: np.ndarray, params: dict,
                 tf_weight: float = TF_WEIGHT, comparisons=SCORED_COMPARISONS
                 ) -> tuple[np.ndarray, np.ndarray]:
@@ -180,54 +169,12 @@ def score_pairs(accounts: pd.DataFrame, pairs: np.ndarray, params: dict,
 
 
 def bits_to_probability(bits: np.ndarray, prior_odds: float) -> np.ndarray:
-    """Turn a match weight back into a real probability of sharing an operator."""
     odds = prior_odds * np.exp2(np.clip(bits, -200, 200))
     return odds / (1.0 + odds)
 
 
 def explain_pair(contributions_row: np.ndarray, comparisons=SCORED_COMPARISONS,
                  top: int = 5) -> list[tuple[str, float]]:
-    """The strongest few reasons one pair scored what it did."""
     order = np.argsort(-np.abs(contributions_row))[:top]
     return [(comparisons[k], round(float(contributions_row[k]), 2))
             for k in order if abs(contributions_row[k]) > 0.01]
-
-
-def pair_metrics(world, pairs: np.ndarray, bits: np.ndarray,
-                 thresholds) -> list[dict]:
-    """Pair precision and recall at each match weight threshold.
-
-    Recall counts every true pair in the world, including the ones blocking
-    never produced. Those missed pairs still count against us.
-    """
-    from detector.blocking import true_pair_codes
-
-    n = len(world.accounts)
-    codes = pairs[:, 0] * n + pairs[:, 1]
-    truth = true_pair_codes(world)
-    is_true = np.isin(codes, truth)
-    n_true_total = len(truth)
-
-    out = []
-    for t in thresholds:
-        keep = bits >= t
-        tp = int((keep & is_true).sum())
-        predicted = int(keep.sum())
-        out.append({
-            "threshold_bits": float(t),
-            "edges": predicted,
-            "tp": tp,
-            "fp": predicted - tp,
-            "precision": round(tp / predicted, 4) if predicted else 0.0,
-            "recall": round(tp / n_true_total, 4) if n_true_total else 0.0,
-        })
-    return out
-
-
-def evaluate_world(world, params, thresholds, tf_weight: float = TF_WEIGHT,
-                   comparisons=SCORED_COMPARISONS) -> list[dict]:
-    from detector.blocking import candidate_pairs
-
-    pairs, _ = candidate_pairs(world.accounts)
-    bits, _ = score_pairs(world.accounts, pairs, params, tf_weight, comparisons)
-    return pair_metrics(world, pairs, bits, thresholds)

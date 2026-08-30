@@ -37,7 +37,6 @@ CLUSTER_SEED = 42             # community detection is randomised. Pin it.
 
 def build_graph(pairs: np.ndarray, bits: np.ndarray, n_accounts: int,
                 threshold: float = EDGE_THRESHOLD_BITS) -> ig.Graph:
-    """Weighted graph over account row positions. Isolated accounts stay isolated."""
     keep = bits >= threshold
     edges = pairs[keep]
     weights = bits[keep].astype(float)
@@ -61,7 +60,6 @@ def leiden_clusters(graph: ig.Graph, resolution: float = RESOLUTION,
 
 def louvain_clusters(graph: ig.Graph, seed: int = CLUSTER_SEED
                      ) -> list[list[int]]:
-    """The same job with Louvain, for comparison."""
     nxg = nx.Graph()
     nxg.add_nodes_from(range(graph.vcount()))
     for e in graph.es:
@@ -75,7 +73,6 @@ def louvain_clusters(graph: ig.Graph, seed: int = CLUSTER_SEED
 
 
 def count_disconnected(graph: ig.Graph, clusters: list[list[int]]) -> int:
-    """Count the clusters that are not connected subgraphs."""
     bad = 0
     for c in clusters:
         sub = graph.subgraph(c)
@@ -150,7 +147,6 @@ def pairwise_quality(world: World, clusters: list[list[int]]) -> dict:
 
 
 def score_clusters(world: World, clusters: list[list[int]]) -> dict:
-    """How well the partition lines up with the operators that actually exist."""
     is_ring = world.truth["is_ring"].to_numpy()
     group = world.truth["group_id"].to_numpy()
 

@@ -1,12 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/*
-  Recharts draws the marks; everything a reader looks at around them is ours.
-  There is no library tooltip anywhere: hovering a chart lifts the active point
-  into a Readout that sits in the frame, so the numbers appear in the same
-  typography as the rest of the page instead of in a floating box.
-*/
-
 export const axisProps = {
   stroke: "var(--color-line-strong)",
   tick: { fill: "var(--color-fg-faint)", fontSize: 11 },
@@ -20,7 +13,6 @@ export const gridProps = {
   vertical: false,
 };
 
-/* A thin vertical guide, drawn by us so it matches the rest of the rules. */
 export const crosshair = {
   stroke: "var(--color-line-loud)",
   strokeWidth: 1,
@@ -69,10 +61,6 @@ export function ChartFrame({
   );
 }
 
-/*
-  The value readout. Holds its own height so the chart never jumps when the
-  pointer enters, and dims to the resting message when it leaves.
-*/
 export function Readout({ items, resting, active }) {
   return (
     <div className="mb-6 flex min-h-[46px] flex-wrap items-baseline gap-x-9 gap-y-2 border-y border-line py-3">
@@ -121,11 +109,6 @@ export function Legend({ items }) {
   );
 }
 
-/*
-  A ranked list of magnitudes. An HTML row beats an SVG bar chart here because
-  the label sits outside the plot where it can never collide, and a row can be
-  hovered and selected without hit-testing a rectangle.
-*/
 export function BarList({
   items, max, format, color = "var(--color-fg-faint)", onHover, active, describe,
 }) {

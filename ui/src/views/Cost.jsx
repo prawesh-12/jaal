@@ -54,7 +54,6 @@ export default function Cost({ decisions, loading }) {
         />
       </PageHeader>
 
-      {/* The conclusion, before the chart that supports it. */}
       <Section title="The decision that pays">
         <div className="grid gap-x-16 gap-y-10 border-y border-line-strong py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
           <div>

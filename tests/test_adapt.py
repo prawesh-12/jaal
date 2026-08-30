@@ -103,9 +103,7 @@ def test_blocking_collapses_while_the_review_queue_holds(report):
     assert blocked_lost > 10 * stopped_lost
 
 
-# --------------------------------------------------------------------------
 # how much of the review queue the operator can see
-# --------------------------------------------------------------------------
 
 OUTCOME = {"n_ring": 96, "blocked": 10, "reviewed": 40,
            "reviewed_clusters": [20, 15, 5]}

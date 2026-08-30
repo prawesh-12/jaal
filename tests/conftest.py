@@ -6,6 +6,7 @@ checkout those tests skip with a message saying what to run, instead of erroring
 out and making the suite look broken.
 """
 
+import json
 import os
 
 import pytest
@@ -25,3 +26,9 @@ def train_table_path():
 @pytest.fixture(scope="session")
 def val_table_path():
     return require("results/features_val.csv")
+
+
+@pytest.fixture(scope="module")
+def params():
+    with open("results/link_params.json") as f:
+        return json.load(f)

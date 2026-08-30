@@ -1,13 +1,6 @@
 import { dp4 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/*
-  What the scene is showing, in words and in figures. Input, process and
-  output are named explicitly on every stage, because that is the part a
-  reader needs and an animation on its own does not give them.
-
-  Every value comes from the stage model, which reads the results files.
-*/
 export function StageDetailPanel({ stage, index, total }) {
   return (
     <div key={stage.id} className="scene-fade">
@@ -19,7 +12,6 @@ export function StageDetailPanel({ stage, index, total }) {
         </div>
         <p className="t-body mt-3 max-w-[68ch]">{stage.what}</p>
 
-        {/* Input, process, output. The spine of every stage. */}
         <dl className="mt-8 grid gap-px border border-line bg-line sm:grid-cols-3">
           <Cell label="Input">
             {stage.input ? (

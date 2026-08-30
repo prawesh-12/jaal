@@ -3,9 +3,8 @@ import { X } from "lucide-react";
 import { Metadata, PageHeader, Section } from "@/components/section";
 
 /*
-  These are matplotlib output, drawn on a white canvas during the run. They are
-  framed as paper on purpose: it should stay obvious that this page did not
-  draw them.
+  matplotlib output, drawn on a white canvas during the run, framed as paper
+  so it stays obvious this page did not draw them.
 
   Paired into groups, because a masonry grid fills one column before the other
   and a reader ends up jumping between unrelated charts.

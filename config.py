@@ -10,7 +10,7 @@ RING_PREVALENCE = 0.008      # 0.8%, realistic promo abuse rate
 LOOKALIKE_GROUPS = 40        # families, flatmates, hostels, offices
 
 COUPON_MIN_ORDER = 400       # rupees, minimum order value to qualify
-COUPON_VALUE = 200           # rupees off
+COUPON_VALUE = 200
 
 # One farmed coupon is a direct Rs.200 giveaway.
 COST_MISSED_ABUSER = COUPON_VALUE
@@ -59,7 +59,7 @@ LOOKALIKE_KINDS = {
                       span_days=(1, 14),    repeat_rate=0.6),
 }
 
-MAX_CANDIDATE_PAIRS = 2_000_000   # refuse to proceed beyond this
+MAX_CANDIDATE_PAIRS = 2_000_000
 MAX_BLOCK_SIZE = 400              # skip any blocking key with more members
 
 OLIST_PRIORS_PATH = "data/olist_priors.json"

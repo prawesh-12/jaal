@@ -1,21 +1,14 @@
 """Which account columns a caller can actually send, and what that costs them.
 
-Every published number assumes all twelve columns are present. Not every caller
-has them. A merchant knows the delivery address and when the account was
-created. A payment aggregator sees the same device across every merchant it
-processes, but never sees a delivery address and never sees that a coupon was
-applied, because the promo is applied merchant side.
+Every published number assumes all twelve columns. An aggregator never sees a
+delivery address or a coupon flag, because the promo is applied merchant side.
 
-A profile is a named set of columns the caller can supply. Three things follow
-from it, and nothing else in the pipeline changes:
+A profile is a named set of columns. Three things follow from it: which
+blocking rules can key on something, which comparisons the scorer can add up,
+and which cluster features can still be computed.
 
-  - which blocking rules can still key on something
-  - which comparisons the pair scorer can still add up
-  - which cluster features can still be computed
-
-The third one matters as much as the first two. Narrowing the comparisons only
-changes the graph. A caller who cannot send `address_id` also loses
-`distinct_address_ratio`, and an ablation that forgets that flatters them.
+The third is the one people forget. A caller who cannot send `address_id` also
+loses `distinct_address_ratio`, and an ablation that misses that flatters them.
 
     python -m detector.profiles          print the table
 """
@@ -101,13 +94,11 @@ class Profile:
 
     @property
     def comparisons(self) -> tuple[str, ...]:
-        """Comparisons the scorer can still use, in the shipped order."""
         return tuple(c for c in link.SCORED_COMPARISONS
                      if self.has(*FIELD_COLUMNS[c]))
 
     @property
     def rules(self) -> tuple:
-        """Blocking rules whose every key column is available."""
         have = set(self.columns)
         if "signup_ts" in have:
             have |= {"signup_week", "signup_month", "signup_month_shift"}
@@ -116,7 +107,6 @@ class Profile:
 
     @property
     def features(self) -> tuple[str, ...]:
-        """Cluster features that can still be computed, in the shipped order."""
         from detector.model import MODEL_FEATURES
         return tuple(f for f in MODEL_FEATURES if self.has(*FEATURE_COLUMNS[f]))
 
@@ -213,7 +203,6 @@ def match(columns) -> Profile:
 
 
 def coverage(columns) -> dict:
-    """What a caller with these columns can and cannot do. Plain data."""
     have = set(columns)
     p = match(columns)
     return {

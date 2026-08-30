@@ -245,7 +245,6 @@ def main() -> None:
               f"{a['lift_over_baseline']:<8.1f} {a['brier']:<9.5f} "
               f"{a['roc_auc']:.4f}")
 
-    # Which calibration method, decided on the Brier score it produces.
     sig = report["variants"]["forest_sigmoid"]["all_tiers_pooled"]["brier"]
     iso = report["variants"]["forest_isotonic"]["all_tiers_pooled"]["brier"]
     # Both calibrators are saved, and the decision stage picks on cost.

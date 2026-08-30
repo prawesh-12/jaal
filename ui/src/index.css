@@ -1,22 +1,14 @@
 @import "tailwindcss";
 
-/*
-  Jaal's design tokens. Everything visual is defined once, here, and shared by
-  every view. Nothing in a view should invent a colour, a radius or a shadow.
-
-  The interface is deliberately close to neutral. Colour is reserved for state
-  that a reader has to act on, so a figure being positive is not on its own a
-  reason to paint anything.
-*/
 @theme {
   /*
-    Surface ladder. Four steps, each one a small lift on the last, so depth
-    comes from stacking rather than from shadow.
+    Depth comes from stacking these, never from shadow.
 
       base      the page
       surface   a section that needs separating from the page
       raised    something interactive sits here
       active    the selected or highlighted state
+      sunken    below the page, for insets
   */
   --color-base: #0b0c0d;
   --color-surface: #101214;
@@ -24,22 +16,16 @@
   --color-active: #1d2126;
   --color-sunken: #08090a;
 
-  /* Structure. Hairlines carry the layout; a heavier rule marks a boundary. */
   --color-line: #1d2023;
   --color-line-strong: #2b2f34;
   --color-line-loud: #3a4046;
 
-  /*
-    Text ladder. Five steps, because four was not enough to keep a heading
-    from reading like the paragraph under it.
-  */
   --color-fg: #f7f7f5;
   --color-fg-2: #c8c9c6;
   --color-fg-muted: #9a9c99;
   --color-fg-faint: #6b6d6b;
   --color-fg-dim: #4a4c4b;
 
-  /* The only non-semantic accent: near-white, for selection and focus. */
   --color-accent: #d9dde2;
 
   /*
@@ -53,10 +39,6 @@
   --color-bad: #a7423e;
   --color-info: #5382be;
 
-  /*
-    Tier ramp, easiest to hardest. Deliberately the same four values as the
-    state colours: a tier is a severity, so it should not get its own hues.
-  */
   --color-tier-obvious: #549b69;
   --color-tier-moderate: #5382be;
   --color-tier-sophisticated: #ba8a36;
@@ -65,19 +47,13 @@
   --font-sans: "Geist Variable", "Mukta", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Small radii only. Nothing here is a rounded dashboard widget. */
   --radius-xs: 2px;
   --radius-sm: 3px;
   --radius-md: 5px;
 
-  /*
-    Motion. Named by what they are for, so a duration is chosen rather than
-    typed. Everything is ease-out or ease-in-out; nothing bounces.
-  */
   --motion-fast: 160ms;
   --motion-standard: 280ms;
   --motion-slow: 620ms;
-  --motion-stage: 720ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
@@ -104,10 +80,6 @@
     font-synthesis-weight: none;
   }
 
-  /*
-    A single hairline grid, almost at the threshold of visible. It gives the
-    page a sense of being ruled rather than floating. No perspective, no glow.
-  */
   body::before {
     content: "";
     position: fixed;
@@ -141,33 +113,18 @@
   ::-webkit-scrollbar-thumb:hover { background: #33373b; }
 }
 
-/*
-  Figures. Tabular so decimal columns line up down a table, and lining so they
-  sit on the same baseline as the text beside them. Every number on the site
-  wears this.
-*/
 @utility tnum {
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1, "zero" 1;
   letter-spacing: -0.01em;
 }
 
-/* Identifiers and raw system values only. Never a whole paragraph. */
 @utility ident {
   font-family: var(--font-mono);
   font-size: 0.9em;
   letter-spacing: -0.01em;
 }
 
-/*
-  Type scale. Three levels of importance, named after the job rather than the
-  size, so a heading cannot quietly end up the same weight as the paragraph
-  under it.
-
-    t-hero / t-result   level 1, the thing the page is about
-    t-section / t-sub   level 2, the analytical structure
-    t-body / t-meta     level 3, support that should stay quiet
-*/
 @utility t-hero {
   font-size: clamp(2.5rem, 1.6rem + 2.6vw, 3.75rem);
   line-height: 1.04;
@@ -212,7 +169,6 @@
   color: var(--color-fg-muted);
 }
 
-/* Column headers and field labels. */
 @utility label {
   font-size: 11px;
   line-height: 1rem;
@@ -222,7 +178,6 @@
   color: var(--color-fg-faint);
 }
 
-/* Something the reader can act on. Lifts on hover, never glows. */
 @utility interactive {
   transition:
     background-color var(--motion-fast) var(--ease-out),
@@ -246,12 +201,8 @@
 }
 
 /*
-  Scene reveals. These are CSS rather than JS on purpose: the style engine
-  guarantees the finished state through animation-fill-mode, so a stalled
-  frame loop or a slow device leaves the diagram fully drawn rather than
-  blank. Motion still drives everything interaction-led, where the resting
-  state is visible anyway.
-
+  animation-fill-mode guarantees the finished state, so a stalled frame loop
+  or a slow device leaves the diagram fully drawn rather than blank.
   Each one takes its delay from --d, set inline by the caller.
 */
 @keyframes scene-in {
@@ -349,7 +300,7 @@
 
 /*
   Reduced motion. The CSS half is here; the JS half reads the same query
-  through useReducedMotion so the pipeline skips its flow animation and jumps
+  through usePrefersReducedMotion so the pipeline skips its flow animation and jumps
   straight to each stage's finished state, which stays fully readable.
 */
 @media (prefers-reduced-motion: reduce) {

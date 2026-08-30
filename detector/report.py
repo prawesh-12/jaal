@@ -38,7 +38,6 @@ def section(title: str) -> str:
 
 
 def profiles_columns(row: dict) -> list:
-    """Columns a profile can send, worked back from what it is missing."""
     from detector.profiles import ALL_COLUMNS
     missing = set(row.get("missing_columns", ()))
     return [c for c in ALL_COLUMNS if c not in missing]

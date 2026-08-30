@@ -34,7 +34,7 @@ def _check_raw(raw_dir: str) -> None:
             f"missing {len(missing)} Olist file(s) in {raw_dir}: {', '.join(missing)}\n"
             f"Get them from https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce\n"
             f"and unzip into {raw_dir}. The raw data is never committed; only the\n"
-            f"derived {os.path.basename('olist_priors.json')} is."
+            f"derived olist_priors.json is."
         )
 
 
@@ -66,7 +66,6 @@ def repeat_rate(orders: pd.DataFrame, customers: pd.DataFrame) -> float:
 
 
 def hour_weights(orders: pd.DataFrame) -> list[float]:
-    """24 buckets, normalised, of when orders actually get placed."""
     hours = pd.to_datetime(orders["order_purchase_timestamp"]).dt.hour
     counts = hours.value_counts(normalize=True).reindex(range(24), fill_value=0.0)
     return [round(float(v), 6) for v in counts.tolist()]

@@ -88,7 +88,6 @@ def _measured() -> dict:
 
 @app.get("/v1/profiles")
 def profile_list():
-    """What each column set gives up, and what it is measured to reach."""
     measured = _measured()
     return jsonify({
         "all_columns": list(profiles.ALL_COLUMNS),
@@ -111,11 +110,7 @@ def profile_list():
 
 @app.post("/v1/coverage")
 def coverage():
-    """Send the column names you have. Get back what you would actually get.
-
-    This is the question to answer before writing an integration, so it costs
-    nothing to ask and needs no account data.
-    """
+    """Send the column names you have. Get back what you would actually get."""
     payload = request.get_json(silent=True) or {}
     columns = payload.get("columns")
     if not isinstance(columns, list) or not columns:
@@ -146,7 +141,6 @@ def health():
 
 @app.get("/v1/schema")
 def schema():
-    """What to send. Useful when wiring up a client."""
     return jsonify({
         "scan": {"required_columns": list(REQUIRED_COLUMNS),
                  "max_accounts": MAX_ACCOUNTS_PER_SCAN},
@@ -162,7 +156,6 @@ def schema():
 
 @app.post("/v1/scan")
 def scan():
-    """A batch of accounts in, one priced decision per cluster out."""
     payload = request.get_json(silent=True) or {}
     accounts = payload.get("accounts")
     if not isinstance(accounts, list) or not accounts:
@@ -198,7 +191,6 @@ def scan():
 
 @app.post("/v1/score")
 def score():
-    """One cluster whose features are already computed."""
     payload = request.get_json(silent=True) or {}
     m = detector().model
     missing = [f for f in m["features"] if f not in payload]
@@ -235,7 +227,6 @@ def score():
 
 @app.get("/runs/<run_id>")
 def run(run_id: str):
-    """A saved batch result by name, for example /runs/holdout."""
     safe = os.path.basename(run_id) + ".json"
     path = os.path.join(config.RESULTS_DIR, safe)
     if not os.path.exists(path):

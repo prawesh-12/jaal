@@ -1,11 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/*
-  A table is the content, not something inside a container. Thin row rules,
-  compact uppercase headers, numbers right aligned and tabular so the decimal
-  columns line up. No outer border, no radius.
-*/
-
 export function Table({ className, ...props }) {
   return (
     <div className="w-full overflow-x-auto">

@@ -50,7 +50,6 @@ def derive_keys(accounts: pd.DataFrame) -> pd.DataFrame:
 
 
 def _pairs_from_buckets(indices: dict, max_block: int) -> tuple[np.ndarray, int]:
-    """All within-bucket pairs, as a 2-column array of row positions."""
     chunks, skipped = [], 0
     for positions in indices.values():
         k = len(positions)
@@ -135,7 +134,6 @@ def true_pair_codes(world: World) -> np.ndarray:
 
 
 def measure(world: World, rules=BLOCKING_RULES) -> dict:
-    """Blocking recall and reduction for one world, plus per-rule recall."""
     n = len(world.accounts)
     pairs, stats = candidate_pairs(world.accounts, rules)
     got = pairs[:, 0] * n + pairs[:, 1]

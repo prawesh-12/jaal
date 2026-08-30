@@ -1,7 +1,3 @@
-/*
-  Jaal means net. Four accounts caught in one mesh, which is the whole idea:
-  no single account looks wrong, the edges between them do.
-*/
 export function Mark({ size = 18 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">

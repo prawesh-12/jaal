@@ -7,16 +7,10 @@ import numpy as np
 import pytest
 
 import config
-from detector import cluster, link
+from detector import cluster
 from detector import generate_accounts as gen
 
 SMALL = 4000
-
-
-@pytest.fixture(scope="module")
-def params():
-    with open("results/link_params.json") as f:
-        return json.load(f)
 
 
 @pytest.fixture(scope="module")

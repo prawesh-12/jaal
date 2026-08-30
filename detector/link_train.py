@@ -66,7 +66,6 @@ def _normalise(counts: dict[str, np.ndarray], floor: float) -> dict[str, list]:
 
 
 def random_pairs(n: int, k: int, rng: np.random.Generator) -> np.ndarray:
-    """k random pairs of distinct row positions."""
     a = rng.integers(0, n, k)
     b = rng.integers(0, n, k)
     keep = a != b
@@ -77,7 +76,6 @@ def random_pairs(n: int, k: int, rng: np.random.Generator) -> np.ndarray:
 def popular_value_pairs(accounts: pd.DataFrame, field: str = SEED_FIELD,
                         min_freq: int = MIN_SEED_FREQ,
                         max_freq: int = config.MAX_BLOCK_SIZE) -> np.ndarray:
-    """Pairs sharing a value held by more accounts than any household has."""
     chunks = []
     for positions in accounts.groupby(field).indices.values():
         k = len(positions)
@@ -100,7 +98,6 @@ def purity(world: World, pairs: np.ndarray) -> tuple[int, int]:
 
 
 def expected_match_rate(n_accounts: int, n_candidate_pairs: int) -> float:
-    """Roughly what share of candidate pairs are real matches, from config."""
     ring_accounts = n_accounts * config.RING_PREVALENCE
     lo, hi = 8, 45                      # config.generate_accounts.ring_sizes
     mean_size = (lo + hi) / 2

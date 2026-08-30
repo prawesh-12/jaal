@@ -32,15 +32,12 @@ from detector import decide, features, model, profiles
 from detector.cli import parse_seeds
 from detector.resources import announce, apply, budget
 
-# The four mark colours the dashboard uses, checked for colour-vision
-# separation. Nothing here invents a fifth.
 GREEN, BLUE, AMBER, RED = "#2baf60", "#3e8be9", "#c38700", "#c3292e"
 
 
 def evaluate_profile(profile: profiles.Profile, train_seeds: list[int],
                      val_seeds: list[int], n_accounts: int, params: dict,
                      n_jobs: int, features_from_full: bool = False) -> dict:
-    """One profile, end to end: build both tables, refit, decide, score."""
     print(f"\n  fields: {', '.join(profile.comparisons) or 'none'}")
     print(f"  blocking rules: "
           f"{', '.join(n for n, _ in profile.rules) or 'none'}")

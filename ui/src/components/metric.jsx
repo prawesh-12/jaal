@@ -2,13 +2,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 /*
-  A metric is a label, a figure and the thing the figure is measured against.
-  No box, no icon, no fill. Adjacent metrics are separated by a rule, which is
-  enough to group them.
-
-  `level` sets how loud it is, and matches the three levels of importance the
-  whole interface uses: 1 is what the page is about, 2 is the analysis, 3 is
-  support.
+  `level` matches the interface's three levels of importance: 1 is what the
+  page is about, 2 is the analysis, 3 is support.
 */
 const LEVEL = {
   1: "t-result",
@@ -29,7 +24,6 @@ export function Metric({
     quiet: "text-fg-muted",
   }[tone];
 
-  // A metric only becomes interactive when there is something more to say.
   const Wrapper = detail ? "button" : "div";
   const wrapperProps = detail
     ? {
@@ -80,10 +74,6 @@ export function Metric({
   );
 }
 
-/*
-  Metrics in a row, divided rather than boxed. The dividers are a left border
-  on every item after the first, so they never appear at the ends of the row.
-*/
 export function MetricRow({ children, columns = 4, className }) {
   const cols = {
     2: "sm:grid-cols-2",
@@ -106,10 +96,6 @@ export function MetricRow({ children, columns = 4, className }) {
   );
 }
 
-/*
-  One horizontal bar. Used only where the length says something the number
-  beside it does not, which in practice means showing a gap or a share.
-*/
 export function Bar({ value, second, color, className, height = 6 }) {
   const clamp = (v) => `${Math.max(0, Math.min(1, v ?? 0)) * 100}%`;
   return (

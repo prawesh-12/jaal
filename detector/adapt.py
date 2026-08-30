@@ -72,7 +72,6 @@ def starting_point() -> dict:
 
 
 def trial_settings(point: dict, rng: np.random.Generator) -> dict:
-    """One experiment the operator runs, near where it currently stands."""
     out = {}
     for name, spec in PARAMS.items():
         span = (spec["hi"] - spec["lo"]) * TRIAL_SPREAD
@@ -127,7 +126,6 @@ def run_round(point: dict, seeds: list[int], n_accounts: int, priors: dict,
               link_params: dict, model: dict, rng: np.random.Generator,
               vary: bool = True, q: float = 0.0,
               detect_rng: np.random.Generator | None = None) -> dict:
-    """A round of experiments, then the operator's read on what to change."""
     detect_rng = detect_rng or np.random.default_rng(0)
     trials = []
     for seed in seeds:
@@ -215,8 +213,8 @@ def choose_move(correlations: dict, point: dict) -> dict | None:
 
 
 def loop(rounds: int, worlds: int, n_accounts: int, rng_seed: int = 0,
-         q: float = 0.0, label: str = "blocks_only", loaded: dict = None,
-         quiet: bool = False) -> dict:
+         q: float = 0.0, label: str = "blocks_only",
+         loaded: dict = None) -> dict:
     if loaded is None:
         priors = load_priors()
         with open("results/link_params.json") as f:
@@ -256,14 +254,13 @@ def loop(rounds: int, worlds: int, n_accounts: int, rng_seed: int = 0,
         history.append(summary)
 
         m = summary.get("move")
-        if not quiet:
-            print(f"  round {r}: blocked {summary['recall_blocked']:.4f}, "
-                  f"+review {summary['recall_including_review']:.4f}"
+        print(f"  round {r}: blocked {summary['recall_blocked']:.4f}, "
+              f"+review {summary['recall_including_review']:.4f}"
               + (f"  ->  moves {m['parameter']} "
                  f"{m['from']} to {m['to']} (rho {m['rho']:+.3f}, "
                  f"p {m['p']:.3f}{'' if m['significant'] else ', not significant'})"
-                     if m else "  (watching only)")
-                  + f"   [{summary['seconds']}s]")
+                 if m else "  (watching only)")
+              + f"   [{summary['seconds']}s]")
 
     return {"rounds": rounds, "worlds_per_round": worlds,
             "n_accounts": n_accounts, "start_tier": START_TIER,
@@ -276,7 +273,6 @@ def loop(rounds: int, worlds: int, n_accounts: int, rng_seed: int = 0,
 
 def visibility_sweep(rounds: int, worlds: int, n_accounts: int,
                      settings: dict = None, replicates: int = 1) -> dict:
-    """The same loop at every level of what the operator can see."""
     settings = settings or VISIBILITY
     priors = load_priors()
     with open("results/link_params.json") as f:
@@ -347,9 +343,7 @@ def plot_loop(report: dict, path: str) -> None:
     plt.close(fig)
 
 
-
 def _mean_curve(runs: list[dict], key: str) -> list[float]:
-    """Average across replicates, round by round."""
     per_round = list(zip(*[[h[key] for h in r["history"]] for r in runs]))
     return [float(np.mean(v)) for v in per_round]
 

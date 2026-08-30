@@ -1,14 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-/*
-  A contents list that follows the reader.
-
-  The links do not change the hash. The whole app routes on the hash, so an
-  href of "#what" would land on an unknown tab key and bounce the reader back
-  to the overview. They scroll instead, and the href is kept only so the entry
-  reads as a link and can be opened deliberately.
-*/
 export function useActiveSection(ids, offset = 140) {
   const [active, setActive] = useState(ids[0]);
   const seen = useRef(new Map());
@@ -71,8 +63,6 @@ export function TableOfContents({ sections, active, className }) {
     <nav aria-label="On this page" className={className}>
       <p className="label mb-4 hidden md:block">On this page</p>
 
-      {/* Below the sidebar breakpoint this becomes a scrolling row that sticks
-          under the header, so the list is reachable at every width. */}
       <ol className="-mx-1 flex gap-1 overflow-x-auto px-1 md:mx-0 md:block md:space-y-px md:overflow-visible md:px-0">
         {sections.map((s, i) => {
           const on = s.id === active;

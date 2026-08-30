@@ -14,11 +14,7 @@ import { agreementWeights } from "@/lib/pipelineStages";
 import { count, dp4, pct, rupees, signedRupees } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/*
-  How Jaal is used, integrated and run. Every figure is read from the same
-  result files as the rest of the site. Where a paragraph and a picture would
-  say the same thing, this page draws the picture.
-*/
+/* Every figure is read from the same result files as the rest of the site. */
 
 const SECTIONS = [
   { id: "what", title: "What it does", icon: Layers },
@@ -36,7 +32,6 @@ const SECTIONS = [
 const IDS = SECTIONS.map((s) => s.id);
 const ICON = Object.fromEntries(SECTIONS.map((s) => [s.id, s.icon]));
 
-/* The twelve columns, grouped by what they are rather than listed flat. */
 const GROUPS = [
   {
     name: "Who", icon: Fingerprint, hashable: true,
@@ -56,9 +51,6 @@ const GROUPS = [
   },
 ];
 
-/* ------------------------------------------------------------- diagrams */
-
-/* Two jobs, two shapes. The point is which stages each one has to touch. */
 function WhereDiagram({ timing }) {
   const stages = ["Block", "Link", "Cluster", "Features", "Score", "Decide"];
   const online = new Set(["Block", "Link"]);
@@ -125,7 +117,6 @@ function WhereDiagram({ timing }) {
   );
 }
 
-/* Raw in, digest out, and the one property that survives the trip. */
 function HashDiagram() {
   return (
     <figure className="m-0 border-y border-line py-8">
@@ -176,7 +167,6 @@ function HashDiagram() {
   );
 }
 
-/* Where the milliseconds go, as parts of a whole rather than a table. */
 const STAGE_SHADE = {
   block_ms: 0.92, link_ms: 0.74, cluster_ms: 0.56, features_ms: 0.38, score_ms: 0.22,
 };
@@ -233,7 +223,6 @@ function TimingBars({ sizes }) {
   );
 }
 
-/* -------------------------------------------------------------------- page */
 
 export default function Integrate() {
   const holdout = useJson("holdout");
@@ -286,7 +275,6 @@ export default function Integrate() {
         />
 
         <div className="min-w-0">
-          {/* 01 */}
           <Anchored id="what" icon={ICON.what} title="What it does"
                     lede="Finds groups of accounts run by one person farming a first-order promo. The unit is the cluster, never the transaction.">
             <MetricRow columns={3}>
@@ -314,7 +302,6 @@ export default function Integrate() {
             </Note>
           </Anchored>
 
-          {/* 02 */}
           <Anchored id="where" icon={ICON.where} title="Where it sits"
                     lede="Two jobs, two shapes. Mixing them up is the usual way an integration goes wrong.">
             <WhereDiagram timing={big} />
@@ -323,7 +310,6 @@ export default function Integrate() {
             </Note>
           </Anchored>
 
-          {/* 03 */}
           <Anchored id="send" icon={ICON.send} title="What you send"
                     lede="One row per account, twelve columns, in three groups.">
             <div className="grid gap-px border border-line bg-line lg:grid-cols-3">
@@ -356,7 +342,6 @@ export default function Integrate() {
             </Note>
           </Anchored>
 
-          {/* 04 */}
           <Anchored id="hash" icon={ICON.hash} title="Nothing leaves in the clear"
                     lede="The five identity columns are only ever tested for equality. Salt and hash them and the pipeline cannot tell.">
             <HashDiagram />
@@ -378,7 +363,6 @@ payload = hash_identifiers(accounts, salt="tenant-7c1f")`}</Code>
             </Note>
           </Anchored>
 
-          {/* 05 */}
           <Anchored id="worth" icon={ICON.worth} title="What each field is worth"
                     lede={link.data
                       ? `Two accounts start at about one in ${count(Math.round(1 / link.data.prior_match_rate))}. Each agreement adds bits.`
@@ -395,7 +379,6 @@ payload = hash_identifiers(accounts, salt="tenant-7c1f")`}</Code>
             </Note>
           </Anchored>
 
-          {/* 06 */}
           <Anchored id="partial" icon={ICON.partial} title="If you cannot send it all"
                     lede="Each column set re-blocked, re-scored, re-clustered and refitted on its own. Bars are what it reaches with a human.">
             {profiles.length ? (
@@ -442,7 +425,6 @@ payload = hash_identifiers(accounts, salt="tenant-7c1f")`}</Code>
             )}
           </Anchored>
 
-          {/* 07 */}
           <Anchored id="call" icon={ICON.call} title="Calling it"
                     lede="Coverage takes column names and no account data, so it can be answered before anyone writes an integration.">
             <Code language="bash">{`curl -s localhost:5001/v1/coverage -X POST \\
@@ -474,7 +456,6 @@ for cluster in result["clusters"]:
             </ul>
           </Anchored>
 
-          {/* 08 */}
           <Anchored id="scale" icon={ICON.scale} title="Running it at scale"
                     lede="Measured, not estimated. Each batch scanned three times, best run shown.">
             {timing.data ? (
@@ -510,7 +491,6 @@ for cluster in result["clusters"]:
             )}
           </Anchored>
 
-          {/* 09 */}
           <Anchored id="staff" icon={ICON.staff} title="Staffing the queue"
                     lede="The queue is the product, so the number of people it needs decides whether it ships.">
             {capacity.data && accuracy.data ? (
@@ -541,7 +521,6 @@ for cluster in result["clusters"]:
             )}
           </Anchored>
 
-          {/* 10 */}
           <Anchored id="limits" icon={ICON.limits} title="What it does not promise">
             <div className="border-t border-line-strong">
               {[

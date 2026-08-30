@@ -28,16 +28,3 @@ export const TIER_COLOR = {
   sophisticated: "var(--color-tier-sophisticated)",
   adaptive: "var(--color-tier-adaptive)",
 };
-
-/*
-  The only four hues anything is allowed to draw with. They were checked with
-  the palette validator against the surface colour, so adjacent pairs stay
-  apart under simulated protanopia and deuteranopia.
-*/
-export const MARK = {
-  ok: "var(--color-ok)",
-  info: "var(--color-info)",
-  warn: "var(--color-warn)",
-  bad: "var(--color-bad)",
-  neutral: "var(--color-fg-faint)",
-};

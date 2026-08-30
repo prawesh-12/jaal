@@ -24,7 +24,6 @@ def test_blocking_everyone_only_bills_the_innocents():
 
 
 def test_one_wrong_block_costs_exactly_seventyfive_misses():
-    """One wrong block costs the same as 75 missed abusers."""
     assert costs.decision_cost(75, 0) == costs.decision_cost(0, 1)
     assert costs.decision_cost(74, 0) < costs.decision_cost(0, 1)
 

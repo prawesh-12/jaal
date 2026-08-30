@@ -84,9 +84,7 @@ def test_an_empty_looking_batch_does_not_crash(detector):
     assert out["summary"]["block"] == 0
 
 
-# --------------------------------------------------------------------------
 # the http service
-# --------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
 def client():
