@@ -1,4 +1,5 @@
 import { Table, THead, TR, TH, TD } from "@/components/ui/table";
+import { Disclosure } from "@/components/disclosure";
 import { Note } from "@/components/ui/panel";
 import { Bar } from "@/components/metric";
 import {
@@ -207,6 +208,75 @@ function Baseline({ baseline, pooled, matrix }) {
   );
 }
 
+/* Answers: why is the decision priced at all? */
+function CostAsymmetry({ decisions }) {
+  const prices = [
+    ["Blocking a real customer", decisions.cost_blocked_innocent, "var(--color-bad)"],
+    ["Missing an abuser", decisions.cost_missed_abuser, "var(--color-fg-dim)"],
+    ["One analyst review", decisions.cost_analyst_review, "var(--color-fg-dim)"],
+  ];
+  const top = decisions.cost_blocked_innocent;
+  const ratio = Math.round(decisions.cost_blocked_innocent / decisions.cost_missed_abuser);
+
+  return (
+    <div className="grid gap-x-16 gap-y-10 border-y border-line-strong py-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      <div>
+        {prices.map(([label, value, color]) => (
+          <div key={label} className="border-b border-line py-4 last:border-b-0">
+            <div className="flex items-baseline justify-between gap-6">
+              <span className="text-[13.5px] text-fg-muted">{label}</span>
+              <span className="tnum text-[17px] text-fg">{rupees(value)}</span>
+            </div>
+            <span className="mt-2.5 block h-2.5 w-full bg-raised">
+              <span className="block h-full"
+                    style={{ width: `${(value / top) * 100}%`, background: color }} />
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="self-center lg:border-l lg:border-line lg:pl-16">
+        <div className="tnum text-[44px] leading-none font-medium tracking-[-0.03em] text-fg">
+          {ratio}&times;
+        </div>
+        <div className="label mt-3">cost asymmetry</div>
+
+        <div className="tnum mt-9 border-t border-line pt-7 text-[36px] leading-none font-medium tracking-[-0.03em] text-fg">
+          {pct(decisions.breakeven_precision, 2)}
+        </div>
+        <div className="label mt-3">break-even precision for blocking</div>
+      </div>
+    </div>
+  );
+}
+
+/* Answers: what does it reach at each tier, at a glance? */
+function TierRecall({ matrix }) {
+  return (
+    <div className="border-t border-line-strong">
+      {TIERS.filter((t) => matrix[t]).map((t) => {
+        const m = matrix[t];
+        return (
+          <div
+            key={t}
+            className="grid items-center gap-x-6 gap-y-2 border-b border-line px-2 py-4 sm:grid-cols-[150px_minmax(0,1fr)_minmax(0,190px)]"
+          >
+            <span className="text-[13.5px]"><TierName tier={t} /></span>
+            <Bar value={m.recall} second={m.recall_including_review}
+                 color={TIER_COLOR[t]} height={10} />
+            <span className="tnum text-[13px] text-fg-2 sm:text-right">
+              {pct(m.recall_including_review, 1)}
+              <span className="ml-2.5 text-[12px] text-fg-faint">
+                with review, {pct(m.recall, 1)} blocked
+              </span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function TierTable({ matrix }) {
   const best = TIERS.filter((t) => matrix[t]).reduce(
     (a, t) => (matrix[t].net_vs_nothing_rupees > matrix[a].net_vs_nothing_rupees ? t : a),
@@ -262,7 +332,7 @@ function TierTable({ matrix }) {
   );
 }
 
-export default function Results({ holdout, baseline, loading }) {
+export default function Results({ holdout, baseline, decisions, loading }) {
   if (loading) return <Skeleton className="mt-16 h-96 w-full" />;
   if (!holdout) return <Empty>No results/holdout.json yet. Run ./run.sh.</Empty>;
 
@@ -278,6 +348,15 @@ export default function Results({ holdout, baseline, loading }) {
 
       <Headline pooled={pooled} holdout={holdout} />
 
+      {decisions && (
+        <Section
+          title="Why blocking has to be nearly perfect"
+          lede="Three prices decide everything. All three belong to the merchant's finance team, not to the model."
+        >
+          <CostAsymmetry decisions={decisions} />
+        </Section>
+      )}
+
       {baseline && <Baseline baseline={baseline} pooled={pooled} matrix={m} />}
 
       <Section
@@ -285,13 +364,25 @@ export default function Results({ holdout, baseline, loading }) {
         lede="Blending the four tiers would hide the sophistication threshold, which is the most interesting result here."
         meta={<TierLegend />}
       >
-        <TierTable matrix={m} />
+        <TierRecall matrix={m} />
         <Note className="mt-6">
-          The bar runs to what the system blocks on its own, then continues at
-          lower opacity to what it reaches once the queue is worked. On the
-          adaptive tier the first segment is absent: it blocks nothing, and
+          The solid part of each bar is what the system blocks on its own. The
+          faint part is what it reaches once a human works the queue. On the
+          adaptive tier the solid part is absent: it blocks nothing, and
           precision there is undefined rather than zero.
         </Note>
+
+        <div className="mt-10 border-t border-line-strong">
+          <Disclosure
+            summary={
+              <span className="text-[14px] text-fg">
+                Every measured column, per tier
+              </span>
+            }
+          >
+            <TierTable matrix={m} />
+          </Disclosure>
+        </div>
       </Section>
     </div>
   );

@@ -1,8 +1,8 @@
-@import "tailwindcss";
-
 @theme {
   /*
-    Depth comes from stacking these, never from shadow.
+    Two themes off one set of names. Light is the default because the dark
+    build was tiring to read for long. `data-theme` on <html> picks, and the
+    block below redefines only the colours.
 
       base      the page
       surface   a section that needs separating from the page
@@ -10,23 +10,23 @@
       active    the selected or highlighted state
       sunken    below the page, for insets
   */
-  --color-base: #0b0c0d;
-  --color-surface: #101214;
-  --color-raised: #16191c;
-  --color-active: #1d2126;
-  --color-sunken: #08090a;
+  --color-base: #fdfdfc;
+  --color-surface: #f6f6f4;
+  --color-raised: #eeeeeb;
+  --color-active: #e3e3df;
+  --color-sunken: #f9f9f7;
 
-  --color-line: #1d2023;
-  --color-line-strong: #2b2f34;
-  --color-line-loud: #3a4046;
+  --color-line: #e5e5e1;
+  --color-line-strong: #d2d2cc;
+  --color-line-loud: #b3b3ac;
 
-  --color-fg: #f7f7f5;
-  --color-fg-2: #c8c9c6;
-  --color-fg-muted: #9a9c99;
-  --color-fg-faint: #6b6d6b;
-  --color-fg-dim: #4a4c4b;
+  --color-fg: #15171a;
+  --color-fg-2: #3c4045;
+  --color-fg-muted: #61656a;
+  --color-fg-faint: #84888d;
+  --color-fg-dim: #a9adb2;
 
-  --color-accent: #d9dde2;
+  --color-accent: #15171a;
 
   /*
     State. Desaturated on purpose: these read as a status marker beside text,
@@ -34,15 +34,15 @@
     surface colour, so adjacent pairs stay apart under simulated protanopia
     and deuteranopia.
   */
-  --color-ok: #549b69;
-  --color-warn: #ba8a36;
-  --color-bad: #a7423e;
-  --color-info: #5382be;
+  --color-ok: #2e7d4f;
+  --color-warn: #8a6410;
+  --color-bad: #a63a34;
+  --color-info: #2f5d9e;
 
-  --color-tier-obvious: #549b69;
-  --color-tier-moderate: #5382be;
-  --color-tier-sophisticated: #ba8a36;
-  --color-tier-adaptive: #a7423e;
+  --color-tier-obvious: #2e7d4f;
+  --color-tier-moderate: #2f5d9e;
+  --color-tier-sophisticated: #8a6410;
+  --color-tier-adaptive: #a63a34;
 
   --font-sans: "Geist Variable", "Mukta", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -60,12 +60,50 @@
   --shell-max: 1400px;
 }
 
+/*
+  Dark, and deliberately not black. The earlier build sat at #0b0c0d, which is
+  hard to read for the length of time a reviewer spends here.
+*/
+:root[data-theme="dark"] {
+  --color-base: #131619;
+  --color-surface: #191d21;
+  --color-raised: #1f242a;
+  --color-active: #292f36;
+  --color-sunken: #101316;
+
+  --color-line: #272d33;
+  --color-line-strong: #363d45;
+  --color-line-loud: #4a525b;
+
+  --color-fg: #f2f3f2;
+  --color-fg-2: #c9ccce;
+  --color-fg-muted: #9ba0a4;
+  --color-fg-faint: #767c81;
+  --color-fg-dim: #565c62;
+
+  --color-accent: #dfe3e7;
+
+  --color-ok: #63ab78;
+  --color-warn: #c99a45;
+  --color-bad: #cf6460;
+  --color-info: #6a99d6;
+
+  --color-tier-obvious: #63ab78;
+  --color-tier-moderate: #6a99d6;
+  --color-tier-sophisticated: #c99a45;
+  --color-tier-adaptive: #cf6460;
+}
+
 @layer base {
   * {
     border-color: var(--color-line);
   }
 
   html {
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] {
     color-scheme: dark;
   }
 
@@ -78,19 +116,6 @@
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     font-synthesis-weight: none;
-  }
-
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background-image:
-      linear-gradient(to right, #ffffff05 1px, transparent 1px),
-      linear-gradient(to bottom, #ffffff04 1px, transparent 1px);
-    background-size: 120px 120px;
-    mask-image: linear-gradient(to bottom, #000 0, #0006 240px, transparent 640px);
   }
 
   ::selection {
@@ -110,7 +135,7 @@
     background: var(--color-line-strong);
     border: 3px solid var(--color-sunken);
   }
-  ::-webkit-scrollbar-thumb:hover { background: #33373b; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-line-loud); }
 }
 
 @utility tnum {

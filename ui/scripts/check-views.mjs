@@ -41,9 +41,8 @@ import Integrate from "@/views/Integrate";
 const TIERS = ["obvious", "moderate", "sophisticated", "adaptive"];
 const views = [
   ["Overview", <Overview holdout={all.holdout} decisions={all.decisions}
-                blocking={all.blocking} clustering={all.clustering}
                 model={all.model} loading={false} onSimulate={() => {}} />],
-  ["Results", <Results holdout={all.holdout} baseline={all.baseline} loading={false} />],
+  ["Results", <Results holdout={all.holdout} baseline={all.baseline} decisions={all.decisions} loading={false} />],
   ["Failure", <Failure holdout={all.holdout} loading={false} />],
   ["DeepDive", <DeepDive />],
   ["Cost", <Cost decisions={all.decisions} loading={false} bare />],

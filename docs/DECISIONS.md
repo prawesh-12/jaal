@@ -1055,3 +1055,48 @@ says the per-cluster value is not published, rather than inventing one.
 `react-dom/server`, including all eight tier and case combinations of the
 simulation. `npm run build` only proves the modules parse. This proves they
 run, which matters because there is no browser in this environment.
+
+## D-049: Second UI pass, from the frontend audit
+Date: 2026-08-30
+
+`extras/deep-research-report.md` is an audit of the UI that D-048 produced. It
+asked for six things D-048 did not do, and they are all done now.
+
+**Light by default, with a toggle.** The audit records that the near-black
+theme was tiring to read. `index.css` now defines the full palette on `:root`
+as light and redefines only the colours under `:root[data-theme="dark"]`, so
+one attribute on `<html>` flips the site. Dark is still there and no longer
+black: the base moved from `#0b0c0d` to `#131619`, and the state colours were
+lifted so they hold up on it. The decorative grid wash behind the page is gone.
+
+**Using Jaal is a top-level page again.** D-048 folded it into Deep Dive. The
+audit called that out: a judge cannot see feasibility without it. It opens with
+a quick start now, a merchant-to-decision diagram and the real request and
+response shapes, both taken from `api/app.py` and `detector/pipeline.py` rather
+than written from memory. Nav is six: Overview, Simulation, Results, Failures,
+Using Jaal, Deep Dive.
+
+**Overview is the pitch and nothing else.** Headline, the one-operator diagram,
+the net benefit at hero size with four supporting figures, three one-line facts,
+and a button. The pipeline funnel moved to Simulation, where it belongs as the
+world summary, and the cost asymmetry moved to Results, where it is the reason
+the baseline comparison matters.
+
+**The simulation animates.** It was a stack of figure strips. It is now a graph:
+a field of accounts, candidate pairs drawn between them, weak pairs dropped,
+survivors pulled into clusters, then a score and an action. `worldCanvas.jsx`
+holds it, seeded so the same stage always draws the same picture, and labelled
+a schematic on the page because it is one. Every number beside it is measured,
+and at the adaptive tier the ring visibly never links, which is the finding.
+The measured detail that used to be inline is under three disclosures below.
+
+**The footer went.** It repeated the top disclaimer and added reproduction notes
+nobody reads while judging. The defence-only line at the top stays.
+
+**Results leads with bars, not a table.** Recall per tier is four bars now; the
+eleven-column table is behind a disclosure for anyone who wants it.
+
+One thing this pass did not follow. The audit suggests a dataset-size control
+on the simulation. The result files are all measured at 12,000 accounts per
+world, so a size control would have nothing true to show. The tier and the case
+are the two controls that change a real number.

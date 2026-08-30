@@ -6,7 +6,6 @@ import Cost from "@/views/Cost";
 import Pipeline from "@/views/Pipeline";
 import Queue from "@/views/Queue";
 import Charts from "@/views/Charts";
-import Integrate from "@/views/Integrate";
 
 /*
   Nothing on this page is new. It is the four dense views the site already had,
@@ -140,8 +139,7 @@ export default function DeepDive() {
             The five identity columns are compared for equality only, so a salted
             digest is enough and nothing has to leave a merchant in the clear.
             Timestamps and money are compared as gaps and amounts, so those go as
-            they are. The breakdown, column by column, is under Running and
-            integrating below.
+            they are. The breakdown, column by column, is on Using Jaal.
           </Answer>
 
           <Answer q="Where can the pipeline fail?">
@@ -179,11 +177,6 @@ export default function DeepDive() {
           <Area title="Charts the pipeline drew"
                 what="matplotlib output, written during the run">
             <Charts bare />
-          </Area>
-
-          <Area title="Running and integrating Jaal"
-                what="columns, hashing, the call, throughput, staffing, limits">
-            <Integrate bare />
           </Area>
         </div>
       </Section>

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import {
   Clock, Database, Fingerprint, KeyRound, Layers, Ruler, ScrollText, Server,
-  Users, Wallet,
+  Terminal, Users, Wallet,
 } from "lucide-react";
 import { Note } from "@/components/ui/panel";
 import { Code } from "@/components/code";
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 /* Every figure is read from the same result files as the rest of the site. */
 
 const SECTIONS = [
+  { id: "start", title: "Quick start", icon: Terminal },
   { id: "what", title: "What it does", icon: Layers },
   { id: "where", title: "Where it sits", icon: Server },
   { id: "send", title: "What you send", icon: Database },
@@ -50,6 +51,47 @@ const GROUPS = [
               "total_order_value", "days_to_second_order"],
   },
 ];
+
+function CallFlow() {
+  const boxes = [
+    ["Your system", "one row per account"],
+    ["POST /v1/scan", "twelve columns, five of them hashable"],
+    ["Jaal", "block, link, cluster, score, price"],
+  ];
+  const actions = [["block", "bad"], ["review", "warn"], ["allow", "ok"]];
+
+  return (
+    <figure className="m-0 border-y border-line py-8">
+      <div className="flex flex-col items-stretch gap-4 lg:flex-row lg:items-center">
+        {boxes.map((box, i) => (
+          <div key={box[0]} className="flex items-center gap-4 lg:flex-1">
+            <div className="min-w-0 flex-1 border border-line bg-surface px-4 py-3.5">
+              <div className="text-[13.5px] text-fg">{box[0]}</div>
+              <div className="t-meta mt-1.5 text-fg-faint">{box[1]}</div>
+            </div>
+            <span aria-hidden="true" className="shrink-0 text-fg-dim">
+              &rarr;
+            </span>
+          </div>
+        ))}
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {actions.map(([name, tone]) => (
+            <span key={name}
+                  className="inline-flex items-center gap-2 border border-line px-3 py-1.5 text-[12.5px] text-fg-2">
+              <Status tone={tone} />
+              {name}
+            </span>
+          ))}
+        </div>
+      </div>
+      <figcaption className="t-meta mt-6 text-fg-faint">
+        One decision per cluster, never per transaction. A cluster the model has
+        nothing to say about comes back as allow and is dropped from the response
+        unless you ask for it.
+      </figcaption>
+    </figure>
+  );
+}
 
 function WhereDiagram({ timing }) {
   const stages = ["Block", "Link", "Cluster", "Features", "Score", "Decide"];
@@ -277,6 +319,81 @@ export default function Integrate({ bare = false }) {
         />
 
         <div className="min-w-0">
+          <Anchored id="start" icon={ICON.start} title="Quick start"
+                    lede="A batch of accounts in, one priced decision per cluster out. Nothing else to wire up.">
+            <CallFlow />
+
+            <div className="mt-10 grid gap-x-10 gap-y-8 lg:grid-cols-2">
+              <div>
+                <h3 className="label">You send</h3>
+                <Code language="json" className="mt-4">{`POST /v1/scan
+{
+  "accounts": [
+    {
+      "account_id": "a-0001",
+      "device_id": "9f2c...a71e",
+      "address_id": "4b81...02cd",
+      "pincode": "560037",
+      "card_bin": "411111",
+      "ip_prefix": "203.0.113",
+      "signup_ts": "2026-03-04T11:22:31Z",
+      "n_orders": 1,
+      "coupon_used": 1,
+      "first_order_value": 1499,
+      "total_order_value": 1499,
+      "days_to_second_order": null
+    }
+  ]
+}`}</Code>
+              </div>
+              <div>
+                <h3 className="label">You get back</h3>
+                <Code language="json" className="mt-4">{`{
+  "n_accounts": 12000,
+  "n_clusters": 195,
+  "clusters": [
+    {
+      "cluster_id": 41,
+      "size": 38,
+      "accounts": ["a-0001", "a-0002"],
+      "probability": 1.0,
+      "predicted_ring_purity": 0.97,
+      "action": "block",
+      "expected_cost_rupees": {
+        "block": 17100, "review": 5700, "allow": 7372
+      },
+      "discount_at_risk_rupees": 7600,
+      "strongest_signal": "card_bin",
+      "reason": "38 accounts, one card BIN ..."
+    }
+  ],
+  "summary": { "block": 1, "review": 6, "allow": 188 }
+}`}</Code>
+              </div>
+            </div>
+
+            <dl className="mt-10 grid gap-x-10 gap-y-4 border-t border-line pt-6 sm:grid-cols-2">
+              {[
+                ["Interface", "REST over HTTP. Flask, loopback by default."],
+                ["Shape", `Batch. Up to ${count(20000)} accounts a call.`],
+                ["Cadence", "Nightly discovery. Attaching one new account is blocking and linking only, so that half can be online."],
+                ["Deployment", "One stateless microservice next to your risk stack. It loads a pickled model and holds no database."],
+                ["Input", "One row per account, twelve columns. The five identity columns can be salted digests."],
+                ["Output", "One record per cluster: an action, a probability, a predicted purity, the expected cost of each action, and a written reason."],
+              ].map(([k, v]) => (
+                <div key={k} className="border-b border-line pb-3">
+                  <dt className="text-[13px] text-fg">{k}</dt>
+                  <dd className="t-meta mt-1.5 text-fg-muted">{v}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <Code language="bash" className="mt-10">{`# what you would get from the columns you already have, no account data sent
+curl -s localhost:5001/v1/coverage -X POST \\
+  -H 'content-type: application/json' \\
+  -d '{"columns": ["account_id","device_id","card_bin","n_orders"]}'`}</Code>
+          </Anchored>
+
           <Anchored id="what" icon={ICON.what} title="What it does"
                     lede="Finds groups of accounts run by one person farming a first-order promo. The unit is the cluster, never the transaction.">
             <MetricRow columns={3}>
