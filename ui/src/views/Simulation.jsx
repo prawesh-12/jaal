@@ -198,35 +198,55 @@ function purityBands(d) {
 
 function DecisionBands({ decisions, action }) {
   const bands = purityBands(decisions);
+  const TONE = { ok: "var(--color-ok)", warn: "var(--color-warn)", bad: "var(--color-bad)" };
+
   return (
     <div>
-      <div className="flex h-11 w-full overflow-hidden border border-line">
-        {bands.map((b) => {
-          const on = b.action === action;
-          return (
-            <div
-              key={b.action}
-              style={{ width: `${(b.to - b.from) * 100}%` }}
-              className={cn(
-                "flex items-center justify-center border-l border-line text-[12.5px] first:border-l-0",
-                on ? "bg-active text-fg" : "bg-surface text-fg-dim"
-              )}
-            >
-              <span className="inline-flex items-center gap-2">
-                {on && <Status tone={b.tone} />}
-                {b.action}
-              </span>
-            </div>
-          );
-        })}
+      {/* Widths are the real proportions, so no label goes inside: the block
+          band is one percent of the axis and any text would stretch it. */}
+      <div
+        className="flex h-4 w-full overflow-hidden border border-line"
+        role="img"
+        aria-label={bands
+          .map((b) => `${b.action} from ${b.from.toFixed(4)} to ${b.to.toFixed(4)} purity`)
+          .join(", ")}
+      >
+        {bands.map((b) => (
+          <span
+            key={b.action}
+            style={{
+              width: `${(b.to - b.from) * 100}%`,
+              background: TONE[b.tone],
+              opacity: b.action === action ? 1 : 0.22,
+            }}
+          />
+        ))}
       </div>
-      <div className="mt-2.5 flex justify-between text-[11.5px] text-fg-faint">
+      <div className="mt-2 flex justify-between text-[11.5px] text-fg-faint">
         <span className="tnum">purity 0</span>
         {bands.slice(1).map((b) => (
           <span key={b.action} className="tnum">{b.from.toFixed(4)}</span>
         ))}
         <span className="tnum">1</span>
       </div>
+
+      <dl className="mt-6 grid gap-px border border-line bg-line sm:grid-cols-3">
+        {bands.map((b) => {
+          const on = b.action === action;
+          return (
+            <div key={b.action} className={cn("px-4 py-3.5", on ? "bg-active" : "bg-surface")}>
+              <dt className="flex items-center gap-2.5 text-[13.5px]">
+                <Status tone={b.tone} />
+                <span className={on ? "text-fg" : "text-fg-faint"}>{b.action}</span>
+                {on && <span className="label ml-auto">taken</span>}
+              </dt>
+              <dd className={cn("tnum mt-2 text-[12.5px]", on ? "text-fg-2" : "text-fg-dim")}>
+                purity {b.from.toFixed(2)} to {b.to.toFixed(2)}
+              </dd>
+            </div>
+          );
+        })}
+      </dl>
     </div>
   );
 }
