@@ -365,6 +365,23 @@ export default function Simulation() {
             <Segmented label="Kind" value={kind} onChange={setKind} options={BENIGN_KINDS} />
           )}
 
+          {mode === "ring" && examples.length > 0 && (
+            <label className="flex items-center gap-2.5">
+              <span className="label">Cluster</span>
+              <select
+                value={pick}
+                onChange={(e) => setPick(Number(e.target.value))}
+                className="interactive h-9 border border-line bg-base px-2.5 text-[12.5px] text-fg-2 hover:border-line-strong"
+              >
+                {examples.map((e, i) => (
+                  <option key={`${e.seed}-${e.cluster_id}`} value={i}>
+                    seed {e.seed} · cluster {e.cluster_id} · {e.size} accounts
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
           <button
             type="button"
             onClick={() => setStep(1)}
@@ -610,36 +627,6 @@ export default function Simulation() {
                 </p>
               </div>
             </Disclosure>
-
-            {mode === "ring" && examples.length > 1 && (
-              <Disclosure
-                summary={
-                  <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                    <span className="text-[14.5px] text-fg">Try another real cluster</span>
-                    <span className="t-meta ml-auto text-fg-faint">
-                      {count(examples.length)} from the {tier} tier
-                    </span>
-                  </span>
-                }
-              >
-                <div className="flex flex-wrap gap-x-5 gap-y-2.5">
-                  {examples.map((e, i) => (
-                    <button
-                      key={`${e.seed}-${e.cluster_id}`}
-                      type="button"
-                      onClick={() => setPick(i)}
-                      className={cn(
-                        "interactive ident border-b pb-0.5 text-[12.5px]",
-                        i === pick ? "border-accent text-fg"
-                          : "border-line text-fg-faint hover:text-fg-muted"
-                      )}
-                    >
-                      seed {e.seed} · {e.size} accounts · {e.action}
-                    </button>
-                  ))}
-                </div>
-              </Disclosure>
-            )}
           </div>
         </Section>
       )}
