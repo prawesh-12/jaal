@@ -1149,3 +1149,288 @@ one D-049 deleted.
 One number in the plan does not match the data. It quotes the rules baseline at
 -₹4.80 Cr. Summing the four tiers in `results/baseline.json` gives -₹4.96 Cr,
 and that is what the site shows.
+
+---
+
+## D-051: The Lab replays a whole real world, and the engine exports it
+Date: 2026-08-30
+
+`extras/jaal_end_to_end.md` asked for a Three.js-first product with a simulation
+that is a real execution or a deterministic replay of one. The site could not do
+the second half. `results/sim_cases.json` publishes 32 real scored clusters, but
+only cluster-level aggregates, so the old simulation had to invent the picture
+around them: `clusterGraph.jsx` seeded a shuffle to hit a stored edge density,
+and `Simulation.jsx` synthesised agreement levels to draw pair evidence. Both
+said so in comments, which is not the same as being real.
+
+`Detector.scan` already computes everything the page was faking. It just did not
+return any of it, so `detector/sim_world.py` now asks for it with a new
+`trace=True` and writes one whole scanned world per tier: all 12,000 account
+rows, the blocking counts per rule, every edge above 14 bits with its nine-way
+evidence breakdown, and all 194 clusters with membership, probability, purity
+and priced actions. No detection logic moved and no published metric changed.
+Seed 975 across four tiers, 2.1 MB each, 378 KB gzipped.
+
+One seed, four tiers, because `generate(seed, tier)` returns the same 12,000
+accounts every time and varies only the operator. So the tier control is the
+same world with a smarter adversary, and the numbers walk the way the project
+claims they do: device to card BIN to pincode, 2.0% to 100% distinct devices,
+0.04 to 44 days of signup span, 56.4 to 18.3 bits on the average edge.
+
+Positions are the only thing the browser invents, and a position is not a claim.
+Layout lives in `ui/src/lib/world.js`: a phyllotaxis disc for the population, a
+lift for the graph, and an area-packed spiral for the clusters, all pure
+functions of the file.
+
+Four Three.js bugs cost the most time and none of them are visible in a build.
+Instance colours are read as linear and every colour in the stylesheet is sRGB,
+so the first scene rendered solid black. A geometry attribute declared after the
+material compiles is missing its shader define, so the fix is to declare it in
+JSX rather than assign it in an effect. `InstancedMesh.raycast` tests the
+bounding sphere first and it is stale the moment the instances move, so nothing
+was clickable. And Radix `Tabs.Content` keeps an outgoing panel mounted for its
+exit animation, which detaches the canvas one frame before r3f attaches its
+pointer handlers: every page switch threw. Rendering the active view directly
+removed the last one, and the tab list kept its roles.
+
+The rules baseline now reads from `results/baseline_holdout.json` rather than
+`results/baseline.json`. D-050 recorded that the plan's -₹4.80 Cr did not match
+the -₹4.96 Cr on screen. It matches now, because the holdout baseline is the
+same sealed seeds as the Jaal result beside it, which is the comparison the page
+was claiming to draw all along.
+
+`views/Pipeline.jsx` and `components/pairScorer.jsx` are gone. The simulation
+explains the pipeline on a real world, so keeping a second explanation broke the
+one-concept-one-place rule, and the pair scorer computed `log2(m / u)` in the
+browser, which is detection logic the frontend is not allowed to hold.
+`tests/test_engine_boundary.py` now asserts that nothing in `detector/` or
+`api/` reaches into `ui/`, that the requirements hold no frontend packages, and
+that `world.js` computes no score.
+
+---
+
+## D-052: Second read of the plan, and the parts the first read skipped
+Date: 2026-08-30
+
+D-051 built the replay and the Three.js system. Re-reading
+`extras/jaal_end_to_end.md` against what shipped turned up eight requirements
+that were in the plan and not on the page.
+
+**The dataset was never stated.** Section 10 asks for the population up front:
+accounts, fields, prevalence. It was only implied by a caption. The simulation
+now opens with it, and the schema panel carries the column type next to the
+name, which the integration doc has and the panel did not.
+
+**One pair, walked to the threshold.** Section 16 is specific: show a real pair,
+accumulate its evidence, and draw the edge because the score crossed 14 bits,
+not because the animation reached that stage. The evidence stage now takes the
+strongest edge inside the cluster under discussion, brings those two accounts to
+the middle of the scene, and reveals the nine comparisons one at a time with a
+running total. Two accounts on a 12,000-account disc are nowhere near each
+other, so aiming a camera at their midpoint frames empty ground: the stage gets
+its own layout that moves the pair and leaves the rest of the population alone.
+
+**Four benign kinds, not one.** Section 22 names family, flatmates, hostel and
+office. The case control offered "benign lookalike" and silently picked the
+largest, which was a hostel every time. All four are now separate cases, and all
+four exist in all twelve published worlds. The family case is the strongest one
+on the page: five accounts, edge density 1.0, 34.69 bits on the average edge,
+and still allowed.
+
+**Three seeds, so the seed control is a control.** It was a label.
+`detector.sim_world` now takes `--seeds` and writes 975, 932 and 977.
+
+**The adaptive chain, with the numbers behind it.** Section 23 wants the walk
+from identity reuse to review-only visible. `results/generator_check.json` has
+the collisions inside rings per tier, 919 device and 907 address at obvious
+against 0 and 0 at adaptive, and the world file has what that costs downstream.
+Both are now under the scene.
+
+Also: hover reads an account, a run button, a focus control, and a decision card
+with replay and next case, all named in sections 11, 14 and 21.
+
+**The API example was wrong in three ways.** Section 33 says show a real request
+and response and do not invent fields. The hand-written example sent `signup_ts`
+as an ISO string where the schema says unix seconds, `days_to_second_order` as
+null where the schema says -1, and returned `"action": "block"` on a cluster
+where `decide.best_action` returns review, because review at Rs.5,700 is cheaper
+than block at Rs.17,100. `detector.sim_world` now writes
+`results/api_example.json` from a real scan, the page renders that file, and
+`tests/test_sim_world.py` asserts the published action is the cheapest published
+cost. A worked example that contradicts the decision layer is worse than no
+example.
+
+---
+
+## D-053: One dominant visual per page, and the simulation becomes an application
+Date: 2026-08-30
+
+The verdict on D-052 was that the pages still explained the visualisation
+instead of the visualisation explaining the product. That is a structural
+complaint, not a styling one, so this pass rebuilt the composition of every
+page around a single visual that carries the page's argument.
+
+**The simulation is no longer a page with a canvas in it.** It owns the
+viewport: a toolbar, a stage rail on the left, the Three.js world in the middle
+and the inspector on the right, with no article underneath. The rail is the
+state machine made visible, one row per stage carrying the number that stage
+produced on this world, and a stage stays blank until the run reaches it, so
+12,000 accounts becoming 5,23,796 candidate pairs becoming 6,419 edges becoming
+194 clusters becoming a purity of 0.9996 becoming BLOCK reads as a sequence of
+states rather than a slideshow. The dataset is an overlay over the world before
+the first run and goes away when it starts.
+
+**Overview is one scene in four beats.** Nine accounts apart, the edges between
+them, the ring around them, and then the group priced against three plates whose
+heights are the real expected costs of the real cluster from
+`results/sim_cases.json`: block Rs.300, review Rs.7,500, allow Rs.9,996, and
+the shortest one wins. That last beat replaced a separate cost chart, because a
+decision is better shown being made than described.
+
+**Results leads with proof rather than analytics.** 6,439 cells, one per account
+blocked on the sealed holdout, with the single false positive ringed and a
+leader line pointing at it. How hard that cell is to find is the argument. Under
+it, precision on one axis with the break-even line across it: the rules baseline
+at 91.72% sits in the red where blocking loses money, Jaal at 99.98% sits in the
+green. Two pictures carry what four paragraphs used to.
+
+**Failures is the collapse, in three dimensions.** Two bands standing on the
+same ground, the front one what Jaal blocks alone and the back one what the
+queue still reaches. The front band is on the floor by sophistication 0.30 while
+the back one holds until the far end. The tier buttons scrub the readout to
+their point on the sweep.
+
+**Using Jaal opens with where Jaal sits**, as a map rather than a column:
+merchant population, the two lanes that are the two shapes of the job, the
+engine, the risk queue, with a packet travelling each lane so the direction is
+not left to arrowheads.
+
+**Deep Dive is the engine as a stack of plates.** Picking one slides it out and
+opens that stage's own record: the blocking rules and their measured recall, the
+m and u sources, the swept threshold, the Leiden parameters, the feature counts,
+both models with the neural net's win on validation stated plainly, and the
+three prices. The diagram is the navigation, not a picture of navigation.
+
+Removed on the way:
+`three/Curve.jsx` and `three/OperatorHero.jsx`, both superseded, and the
+Radix tabs and class-variance-authority packages, both unused since the tab
+panels stopped being Radix presence containers.
+
+---
+
+## D-054: Cut the repository notes out of the product
+Date: 2026-08-30
+
+A band under the navigation on every page read "Defence only. Every account
+record here is synthetic, produced by a test fixture. Every figure is read from
+a file ./run.sh wrote." The second sentence is a note about how this repository
+is built, which is not something a reader of a risk product needs on every
+screen, and the first was already in the footer. The band is gone. The footer
+still carries "Synthetic evaluation data", and the simulation, which has no
+footer, carries "synthetic population · replay of a real run" in its status bar
+whenever nothing is hovered, so the synthetic labelling holds everywhere.
+
+The persistent "+₹22.53 L net on the sealed holdout" in the navigation went with
+it. It is a real number, and it is the headline on two of the six pages already.
+Repeating it in the chrome of the other four is decoration.
+
+Four more of the same kind, all provenance notes phrased as product copy:
+
+- Using Jaal opened with "Every figure here is read from the same result files
+  as the rest of the site."
+- The charts area opened with "Written to results/ by the pipeline itself, not
+  by this page. If a number here disagrees with a number elsewhere on the site,
+  the pipeline is the one to trust."
+- "Nothing in detector/ or api/ imports anything from ui/" was in a lede. It is
+  true, `tests/test_engine_boundary.py` asserts it, and it belongs in the test
+  rather than in a sentence a merchant reads.
+- The failure catalogue and one section header carried "Open one for why it
+  happens and what it costs" and "Open what you want to check", which describe
+  the widget rather than the content.
+
+The messages that name a missing file and the command that writes it stayed.
+Those only render when the pipeline has not been run, and at that point the
+reader is a developer who needs exactly that.
+
+Also removed a straight duplication: the dataset panel before a simulation run
+listed all twelve columns with a sample row while the inspector beside it listed
+the same twelve with their types, notes and hashable flags. The panel now shows
+the four population numbers and the run button, and points at the schema.
+
+---
+
+## D-055: The opening scene is the population, not an illustration of one
+Date: 2026-08-30
+
+The hero D-053 built was nine invented nodes, fifty-four decorative dots, a red
+circle drawn around the group, and three bars. It read as a Three.js demo
+because nothing in it was data. Replaced, not polished.
+
+`detector.sim_world` now writes `results/overview_scene.json`: a lattice
+position for every one of the 12,000 accounts in seed 975, all 6,419 edges the
+run drew with their bits and the comparison that contributed most to each, and
+the record of the cluster that batch blocked. 116 KB, 23 KB gzipped, which is
+what the whole scene is drawn from.
+
+The layout is the part that made it work. Accounts are placed on a 200 by 60
+grid filled tile by tile, and everything a chain of edges can reach is placed
+contiguously, so every edge in the file is a short local mark and none of them
+crosses the field. Two earlier attempts failed here: ordering by kept cluster
+left the sub-minimum communities scattered and 580 edges drawn as chords across
+the whole picture, and ordering by size put every interesting thing in the left
+quarter. Ordering by connected component with the sizes mixed through the field
+gives 774 compact patches spread evenly, and the maximum distance an edge spans
+falls from the width of the field to 57 cells.
+
+Nothing is highlighted. The scene opens as a uniform field of 12,000 marks,
+reveals the edges one comparison at a time weakest first, and the communities
+appear where the edges gather. The cluster that gets decided is the darkest
+patch on the page because its edge density is 1.0 and every one of its 1,225
+edges lands in the same few cells, not because anything drew a ring around it.
+Then the population steps back, the marks hold their size on screen while the
+field zooms so it stays a texture rather than becoming blobs, and the cluster
+resolves into fifty individual accounts fully meshed.
+
+Two rendering facts decided the look. Opaque lines do not accumulate, so a
+dense community drew as one flat shape and, being lighter than the marks under
+it, erased them: the edges are semi-transparent now and a patch is dark because
+its edges overlap. And an edge that has not been revealed yet cannot simply be
+coloured like the page, because that paints white over the field; it collapses
+to a point instead.
+
+The decision is the same scene continuing rather than a chart appearing beside
+it. Ring probability and predicted purity as two thin rules, the three expected
+costs as three ticks on one shared rupee axis with the lowest marked, and the
+cheapest action named. No bars.
+
+---
+
+## D-056: The hero moves to a scale a reader can actually see
+Date: 2026-08-30
+
+D-055 drew all 12,000 accounts at once and called it a population. On a real
+screen that is a halftone rectangle: at roughly six pixels per account no mark
+reads as an entity and no edge reads as a relationship, so the whole middle of
+the story was invisible and the cluster arrived as a scribble.
+
+The concept was right and the scale was wrong. The scene now opens on the full
+field for a couple of seconds with a viewfinder marking one neighbourhood, moves
+into that neighbourhood, and does the rest of its work there. In the
+neighbourhood a mark is about ten pixels in a thirty pixel cell, which is an
+account you can point at, and an edge is a line you can follow from one to
+another. Marks are sized in screen pixels rather than world units, so the field
+is a fine texture when it is showing scale and discrete entities when it is
+showing structure.
+
+What that bought: the middle of the story is now the strongest part of it.
+Around four hundred accounts sit in a plain lattice, all identical, and when the
+edges arrive one comparison at a time a single block of fifty is bound together
+while the accounts either side of it have almost no links at all. Nothing points
+at the block. It is the only thing in the frame with structure.
+
+Three smaller fixes came with it. The cluster's run is padded to start on a tile
+boundary, so its fifty accounts form one clean block instead of wrapping across
+two and trailing a diagonal. The edge material's opacity rises as the scene
+moves in, since sixteen per cent reads as a smudge at field scale and as nothing
+at all up close. And the decision record now sits on its own plate rather than
+over the dots, which it was competing with.

@@ -42,28 +42,56 @@ import Results from "@/views/Results";
 import Failure from "@/views/Failure";
 import DeepDive from "@/views/DeepDive";
 import Cost from "@/views/Cost";
-import Pipeline from "@/views/Pipeline";
 import Queue from "@/views/Queue";
 import Charts from "@/views/Charts";
 import Integrate from "@/views/Integrate";
+import { Inspector } from "@/components/simulation/inspector";
+import { layout } from "@/lib/world";
 
 const TIERS = ["obvious", "moderate", "sophisticated", "adaptive"];
+const BENIGN = ["family", "flatmates", "hostel", "office"];
 const views = [
-  ["Overview", <Overview holdout={all.holdout} decisions={all.decisions}
-                model={all.model} loading={false} onSimulate={() => {}} />],
+  ["Overview", <Overview holdout={all.holdout} loading={false} onSimulate={() => {}} />],
   ["Results", <Results holdout={all.holdout} baseline={all.baseline} decisions={all.decisions} loading={false} />],
   ["Failure", <Failure holdout={all.holdout} loading={false} />],
   ["DeepDive", <DeepDive />],
   ["Cost", <Cost decisions={all.decisions} loading={false} bare />],
-  ["Pipeline", <Pipeline bare />],
   ["Queue", <Queue explanations={all.explanations} loading={false} bare />],
   ["Charts", <Charts bare />],
   ["Integrate", <Integrate bare />],
-  // Every branch of the simulation, since a tier and a scenario decide which
-  // case it replays.
-  ...TIERS.flatMap((t) => ["ring", "lookalike"].map((m) =>
-    ["Simulation " + t + "/" + m,
-     <Simulation __tier={t} __scenario={m} __step={6} onGoTo={() => {}} />])),
+  ["Simulation", <Simulation />],
+  // The scene needs a browser, but the panels beside it are plain React over
+  // the same replay file. Every stage of every tier is rendered against the
+  // real world, for both cases, so a bad field reference fails here.
+  ...TIERS.flatMap((tier) => {
+    const world = all["sim_world_" + tier + "_975"];
+    if (!world) return [];
+    const geom = layout(world);
+    const pick = (ring) => world.clusters.filter((c) => (ring
+      ? c.truth.label === 1
+      : c.truth.label === 0 && BENIGN.includes(c.truth.dominant_benign_kind)))[0];
+    return [0, 1, 2, 3, 4, 5, 6].flatMap((stage) =>
+      [true, false].map((ring) => [
+        "Inspector " + tier + "/" + (ring ? "ring" : "lookalike") + "/" + stage,
+        <Inspector world={world} geom={geom} stage={stage}
+                   cluster={stage >= 4 ? pick(ring) : null}
+                   selected={null} onSelect={() => {}} />,
+      ]));
+  }),
+  ["Inspector account", (() => {
+    const world = all.sim_world_obvious_975;
+    const geom = layout(world);
+    return <Inspector world={world} geom={geom} stage={4}
+                      cluster={null} selected={{ kind: "account", id: 0 }}
+                      onSelect={() => {}} />;
+  })()],
+  ["Inspector edge", (() => {
+    const world = all.sim_world_obvious_975;
+    const geom = layout(world);
+    return <Inspector world={world} geom={geom} stage={4}
+                      cluster={null} selected={{ kind: "edge", id: 0 }}
+                      onSelect={() => {}} />;
+  })()],
 ];
 
 let bad = 0;
@@ -95,18 +123,6 @@ await esbuild.build({
         }
         return { path: base };
       });
-      // The simulation drives itself from state, so the check reaches inside to
-      // start it on a chosen tier and step. Source on disk is untouched.
-      build.onLoad({ filter: /views[/\\]Simulation\.jsx$/ }, (a) => ({
-        loader: "jsx",
-        contents: readFileSync(a.path, "utf8")
-          .replace("export default function Simulation({ onGoTo }) {",
-                   "export default function Simulation({ onGoTo, __tier, __scenario, __step }) {")
-          .replace('useState("moderate")', 'useState(__tier ?? "moderate")')
-          .replace('useState("ring")', 'useState(__scenario ?? "ring")')
-          .replace("const [step, setStep] = useState(0)",
-                   "const [step, setStep] = useState(__step ?? 0)"),
-      }));
     },
   }],
 });

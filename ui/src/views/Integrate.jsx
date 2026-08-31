@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import {
-  Clock, Database, Fingerprint, KeyRound, Layers, Ruler, ScrollText, Server,
+  Clock, Database, Fingerprint, KeyRound, Layers, Package, Ruler, ScrollText, Server,
   Terminal, Users, Wallet,
 } from "lucide-react";
 import { Note } from "@/components/ui/panel";
@@ -9,12 +9,13 @@ import { BarList } from "@/components/chart";
 import { Anchored, TableOfContents, useActiveSection } from "@/components/toc";
 import { Empty, Metadata, PageHeader, Skeleton, Status } from "@/components/section";
 import { Metric, MetricRow } from "@/components/metric";
+import { FlowPair } from "@/three/Flow";
+import { SystemMap } from "@/three/SystemMap";
 import { useJson } from "@/lib/useJson";
 import { agreementWeights } from "@/lib/pipelineStages";
 import { count, dp4, pct, rupees, signedRupees } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/* Every figure is read from the same result files as the rest of the site. */
 
 const SECTIONS = [
   { id: "start", title: "Quick start", icon: Terminal },
@@ -27,6 +28,7 @@ const SECTIONS = [
   { id: "call", title: "Calling it", icon: ScrollText },
   { id: "scale", title: "Running it at scale", icon: Clock },
   { id: "staff", title: "Staffing the queue", icon: Users },
+  { id: "engine", title: "Deploy the engine", icon: Package },
   { id: "limits", title: "What it does not promise", icon: ScrollText },
 ];
 
@@ -52,60 +54,102 @@ const GROUPS = [
   },
 ];
 
-function Architecture() {
-  const chain = [
-    ["Merchant account and order data", "one row per account, twelve columns"],
-    ["Account relationships", "every candidate pair scored in bits"],
-    ["Clusters", "the graph cut into groups"],
-    ["Risk, purity and cost", "two models, then three prices"],
-  ];
-  const actions = [
-    ["BLOCK", "bad", "stop the whole cluster"],
-    ["REVIEW", "warn", "put it in front of a person"],
-    ["ALLOW", "ok", "leave it alone"],
-  ];
+const BATCH = {
+  title: "Batch discovery",
+  steps: [
+    { label: "Whole account population" },
+    { label: "Candidate pairs and edges" },
+    { label: "Graph and clustering" },
+    { label: "Scores, prices, review queue", tone: "fg" },
+  ],
+};
 
+const ENGINE_CODE = `pip install -r requirements.txt
+
+python -c "
+import pandas as pd
+from detector.pipeline import Detector
+accounts = pd.read_csv('your_accounts.csv')
+for c in Detector.load().scan(accounts)['clusters']:
+    print(c['action'], c['size'], c['accounts'])
+"
+
+python -m api.app          # then POST to http://127.0.0.1:5001/v1/scan`;
+
+const ENGINE = {
+  title: "Jaal Engine",
+  steps: [
+    { label: "detector/", note: "blocking, linkage, clustering, features" },
+    { label: "results/model.pkl", note: "classifier, calibrator, purity model" },
+    { label: "api/", note: "the HTTP service over it" },
+    { label: "Merchant system", note: "block, review, allow", tone: "fg" },
+  ],
+};
+
+const LAB = {
+  title: "Jaal Lab",
+  steps: [
+    { label: "ui/", note: "this application" },
+    { label: "Three.js scenes", note: "hero, simulation, charts" },
+    { label: "results/*.json", note: "read only, copied at build time" },
+    { label: "Reader", note: "explanation, not detection" },
+  ],
+};
+
+const ONLINE = {
+  title: "Online cluster assignment",
+  steps: [
+    { label: "One new account" },
+    { label: "Blocking against existing members" },
+    { label: "Pair evidence in bits" },
+    { label: "Attach to a cluster, or stand alone", tone: "fg" },
+  ],
+};
+
+/* Request and response as one real run produced them, not as they might look.
+   results/api_example.json is written by detector.sim_world. */
+function ApiExample({ example }) {
+  if (!example) {
+    return (
+      <p className="mt-10 t-meta">
+        results/api_example.json is missing. Run{" "}
+        <span className="ident">python -m detector.sim_world</span>.
+      </p>
+    );
+  }
   return (
-    <figure className="m-0">
-      <div className="border border-line-strong">
-        {chain.map(([title, note], i) => (
-          <div key={title}
-               className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line px-6 py-4">
-            <span className="flex items-baseline gap-4">
-              <span className="tnum text-[11px] text-fg-dim">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="text-[15px] text-fg">{title}</span>
-            </span>
-            <span className="t-meta text-fg-faint">{note}</span>
-          </div>
-        ))}
-
-        <div className="grid gap-px bg-line sm:grid-cols-3">
-          {actions.map(([name, tone, what]) => (
-            <div key={name} className="bg-surface px-6 py-5">
-              <span className="inline-flex items-center gap-2.5">
-                <Status tone={tone} />
-                <span className="text-[15px] font-medium tracking-[0.02em] text-fg">
-                  {name}
-                </span>
-              </span>
-              <p className="t-meta mt-2.5">{what}</p>
-            </div>
-          ))}
+    <div className="mt-10">
+      <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
+        <div>
+          <h3 className="label">You send</h3>
+          <Code language="json" className="mt-4">
+            {`${example.endpoint}\n${JSON.stringify(example.request, null, 2)}`}
+          </Code>
         </div>
-
-        <div className="border-t border-line-strong px-6 py-4">
-          <span className="text-[15px] text-fg">
-            Merchant risk and review workflow
-          </span>
-          <p className="t-meta mt-1.5">
-            block and review land in your queue. Allow is the silent majority.
-          </p>
+        <div>
+          <h3 className="label">You get back</h3>
+          <Code language="json" className="mt-4">
+            {JSON.stringify(example.response, null, 2)}
+          </Code>
         </div>
       </div>
+      <p className="t-meta mt-4 text-fg-faint">
+        Both halves are from {example.from}. The request is two of the twelve
+        thousand rows that call sent, and the response is the cluster that batch
+        came back with.
+      </p>
+    </div>
+  );
+}
 
-      <figcaption className="mt-7 max-w-[74ch] border-l-2 border-line-loud pl-6 text-[17px] leading-[1.45] text-fg">
+function Architecture() {
+  return (
+    <figure className="m-0">
+      <div className="h-[min(52vh,460px)] border border-line">
+        <SystemMap className="h-full w-full" />
+      </div>
+
+      <figcaption className="mt-6 max-w-[74ch] border-l-2 border-line-loud pl-6 text-[17px] leading-[1.45] text-fg">
         Jaal is a triage layer that fills a review queue. It is not a checkout
         authorisation gate.
       </figcaption>
@@ -228,6 +272,7 @@ export default function Integrate({ bare = false }) {
   const timing = useJson("scan_timing");
   const capacity = useJson("review_capacity");
   const accuracy = useJson("review_accuracy");
+  const api = useJson("api_example");
   const active = useActiveSection(IDS);
 
   const weights = useMemo(
@@ -248,7 +293,7 @@ export default function Integrate({ bare = false }) {
       {!bare && (
         <PageHeader
           title="Using Jaal"
-          lede="What you send it, where it sits, what it costs to run. Every figure here is read from the same result files as the rest of the site."
+          lede="What you send it, where it sits, and what it costs to run."
         >
           <Metadata
             className="mt-8"
@@ -277,54 +322,7 @@ export default function Integrate({ bare = false }) {
                     lede="A batch of accounts in, one priced decision per cluster out. Nothing else to wire up.">
             <Architecture />
 
-            <div className="mt-10 grid gap-x-10 gap-y-8 lg:grid-cols-2">
-              <div>
-                <h3 className="label">You send</h3>
-                <Code language="json" className="mt-4">{`POST /v1/scan
-{
-  "accounts": [
-    {
-      "account_id": "a-0001",
-      "device_id": "9f2c...a71e",
-      "address_id": "4b81...02cd",
-      "pincode": "560037",
-      "card_bin": "411111",
-      "ip_prefix": "203.0.113",
-      "signup_ts": "2026-03-04T11:22:31Z",
-      "n_orders": 1,
-      "coupon_used": 1,
-      "first_order_value": 1499,
-      "total_order_value": 1499,
-      "days_to_second_order": null
-    }
-  ]
-}`}</Code>
-              </div>
-              <div>
-                <h3 className="label">You get back</h3>
-                <Code language="json" className="mt-4">{`{
-  "n_accounts": 12000,
-  "n_clusters": 195,
-  "clusters": [
-    {
-      "cluster_id": 41,
-      "size": 38,
-      "accounts": ["a-0001", "a-0002"],
-      "probability": 1.0,
-      "predicted_ring_purity": 0.97,
-      "action": "block",
-      "expected_cost_rupees": {
-        "block": 17100, "review": 5700, "allow": 7372
-      },
-      "discount_at_risk_rupees": 7600,
-      "strongest_signal": "card_bin",
-      "reason": "38 accounts, one card BIN ..."
-    }
-  ],
-  "summary": { "block": 1, "review": 6, "allow": 188 }
-}`}</Code>
-              </div>
-            </div>
+            <ApiExample example={api.data} />
 
             <dl className="mt-10 grid gap-x-10 gap-y-4 border-t border-line pt-6 sm:grid-cols-2">
               {[
@@ -399,42 +397,19 @@ curl -s localhost:5001/v1/coverage -X POST \\
 
           <Anchored id="where" icon={ICON.where} title="Where it sits"
                     lede="Two jobs, two shapes. Mixing them up is the usual way an integration goes wrong.">
-            <div className="grid gap-x-12 gap-y-8 border-y border-line py-8 lg:grid-cols-2">
-              <div>
-                <h3 className="text-[15px] font-medium text-fg">Batch discovery</h3>
-                <p className="t-meta mt-2 max-w-[44ch]">
-                  Nightly or hourly over the whole population. Clustering has to
-                  see the entire graph, so this half cannot be synchronous.
-                </p>
-                <ol className="mt-5 space-y-2">
-                  {["whole account population", "candidate pairs and edges",
-                    "graph and clustering", "scores, prices, review queue"].map((t, i) => (
-                    <li key={t} className="flex items-baseline gap-4 border-b border-line pb-2.5">
-                      <span className="tnum text-[11px] text-fg-dim">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span className="text-[13.5px] text-fg-2">{t}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-              <div className="lg:border-l lg:border-line lg:pl-12">
-                <h3 className="text-[15px] font-medium text-fg">Online cluster assignment</h3>
-                <p className="t-meta mt-2 max-w-[44ch]">
-                  One new account against the clusters that already exist. Blocking
-                  and linking only, which is the half that can run in a request.
-                </p>
-                <ol className="mt-5 space-y-2">
-                  {["one new account", "blocking rules against existing members",
-                    "pair evidence in bits", "attach to a cluster, or stand alone"].map((t, i) => (
-                    <li key={t} className="flex items-baseline gap-4 border-b border-line pb-2.5">
-                      <span className="tnum text-[11px] text-fg-dim">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span className="text-[13.5px] text-fg-2">{t}</span>
-                    </li>
-                  ))}
-                </ol>
+            <div className="grid gap-x-12 gap-y-6 border-y border-line py-8 lg:grid-cols-2">
+              <p className="t-meta max-w-[46ch]">
+                Batch discovery runs nightly or hourly over the whole population.
+                Clustering has to see the entire graph, so this half cannot be
+                synchronous.
+              </p>
+              <p className="t-meta max-w-[46ch]">
+                Online assignment takes one new account against the clusters that
+                already exist. Blocking and linking only, which is the half that
+                can run inside a request.
+              </p>
+              <div className="h-[360px] lg:col-span-2">
+                <FlowPair left={BATCH} right={ONLINE} className="h-full w-full" />
               </div>
             </div>
             {big && (
@@ -658,6 +633,23 @@ for cluster in result["clusters"]:
             ) : (
               <Empty>No review capacity results yet. Run python -m detector.review.</Empty>
             )}
+          </Anchored>
+
+          <Anchored id="engine" icon={ICON.engine}
+                    title="Deploy the engine"
+                    lede="The detection system without the visualisation. A merchant installs the engine and never builds the visualisation.">
+            <div className="h-[360px] border-y border-line">
+              <FlowPair left={ENGINE} right={LAB} className="h-full w-full" />
+            </div>
+
+            <div className="mt-8">
+              <Code language="bash">{ENGINE_CODE}</Code>
+            </div>
+
+            <Note className="mt-6">
+              The Lab reads the same JSON files the engine writes. It never
+              recomputes a score, and removing it changes no result.
+            </Note>
           </Anchored>
 
           <Anchored id="limits" icon={ICON.limits} title="What it does not promise">

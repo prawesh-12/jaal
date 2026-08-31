@@ -46,8 +46,13 @@ class Detector:
         return cls(params=params, model=model)
 
     def scan(self, accounts: pd.DataFrame, explain_notes: bool = True,
-             live: bool = False) -> dict:
-        """Run every stage over one batch and return what to do about it."""
+             live: bool = False, trace: bool = False) -> dict:
+        """Run every stage over one batch and return what to do about it.
+
+        `trace` also returns the intermediate objects each stage built. They are
+        numpy arrays and an igraph graph, not JSON, so only a local caller can
+        ask for them. `detector/sim_world.py` is the one that does.
+        """
         missing = [c for c in REQUIRED_COLUMNS if c not in accounts.columns]
         if missing:
             raise ValueError(f"accounts is missing {len(missing)} column(s): "
@@ -72,9 +77,14 @@ class Detector:
 
         if not groups:
             timings["total_ms"] = round((time.perf_counter() - t0) * 1000, 1)
-            return {"n_accounts": len(accounts), "n_clusters": 0,
-                    "clusters": [], "summary": _empty_summary(),
-                    "timings_ms": timings, "blocking": block_stats}
+            empty = {"n_accounts": len(accounts), "n_clusters": 0,
+                     "clusters": [], "summary": _empty_summary(),
+                     "timings_ms": timings, "blocking": block_stats}
+            if trace:
+                empty["trace"] = {"pairs": pairs, "bits": bits,
+                                  "contributions": contributions, "graph": graph,
+                                  "groups": [], "features": None}
+            return empty
 
         t = time.perf_counter()
         rows = []
@@ -127,9 +137,14 @@ class Detector:
             out.append(record)
 
         timings["total_ms"] = round((time.perf_counter() - t0) * 1000, 1)
-        return {"n_accounts": len(accounts), "n_clusters": len(out),
-                "clusters": out, "summary": _summarise(out),
-                "timings_ms": timings, "blocking": block_stats}
+        result = {"n_accounts": len(accounts), "n_clusters": len(out),
+                  "clusters": out, "summary": _summarise(out),
+                  "timings_ms": timings, "blocking": block_stats}
+        if trace:
+            result["trace"] = {"pairs": pairs, "bits": bits,
+                               "contributions": contributions, "graph": graph,
+                               "groups": groups, "features": table}
+        return result
 
 
 def _empty_summary() -> dict:

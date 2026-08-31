@@ -1,0 +1,226 @@
+{
+ "seeds": [
+  975,
+  932,
+  977
+ ],
+ "tiers": [
+  "obvious",
+  "moderate",
+  "sophisticated",
+  "adaptive"
+ ],
+ "n_accounts": 12000,
+ "edge_threshold_bits": 14.0,
+ "costs_rupees": {
+  "blocked_innocent": 15000,
+  "missed_abuser": 200,
+  "analyst_review": 150
+ },
+ "worlds": [
+  {
+   "file": "sim_world_obvious_975",
+   "tier": "obvious",
+   "seed": 975,
+   "n_accounts": 12000,
+   "n_edges": 6419,
+   "n_clusters": 194,
+   "summary": {
+    "block": 2,
+    "review": 1,
+    "allow": 191,
+    "accounts_blocked": 65,
+    "accounts_for_review": 33,
+    "discount_at_risk_rupees": 6600
+   },
+   "bytes": 2140614
+  },
+  {
+   "file": "sim_world_moderate_975",
+   "tier": "moderate",
+   "seed": 975,
+   "n_accounts": 12000,
+   "n_edges": 5284,
+   "n_clusters": 181,
+   "summary": {
+    "block": 0,
+    "review": 3,
+    "allow": 178,
+    "accounts_blocked": 0,
+    "accounts_for_review": 93,
+    "discount_at_risk_rupees": 18600
+   },
+   "bytes": 2049629
+  },
+  {
+   "file": "sim_world_sophisticated_975",
+   "tier": "sophisticated",
+   "seed": 975,
+   "n_accounts": 12000,
+   "n_edges": 5360,
+   "n_clusters": 198,
+   "summary": {
+    "block": 0,
+    "review": 4,
+    "allow": 194,
+    "accounts_blocked": 0,
+    "accounts_for_review": 98,
+    "discount_at_risk_rupees": 19600
+   },
+   "bytes": 2076976
+  },
+  {
+   "file": "sim_world_adaptive_975",
+   "tier": "adaptive",
+   "seed": 975,
+   "n_accounts": 12000,
+   "n_edges": 3643,
+   "n_clusters": 183,
+   "summary": {
+    "block": 0,
+    "review": 1,
+    "allow": 182,
+    "accounts_blocked": 0,
+    "accounts_for_review": 37,
+    "discount_at_risk_rupees": 7400
+   },
+   "bytes": 1946165
+  },
+  {
+   "file": "sim_world_obvious_932",
+   "tier": "obvious",
+   "seed": 932,
+   "n_accounts": 12000,
+   "n_edges": 6205,
+   "n_clusters": 153,
+   "summary": {
+    "block": 0,
+    "review": 3,
+    "allow": 150,
+    "accounts_blocked": 0,
+    "accounts_for_review": 102,
+    "discount_at_risk_rupees": 20200
+   },
+   "bytes": 2085977
+  },
+  {
+   "file": "sim_world_moderate_932",
+   "tier": "moderate",
+   "seed": 932,
+   "n_accounts": 12000,
+   "n_edges": 5390,
+   "n_clusters": 173,
+   "summary": {
+    "block": 0,
+    "review": 4,
+    "allow": 169,
+    "accounts_blocked": 0,
+    "accounts_for_review": 112,
+    "discount_at_risk_rupees": 22200
+   },
+   "bytes": 2051989
+  },
+  {
+   "file": "sim_world_sophisticated_932",
+   "tier": "sophisticated",
+   "seed": 932,
+   "n_accounts": 12000,
+   "n_edges": 5968,
+   "n_clusters": 178,
+   "summary": {
+    "block": 0,
+    "review": 4,
+    "allow": 174,
+    "accounts_blocked": 0,
+    "accounts_for_review": 109,
+    "discount_at_risk_rupees": 21800
+   },
+   "bytes": 2098797
+  },
+  {
+   "file": "sim_world_adaptive_932",
+   "tier": "adaptive",
+   "seed": 932,
+   "n_accounts": 12000,
+   "n_edges": 5640,
+   "n_clusters": 183,
+   "summary": {
+    "block": 0,
+    "review": 3,
+    "allow": 180,
+    "accounts_blocked": 0,
+    "accounts_for_review": 82,
+    "discount_at_risk_rupees": 16400
+   },
+   "bytes": 2083819
+  },
+  {
+   "file": "sim_world_obvious_977",
+   "tier": "obvious",
+   "seed": 977,
+   "n_accounts": 12000,
+   "n_edges": 6607,
+   "n_clusters": 189,
+   "summary": {
+    "block": 2,
+    "review": 2,
+    "allow": 185,
+    "accounts_blocked": 40,
+    "accounts_for_review": 58,
+    "discount_at_risk_rupees": 11600
+   },
+   "bytes": 2152800
+  },
+  {
+   "file": "sim_world_moderate_977",
+   "tier": "moderate",
+   "seed": 977,
+   "n_accounts": 12000,
+   "n_edges": 5056,
+   "n_clusters": 196,
+   "summary": {
+    "block": 0,
+    "review": 4,
+    "allow": 192,
+    "accounts_blocked": 0,
+    "accounts_for_review": 89,
+    "discount_at_risk_rupees": 17600
+   },
+   "bytes": 2052730
+  },
+  {
+   "file": "sim_world_sophisticated_977",
+   "tier": "sophisticated",
+   "seed": 977,
+   "n_accounts": 12000,
+   "n_edges": 4787,
+   "n_clusters": 198,
+   "summary": {
+    "block": 0,
+    "review": 4,
+    "allow": 194,
+    "accounts_blocked": 0,
+    "accounts_for_review": 114,
+    "discount_at_risk_rupees": 22600
+   },
+   "bytes": 2038978
+  },
+  {
+   "file": "sim_world_adaptive_977",
+   "tier": "adaptive",
+   "seed": 977,
+   "n_accounts": 12000,
+   "n_edges": 6115,
+   "n_clusters": 169,
+   "summary": {
+    "block": 0,
+    "review": 2,
+    "allow": 167,
+    "accounts_blocked": 0,
+    "accounts_for_review": 101,
+    "discount_at_risk_rupees": 20200
+   },
+   "bytes": 2097230
+  }
+ ]
+}

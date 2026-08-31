@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mark } from "@/components/mark";
+import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme";
 import { useJson } from "@/lib/useJson";
-import { compactRupees } from "@/lib/format";
 import Overview from "@/views/Overview";
 import Simulation from "@/views/Simulation";
 import Results from "@/views/Results";
@@ -29,8 +28,7 @@ const ALIASES = {
   cost: "deep", pipeline: "deep", queue: "deep", charts: "deep",
 };
 
-function TopNav({ holdout }) {
-  const net = holdout?.pooled?.net_vs_nothing_rupees;
+function TopNav({ tab, onGoTo }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-base/90 backdrop-blur-sm">
       <div className="shell flex h-[52px] items-center gap-8">
@@ -39,20 +37,30 @@ function TopNav({ holdout }) {
           <span className="text-[14px] font-medium tracking-[-0.01em]">Jaal</span>
         </a>
 
-        <TabsList aria-label="Sections">
+        <div role="tablist" aria-label="Sections"
+             className="-mb-px flex items-stretch overflow-x-auto">
           {TABS.map(([k, label]) => (
-            <TabsTrigger key={k} value={k}>
+            <button
+              key={k}
+              id={`tab-${k}`}
+              type="button"
+              role="tab"
+              aria-selected={tab === k}
+              aria-controls="panel"
+              onClick={() => onGoTo(k)}
+              className={cn(
+                "interactive relative inline-flex h-[52px] shrink-0 items-center px-3.5 text-[13.5px] whitespace-nowrap",
+                "after:absolute after:inset-x-0 after:bottom-0 after:h-px",
+                tab === k ? "text-fg after:bg-accent"
+                          : "text-fg-faint after:bg-transparent hover:text-fg-muted"
+              )}
+            >
               {label}
-            </TabsTrigger>
+            </button>
           ))}
-        </TabsList>
+        </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-4">
-          {holdout && (
-            <span className="tnum hidden text-[12.5px] text-fg-muted lg:inline">
-              {compactRupees(net)} net on the sealed holdout
-            </span>
-          )}
+        <div className="ml-auto flex shrink-0 items-center">
           <ThemeToggle />
         </div>
       </div>
@@ -60,20 +68,8 @@ function TopNav({ holdout }) {
   );
 }
 
-function DefenceLine() {
-  return (
-    <div className="border-b border-line bg-sunken">
-      <p className="shell py-2 text-[12.5px] text-fg-faint">
-        Defence only. Every account record here is synthetic, produced by a test
-        fixture. Every figure is read from a file <span className="ident">./run.sh</span> wrote.
-      </p>
-    </div>
-  );
-}
-
 function Footer({ onGoTo }) {
-  const links = [["simulation", "Simulation"], ["results", "Results"],
-                 ["use", "Using Jaal"], ["deep", "Deep Dive"]];
+  const links = TABS;
   return (
     <footer className="mt-24 border-t border-line">
       <div className="shell flex flex-wrap items-start justify-between gap-x-16 gap-y-8 py-10">
@@ -132,16 +128,17 @@ export default function App() {
   const [tab, setTab] = useHashTab();
   const holdout = useJson("holdout");
   const decisions = useJson("decisions");
-  const baseline = useJson("baseline");
+  const baseline = useJson("baseline_holdout");
   const model = useJson("model");
 
   return (
-    <Tabs value={tab} onValueChange={setTab} className="relative z-10 flex min-h-screen flex-col">
-      <TopNav holdout={holdout.data} />
-      <DefenceLine />
+    <div className="relative z-10 flex min-h-screen flex-col">
+      <TopNav tab={tab} onGoTo={setTab} />
 
-      <main className="shell flex-1 pb-20">
-        <TabsContent value="overview">
+      <main id="panel" role="tabpanel" aria-labelledby={`tab-${tab}`}
+            className={cn("enter flex min-h-0 flex-1 flex-col",
+                          tab === "simulation" ? "" : "shell pb-20")}>
+        {tab === "overview" && (
           <Overview
             holdout={holdout.data}
             decisions={decisions.data}
@@ -149,31 +146,22 @@ export default function App() {
             loading={holdout.loading}
             onSimulate={() => setTab("simulation")}
           />
-        </TabsContent>
-        <TabsContent value="simulation">
-          <Simulation onGoTo={setTab} />
-        </TabsContent>
-        <TabsContent value="results">
+        )}
+        {tab === "simulation" && <Simulation />}
+        {tab === "results" && (
           <Results
             holdout={holdout.data}
             baseline={baseline.data}
             decisions={decisions.data}
             loading={holdout.loading}
           />
-        </TabsContent>
-        <TabsContent value="failures">
-          <Failure holdout={holdout.data} loading={holdout.loading} />
-        </TabsContent>
-        <TabsContent value="use">
-          <Integrate />
-        </TabsContent>
-        <TabsContent value="deep">
-          <DeepDive />
-        </TabsContent>
+        )}
+        {tab === "failures" && <Failure holdout={holdout.data} loading={holdout.loading} />}
+        {tab === "use" && <Integrate />}
+        {tab === "deep" && <DeepDive />}
       </main>
 
-      <Footer onGoTo={setTab} />
-
-    </Tabs>
+      {tab !== "simulation" && <Footer onGoTo={setTab} />}
+    </div>
   );
 }

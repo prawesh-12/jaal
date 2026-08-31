@@ -1,0 +1,77 @@
+{
+ "endpoint": "POST /v1/scan",
+ "from": "seed 975, obvious tier",
+ "request": {
+  "note": "truncated to 2 of 12,000 rows",
+  "accounts": [
+   {
+    "account_id": "a000294",
+    "device_id": "dv000000007121",
+    "ip_prefix": "106.118.181",
+    "address_id": "ad0009651",
+    "pincode": "400022",
+    "card_bin": "494415",
+    "signup_ts": 1804785381,
+    "n_orders": 1,
+    "coupon_used": true,
+    "first_order_value": 466,
+    "total_order_value": 466,
+    "days_to_second_order": -1
+   },
+   {
+    "account_id": "a000409",
+    "device_id": "dv000000007121",
+    "ip_prefix": "4.12.66",
+    "address_id": "ad0006747",
+    "pincode": "400022",
+    "card_bin": "494415",
+    "signup_ts": 1804784350,
+    "n_orders": 1,
+    "coupon_used": true,
+    "first_order_value": 472,
+    "total_order_value": 472,
+    "days_to_second_order": -1
+   }
+  ]
+ },
+ "response": {
+  "n_accounts": 12000,
+  "n_clusters": 194,
+  "clusters": [
+   {
+    "cluster_id": 4,
+    "size": 50,
+    "probability": 1.0,
+    "predicted_ring_purity": 0.9996,
+    "action": "block",
+    "expected_cost_rupees": {
+     "block": 300,
+     "allow": 9996,
+     "review": 7500
+    },
+    "discount_at_risk_rupees": 10000,
+    "strongest_signal": "device",
+    "evidence_bits": {
+     "mean_edge": 56.4,
+     "weakest_edge": 48.1
+    }
+   }
+  ],
+  "summary": {
+   "block": 2,
+   "review": 1,
+   "allow": 191,
+   "accounts_blocked": 65,
+   "accounts_for_review": 33,
+   "discount_at_risk_rupees": 6600
+  },
+  "timings_ms": {
+   "block_ms": 457.3,
+   "link_ms": 251.7,
+   "cluster_ms": 490.9,
+   "features_ms": 200.3,
+   "score_ms": 121.1,
+   "total_ms": 1560.1
+  }
+ }
+}

@@ -17,3 +17,8 @@ ui/node_modules/
 ui/dist/
 
 .env
+
+# explanation cache, rebuilt on demand
+cache/
+
+extras/

@@ -126,6 +126,8 @@ if [ -f results/features_holdout.csv ]; then
       --features results/features_holdout.csv
 fi
 
+run "Worlds the site replays"        -m detector.sim_world --seeds 975 932 977
+
 run "Every measured number, in one file"     -m detector.report \
     --out results/metrics.md \
     --integration docs/06-run-and-integrate.md

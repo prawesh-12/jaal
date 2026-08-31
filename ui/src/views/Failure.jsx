@@ -1,19 +1,11 @@
 import { useState } from "react";
-import {
-  CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine,
-  ResponsiveContainer, Tooltip, XAxis, YAxis,
-} from "recharts";
 import { Note } from "@/components/ui/panel";
 import { Disclosure } from "@/components/disclosure";
 import { Empty, Section, Skeleton, Status, SubHead } from "@/components/section";
-import {
-  ChartFrame, Legend, Readout, axisProps, crosshair, gridProps,
-} from "@/components/chart";
+import { Collapse, TIER_AT } from "@/three/Collapse";
 import { useJson } from "@/lib/useJson";
 import { TIERS, count, dp4, isUndefinedPrecision } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-const TICKS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
 /* Where blocking recall falls away, taken from the curve itself, not guessed. */
 function deadZoneStart(curve) {
@@ -207,6 +199,7 @@ export default function Failure({ holdout, loading }) {
   const blocking = useJson("blocking");
   const mechanism = useJson("adaptive_mechanism");
   const [hover, setHover] = useState(null);
+  const [tier, setTier] = useState("adaptive");
 
   if (loading) return <Skeleton className="mt-16 h-96 w-full" />;
   if (!holdout) return <Empty>No results/holdout.json yet. Run ./run.sh.</Empty>;
@@ -223,123 +216,76 @@ export default function Failure({ holdout, loading }) {
   const last = curve[curve.length - 1];
 
   return (
-    <div className="pt-14">
-      <header className="pb-10">
-        <div className="label">Measured, not caveated</div>
-        <h1 className="mt-5 max-w-[24ch] text-[38px] leading-[1.08] font-medium tracking-[-0.03em] text-fg text-balance sm:text-[44px]">
-          A sufficiently adaptive operator defeats automatic blocking.
-        </h1>
-        <p className="mt-6 max-w-[62ch] text-[17px] leading-[1.55] text-fg-2">
-          Blocking fails first. The review queue survives longer. Both halves of
-          that sentence are swept and plotted below.
-        </p>
-      </header>
-
-      <div className="grid gap-x-16 gap-y-10 border-y border-line-strong py-12 sm:grid-cols-3">
+    <div>
+      <div className="grid gap-x-12 gap-y-6 pt-10 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
         <div>
-          <div className="label">Blocking stops contributing at</div>
-          <div className="tnum mt-4 text-[52px] leading-none font-medium tracking-[-0.035em] text-warn">
-            {dead !== null ? dead.toFixed(2) : "n/a"}
-          </div>
-          <p className="t-meta mt-4 max-w-[30ch]">
-            operator sophistication, 0 is the obvious tier and 1 is the adaptive
-            one
+          <div className="label">Measured, not caveated</div>
+          <h1 className="mt-4 max-w-[20ch] text-[34px] leading-[1.08] font-medium tracking-[-0.03em] text-fg text-balance sm:text-[40px]">
+            Blocking falls first. The queue holds on.
+          </h1>
+          <p className="mt-5 max-w-[44ch] text-[15px] leading-[1.6] text-fg-muted">
+            The front band is what Jaal blocks by itself. The band behind it is
+            what a person still reaches from the review queue. Move across the
+            ground to read any level of operator sophistication.
           </p>
+
+          <dl className="mt-8 grid grid-cols-2 gap-x-8 gap-y-6">
+            {[
+              ["Sophistication", a ? a.sophistication.toFixed(2) : "\u2014", null],
+              ["Blocked", a ? dp4(a.blocked) : dp4(last.blocked), "info"],
+              ["With review", a ? dp4(a.withReview) : dp4(last.withReview), "ok"],
+              ["Precision", a
+                ? (isUndefinedPrecision(a.precision) ? "undefined" : dp4(a.precision))
+                : (isUndefinedPrecision(last.precision) ? "undefined" : dp4(last.precision)),
+                "warn"],
+            ].map(([label, value, tone]) => (
+              <div key={label}>
+                <div className="label">{label}</div>
+                <div className="tnum mt-2 text-[24px] leading-none font-medium text-fg"
+                     style={tone ? { color: `var(--color-${tone})` } : undefined}>
+                  {value}
+                </div>
+              </div>
+            ))}
+          </dl>
+
+          {dead !== null && (
+            <p className="mt-7 max-w-[46ch] border-l-2 border-bad pl-5 text-[14px] leading-[1.6] text-fg-2">
+              Past sophistication {dead.toFixed(2)} the front band is under 0.05.
+              Blocking has stopped contributing, and the tinted floor is that
+              region. At the far end it blocks nothing at all and precision is
+              undefined rather than zero.
+            </p>
+          )}
         </div>
-        <div className="sm:border-l sm:border-line sm:pl-16">
-          <div className="label">Blocked recall at sophistication 1.0</div>
-          <div className="tnum mt-4 text-[52px] leading-none font-medium tracking-[-0.035em] text-bad">
-            {dp4(last.blocked)}
+
+        <div>
+          <div className="h-[min(60vh,540px)] border border-line">
+            <Collapse curve={holdout.detection_curve} dead={dead} tier={tier}
+                      activeIndex={hover} onHover={setHover}
+                      className="h-full w-full" />
           </div>
-          <p className="t-meta mt-4 max-w-[30ch]">
-            nothing is blocked, and precision there is undefined rather than zero
-          </p>
-        </div>
-        <div className="sm:border-l sm:border-line sm:pl-16">
-          <div className="label">Blocked or reviewed, same point</div>
-          <div className="tnum mt-4 text-[52px] leading-none font-medium tracking-[-0.035em] text-ok">
-            {dp4(last.withReview)}
+          <div role="group" aria-label="Adversary tier"
+               className="mt-px grid grid-cols-4 border border-line">
+            {Object.entries(TIER_AT).map(([name, at]) => (
+              <button key={name} type="button"
+                      aria-pressed={tier === name}
+                      onClick={() => {
+                        setTier(name);
+                        setHover(Math.round(at * (curve.length - 1)));
+                      }}
+                      className={cn(
+                        "interactive border-l border-line py-2.5 text-[12.5px] first:border-l-0",
+                        tier === name ? "bg-active font-medium text-fg"
+                                      : "text-fg-muted hover:bg-surface hover:text-fg")}>
+                {name}
+              </button>
+            ))}
           </div>
-          <p className="t-meta mt-4 max-w-[30ch]">
-            the queue still puts most of the ring in front of a person
-          </p>
         </div>
       </div>
 
-      <Section
-        title="Recall as the operator gets better"
-        lede="Sophistication swept end to end. Move across the chart to read any point."
-      >
-        <ChartFrame
-          legend={
-            <Legend
-              items={[
-                { label: "blocked or reviewed", color: "var(--color-ok)" },
-                { label: "blocked", color: "var(--color-info)" },
-                { label: "precision", color: "var(--color-warn)", dashed: true },
-              ]}
-            />
-          }
-          readout={
-            <Readout
-              active={!!a}
-              resting="Move across the chart to read the curve at any level of operator sophistication."
-              items={a ? [
-                { label: "Sophistication", value: a.sophistication.toFixed(2) },
-                { label: "Blocked", value: dp4(a.blocked), color: "var(--color-info)" },
-                { label: "With review", value: dp4(a.withReview), color: "var(--color-ok)" },
-                {
-                  label: "Precision",
-                  value: isUndefinedPrecision(a.precision) ? "undefined" : dp4(a.precision),
-                  color: "var(--color-warn)",
-                },
-                { label: "Blocking", value: a.blocked < 0.05 ? "finished" : "still contributing" },
-              ] : []}
-            />
-          }
-          xLabel="operator sophistication"
-          yLabel="rate"
-          footer={dead !== null
-            ? `Past ${dead.toFixed(2)} the blocked line is under 0.05, so blocking has stopped contributing and only the review queue is still working.`
-            : undefined}
-        >
-          <ResponsiveContainer width="100%" height={340}>
-            <LineChart
-              data={curve}
-              margin={{ top: 8, right: 16, bottom: 4, left: 0 }}
-              onMouseMove={(s) => setHover(s?.isTooltipActive ? s.activeTooltipIndex ?? null : null)}
-              onMouseLeave={() => setHover(null)}
-            >
-              <CartesianGrid {...gridProps} />
-              {dead !== null && (
-                <ReferenceArea
-                  x1={dead} x2={1} fill="var(--color-bad)" fillOpacity={0.07} stroke="none"
-                  label={{
-                    value: "blocking is finished here",
-                    fill: "var(--color-fg-faint)", fontSize: 11, position: "center",
-                  }}
-                />
-              )}
-              <XAxis dataKey="sophistication" ticks={TICKS}
-                     tickFormatter={(v) => v.toFixed(1)} {...axisProps} />
-              <YAxis domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} width={42} {...axisProps} />
-              <ReferenceLine y={0.5} stroke="var(--color-line-strong)" strokeDasharray="2 5" />
-              <Tooltip content={() => null} cursor={crosshair} />
-              <Line type="monotone" dataKey="withReview" stroke="var(--color-ok)"
-                    strokeWidth={1.5} dot={false} isAnimationActive={false}
-                    activeDot={{ r: 3.5, fill: "var(--color-ok)", stroke: "var(--color-base)", strokeWidth: 2 }} />
-              <Line type="monotone" dataKey="blocked" stroke="var(--color-info)"
-                    strokeWidth={1.5} dot={false} isAnimationActive={false}
-                    activeDot={{ r: 3.5, fill: "var(--color-info)", stroke: "var(--color-base)", strokeWidth: 2 }} />
-              <Line type="monotone" dataKey="precision" stroke="var(--color-warn)"
-                    strokeWidth={1.5} strokeDasharray="4 3" dot={false}
-                    isAnimationActive={false} connectNulls={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartFrame>
-      </Section>
-
-      <Section title="Why it fails, in detail" lede="Open what you want to check.">
+      <Section title="Why it fails, in detail">
         <div className="border-t border-line-strong">
           {blocking.data && (
             <Disclosure
@@ -390,7 +336,7 @@ export default function Failure({ holdout, loading }) {
 
       <Section
         title="Failure catalogue"
-        lede="Every way this system is known to fail, each with a real cluster from a real seed. Open one for why it happens and what it costs."
+        lede="Every known failure, each with a real cluster from a real seed."
         meta={
           <span className="inline-flex items-center gap-2.5 text-[12.5px] text-fg-muted">
             <Status tone="bad" />

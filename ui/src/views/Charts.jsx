@@ -70,7 +70,7 @@ export default function Charts({ bare = false }) {
       {!bare && (
         <PageHeader
           title="Charts the pipeline drew"
-          lede="Written to results/ by the pipeline itself, not by this page. If a number here disagrees with a number elsewhere on the site, the pipeline is the one to trust."
+          lede="Drawn by the pipeline during the run."
         >
           <Metadata
             className="mt-8"
