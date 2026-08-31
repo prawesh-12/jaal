@@ -13,22 +13,24 @@
       sunken    below the page, for insets
   */
   --color-base: #fdfdfc;
-  --color-surface: #f6f6f4;
-  --color-raised: #eeeeeb;
-  --color-active: #e3e3df;
-  --color-sunken: #f9f9f7;
+  --color-surface: #f4f4f1;
+  --color-raised: #eaeae6;
+  --color-active: #dcdcd6;
+  --color-sunken: #f8f8f6;
 
-  --color-line: #e5e5e1;
-  --color-line-strong: #d2d2cc;
-  --color-line-loud: #b3b3ac;
+  --color-line: #dededa;
+  --color-line-strong: #c4c4bd;
+  --color-line-loud: #9d9d95;
 
-  --color-fg: #15171a;
-  --color-fg-2: #3c4045;
-  --color-fg-muted: #61656a;
-  --color-fg-faint: #84888d;
-  --color-fg-dim: #a9adb2;
+  --color-fg: #14171a;
+  --color-fg-2: #383c41;
+  --color-fg-muted: #575c61;
+  --color-fg-faint: #757a7f;
+  --color-fg-dim: #949a9f;
 
-  --color-accent: #15171a;
+  /* The one hue the interface owns: everything the reader can act on, and
+     nothing else. Kept clear of ok, warn, bad and info. */
+  --color-accent: #0e6a7d;
 
   /*
     State. Desaturated on purpose: these read as a status marker beside text,
@@ -68,22 +70,22 @@
 */
 :root[data-theme="dark"] {
   --color-base: #131619;
-  --color-surface: #191d21;
-  --color-raised: #1f242a;
-  --color-active: #292f36;
+  --color-surface: #1a1e23;
+  --color-raised: #222830;
+  --color-active: #2e3640;
   --color-sunken: #101316;
 
-  --color-line: #272d33;
-  --color-line-strong: #363d45;
-  --color-line-loud: #4a525b;
+  --color-line: #2c333b;
+  --color-line-strong: #3d4650;
+  --color-line-loud: #545e69;
 
   --color-fg: #f2f3f2;
-  --color-fg-2: #c9ccce;
-  --color-fg-muted: #9ba0a4;
-  --color-fg-faint: #767c81;
-  --color-fg-dim: #565c62;
+  --color-fg-2: #cdd0d3;
+  --color-fg-muted: #a2a8ad;
+  --color-fg-faint: #7d838a;
+  --color-fg-dim: #626973;
 
-  --color-accent: #dfe3e7;
+  --color-accent: #4fb8cf;
 
   --color-ok: #63ab78;
   --color-warn: #c99a45;
@@ -325,11 +327,7 @@
   animation: enter 0.18s ease-out both;
 }
 
-/*
-  Reduced motion. The CSS half is here; the JS half reads the same query
-  through usePrefersReducedMotion so the pipeline skips its flow animation and jumps
-  straight to each stage's finished state, which stays fully readable.
-*/
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

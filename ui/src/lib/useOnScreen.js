@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-// A scene that animates forever costs a frame loop forever, so it is told when
-// it has scrolled out of the viewport and can stop.
+// Lets a permanently animating scene stop while it is off screen.
 export function useOnScreen() {
   const ref = useRef(null);
   const [on, setOn] = useState(true);

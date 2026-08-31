@@ -12,7 +12,7 @@ import { useOnScreen } from "@/lib/useOnScreen";
 import { cn } from "@/lib/utils";
 import { compactRupees, count, dp4, pct, rupees } from "@/lib/format";
 
-const RUN_MS = 7000;
+const RUN_MS = 4800;
 
 const STEPS = [
   [0.00, "Population",
@@ -66,8 +66,6 @@ const STAGE_ICON = {
   decide: IndianRupee,
 };
 
-/* Each row is a field of the file that stage wrote, so the diagram and the
-   detail below it are the same eight records read twice. */
 function buildStages({ blocking, link, clustering, model, decisions }) {
   return [
     { id: "accounts", name: "Accounts", label: "Accounts",
@@ -115,7 +113,6 @@ function Architecture({ blocking, link, clustering, model, decisions }) {
 
   const active = held ?? stages[lit].id;
   const shown = stages.find((s) => s.id === active) ?? stages[0];
-  const Icon = STAGE_ICON[shown.id];
 
   return (
     <section className="mt-16 border-t border-line-strong pt-10">
@@ -139,19 +136,31 @@ function Architecture({ blocking, link, clustering, model, decisions }) {
         </div>
       </div>
 
-      <div className="mt-8 flex min-h-[92px] items-start gap-5 border-t border-line pt-6">
-        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center border border-line text-fg-muted">
-          <Icon size={16} aria-hidden="true" />
-        </span>
-        <div>
-          <div className="flex flex-wrap items-baseline gap-x-3">
-            <span className="text-[15px] font-medium text-fg">{shown.name}</span>
-            <span className="tnum text-[14px] text-fg-2">{shown.head}</span>
-          </div>
-          <p className="mt-1.5 max-w-[86ch] text-[14px] leading-[1.6] text-fg-muted">
-            {shown.note}
-          </p>
-        </div>
+      {/* All eight in one grid cell, so the panel is always as tall as the
+          longest note and the page below never shifts. */}
+      <div className="mt-8 grid border-t border-line pt-6">
+        {stages.map((s) => {
+          const Icon = STAGE_ICON[s.id];
+          const on = s.id === shown.id;
+          return (
+            <div key={s.id} aria-hidden={!on}
+                 className="col-start-1 row-start-1 flex items-start gap-5"
+                 style={{ visibility: on ? "visible" : "hidden" }}>
+              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center border border-line text-fg-muted">
+                <Icon size={16} aria-hidden="true" />
+              </span>
+              <div>
+                <div className="flex flex-wrap items-baseline gap-x-3">
+                  <span className="text-[15px] font-medium text-fg">{s.name}</span>
+                  <span className="tnum text-[14px] text-fg-2">{s.head}</span>
+                </div>
+                <p className="mt-1.5 max-w-[86ch] text-[14px] leading-[1.6] text-fg-muted">
+                  {s.note}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -183,12 +192,16 @@ function ModelCard({ card, report }) {
 
       <div className="mt-10 grid gap-x-14 gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
         <div>
-          <div className="label">Every tree in the classifier, by depth</div>
+          <div className="label">How deep the {count(forest.n_trees)} trees grew</div>
           <div className="mt-4 h-[300px] w-full">
             <Forest card={forest} className="h-full w-full" />
           </div>
           <p className="t-meta mt-4 max-w-[62ch]">
-            One bar per tree, as many levels tall as that tree grew. Together
+            One bar per depth, as tall as the number of trees that reached it.
+            The shallowest stopped at{" "}
+            <span className="tnum text-fg-2">{forest.depth_min}</span> levels and
+            the deepest ran to{" "}
+            <span className="tnum text-fg-2">{forest.depth_max}</span>. Together
             they hold{" "}
             <span className="tnum text-fg-2">{count(forest.decision_nodes)}</span>{" "}
             decision nodes and{" "}
@@ -237,7 +250,7 @@ function ModelCard({ card, report }) {
 
 const REPO = "https://github.com/prawesh-12/jaal";
 
-function SpecColumn({ icon: Icon, title, subtitle, rows, children }) {
+function SpecColumn({ icon: Icon, title, subtitle, rows }) {
   return (
     <div className="bg-base py-7 pr-10 lg:pl-10 lg:first:pl-0">
       <div className="flex items-center gap-2.5">
@@ -245,10 +258,10 @@ function SpecColumn({ icon: Icon, title, subtitle, rows, children }) {
         <span className="text-[14px] font-medium text-fg">{title}</span>
       </div>
       <div className="ident mt-1 text-[12px] text-fg-faint">{subtitle}</div>
-      {children}
       <dl className="mt-5 grid gap-y-2">
         {rows.map(([k, v]) => (
-          <div key={k} className="flex items-baseline justify-between gap-4">
+          <div key={k}
+               className="flex items-baseline justify-between gap-4 border-b border-line pb-2 last:border-0">
             <dt className="text-[13px] text-fg-muted">{k}</dt>
             <dd className="tnum text-[13px] text-fg-2">{v}</dd>
           </div>
@@ -258,8 +271,6 @@ function SpecColumn({ icon: Icon, title, subtitle, rows, children }) {
   );
 }
 
-/* Every hyperparameter here is the value the shipped run actually used, read
-   back out of the fitted estimators rather than copied from the call site. */
 function Spec({ card, report }) {
   const { classifier, calibrator, purity } = card;
   const tried = [
@@ -304,21 +315,14 @@ function Spec({ card, report }) {
           title="Probability calibrator"
           subtitle={calibrator.kind}
           rows={[
+            ["Method", calibrator.method],
             ["Breakpoints", calibrator.n_points],
+            ["Fitted on", "held-back worlds"],
             ["Brier before", report.brier_raw.toFixed(5)],
             ["Brier after", report.brier_isotonic.toFixed(5)],
             ["Platt, for comparison", report.brier_sigmoid.toFixed(5)],
           ]}
-        >
-          <div className="mt-5 h-[196px] w-full">
-            <Calibration score={calibrator.score} probability={calibrator.probability}
-                         className="h-full w-full" />
-          </div>
-          <p className="t-meta mt-3 max-w-[40ch]">
-            The shipped step function. Where it runs below the diagonal, the
-            forest was more confident than it had earned.
-          </p>
-        </SpecColumn>
+        />
         <SpecColumn
           icon={Sigma}
           title="Purity regressor"
@@ -334,6 +338,39 @@ function Spec({ card, report }) {
             ["Mean actual", report.purity_model.mean_actual.toFixed(5)],
           ]}
         />
+      </div>
+
+      <div className="mt-12 grid items-center gap-x-14 gap-y-8 border-t border-line pt-10 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+        <div className="h-[320px] w-full">
+          <Calibration score={calibrator.score} probability={calibrator.probability}
+                       className="h-full w-full" />
+        </div>
+
+        <div>
+          <div className="label">What the calibrator changes</div>
+          <p className="mt-4 max-w-[56ch] text-[14.5px] leading-[1.6] text-fg-2">
+            A forest's {count(classifier.n_trees)} trees vote, and the share
+            that vote yes is not a probability. The step function maps each
+            raw vote onto the rate that actually held on held-back worlds, so
+            the cost model can multiply it by rupees and get an answer worth
+            acting on.
+          </p>
+          <dl className="mt-8 grid gap-px border-t border-line-strong bg-line sm:grid-cols-3">
+            {[
+              ["Brier, raw", report.brier_raw.toFixed(5), "straight from the vote"],
+              ["Brier, isotonic", report.brier_isotonic.toFixed(5), "what ships"],
+              ["Brier, Platt", report.brier_sigmoid.toFixed(5), "the alternative"],
+            ].map(([label, value, note]) => (
+              <div key={label} className="bg-base py-5 pr-8 sm:pl-8 sm:first:pl-0">
+                <dt className="label">{label}</dt>
+                <dd className="tnum mt-2.5 text-[21px] leading-none font-medium tracking-tight text-fg">
+                  {value}
+                </dd>
+                <dd className="t-meta mt-2">{note}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
 
       <div className="mt-12 grid gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,430px)]">
@@ -470,7 +507,7 @@ export default function Overview({ holdout, loading, onSimulate }) {
                   </span>
                 </span>
                 <span className="mt-2.5 block h-px w-full bg-line">
-                  <span className="block h-px bg-fg"
+                  <span className="block h-px bg-accent"
                         style={{ width: `${done * 100}%` }} />
                 </span>
               </button>
@@ -485,12 +522,12 @@ export default function Overview({ holdout, loading, onSimulate }) {
 
       <div className="mt-11 grid gap-px border-t border-line-strong bg-line sm:grid-cols-2 lg:grid-cols-4">
         <div className="bg-base py-9 pr-10">
-          <div className="label">Net against doing nothing</div>
+          <div className="label">Saved against doing nothing</div>
           <div className="tnum mt-3 text-[clamp(2.5rem,1.6rem+2.4vw,3.5rem)] leading-none font-medium tracking-[-0.035em] whitespace-nowrap text-ok">
             {compactRupees(pooled.net_vs_nothing_rupees)}
           </div>
           <p className="t-meta mt-3">
-            sealed holdout, {count(holdout.n_seeds)} worlds, opened once
+            Sealed holdout, {count(holdout.n_seeds)} worlds, opened once
           </p>
         </div>
         {[
@@ -521,7 +558,7 @@ export default function Overview({ holdout, loading, onSimulate }) {
 
       <div className="py-10">
         <button type="button" onClick={onSimulate}
-                className="interactive inline-flex h-12 items-center gap-2.5 bg-fg px-7 text-[15px] font-medium text-base hover:opacity-90">
+                className="interactive inline-flex h-12 items-center gap-2.5 bg-accent px-7 text-[15px] font-medium text-base hover:opacity-90">
           Run it on twelve thousand accounts
           <ArrowRight size={16} aria-hidden="true" />
         </button>

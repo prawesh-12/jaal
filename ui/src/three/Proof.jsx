@@ -5,6 +5,8 @@ import * as THREE from "three";
 
 import { ChartCanvas, usePxPerUnit } from "@/three/ChartCanvas";
 import { useThemeColors } from "@/three/JaalCanvas";
+import { SceneLights, SURFACE, useBeadMaterial, useSpring }
+  from "@/three/surface";
 
 const dummy = new THREE.Object3D();
 /* Straight from the stylesheet. Colour management is off, see CanvasHost. */
@@ -15,9 +17,11 @@ function Cells({ total, marked, cols, cell, colors, grow }) {
   const rows = Math.ceil(total / cols);
   const colorBuf = useMemo(() => new Float32Array(total * 3), [total]);
   const attr = useRef();
+  const material = useBeadMaterial(colors.base);
+  const drawn = useRef(-1);
 
   useLayoutEffect(() => {
-    if (!mesh.current || !attr.current) return;
+    if (!attr.current) return;
     const right = paint(colors["fg-2"]);
     const wrong = paint(colors.bad);
     for (let i = 0; i < total; i += 1) {
@@ -25,45 +29,63 @@ function Cells({ total, marked, cols, cell, colors, grow }) {
       colorBuf[i * 3] = c.r;
       colorBuf[i * 3 + 1] = c.g;
       colorBuf[i * 3 + 2] = c.b;
+    }
+    attr.current.needsUpdate = true;
+    drawn.current = -1;
+  }, [colorBuf, colors, total, marked]);
+
+  useFrame(() => {
+    if (!mesh.current) return;
+    const t = grow.current;
+    if (t === drawn.current) return;
+    drawn.current = t;
+
+    const spread = total * 0.22;
+    const head = t * (total + spread);
+    for (let i = 0; i < total; i += 1) {
+      const local = Math.max(0, Math.min(1, (head - i) / spread));
       dummy.position.set((i % cols) * cell - ((cols - 1) * cell) / 2,
                          ((rows - 1) * cell) / 2 - Math.floor(i / cols) * cell, 0);
-      dummy.scale.setScalar(cell * 0.62);
+      dummy.scale.setScalar(Math.max(cell * 0.62 * local, 0.0001));
       dummy.updateMatrix();
       mesh.current.setMatrixAt(i, dummy.matrix);
     }
     mesh.current.instanceMatrix.needsUpdate = true;
-    attr.current.needsUpdate = true;
-  }, [colorBuf, colors, cols, cell, rows, total, marked]);
-
-  useFrame(() => {
-    if (mesh.current) mesh.current.scale.setScalar(grow.current);
   });
 
   return (
     <instancedMesh ref={mesh} args={[undefined, undefined, total]}
-                   frustumCulled={false}>
+                   material={material} frustumCulled={false}>
       <planeGeometry args={[1, 1]}>
-        <instancedBufferAttribute ref={attr} attach="attributes-color"
+        <instancedBufferAttribute ref={attr} attach="attributes-aTint"
                                   args={[colorBuf, 3]} />
       </planeGeometry>
-      <meshBasicMaterial vertexColors toneMapped={false} />
     </instancedMesh>
   );
 }
 
-function Marker({ index, cols, cell, rows, colors, label }) {
+function Marker({ index, cols, cell, rows, colors, label, grow }) {
   const px = usePxPerUnit();
+  const ring = useRef();
+  const stem = useRef();
+
+  useFrame(() => {
+    const show = Math.max(0, Math.min(1, grow.current * 1.35 - 0.35));
+    if (ring.current) ring.current.scale.setScalar(0.4 + 0.6 * show);
+    if (stem.current) stem.current.scale.y = show;
+  });
+
   const x = (index % cols) * cell - ((cols - 1) * cell) / 2;
   const y = ((rows - 1) * cell) / 2 - Math.floor(index / cols) * cell;
   const top = (rows * cell) / 2 + 2;
   return (
     <group position={[x, 0, 1]}>
-      <mesh position={[0, y, 0]}>
+      <mesh ref={ring} position={[0, y, 0]}>
         <ringGeometry args={[cell * 1.7, cell * 2.1, 32]} />
         <meshBasicMaterial color={colors.bad} toneMapped={false}
                            side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[0, (y + cell * 2.1 + top) / 2, 0]}>
+      <mesh ref={stem} position={[0, (y + cell * 2.1 + top) / 2, 0]}>
         <planeGeometry args={[0.22, top - y - cell * 2.1]} />
         <meshBasicMaterial color={colors.bad} toneMapped={false} />
       </mesh>
@@ -113,7 +135,7 @@ function Grid({ total, marked, cols, rows, cell, colors, label }) {
 
   useFrame((_, delta) => {
     if (grow.current >= 1) return;
-    grow.current = Math.min(1, grow.current + delta * 1.4);
+    grow.current = Math.min(1, grow.current + delta * 1.5);
     invalidate();
   });
 
@@ -123,7 +145,7 @@ function Grid({ total, marked, cols, rows, cell, colors, label }) {
              colors={colors} grow={grow} />
       {[...marked].map((i) => (
         <Marker key={i} index={i} cols={cols} rows={rows} cell={cell}
-                colors={colors} label={label} />
+                colors={colors} label={label} grow={grow} />
       ))}
     </group>
   );
@@ -145,10 +167,53 @@ export function PrecisionScale({ breakeven, points, className }) {
   const cut = toX(breakeven);
 
   return (
-    <ChartCanvas width={W + 12} height={H} className={className}>
+    <ChartCanvas width={W + 12} height={H}
+                 lights={<SceneLights ground={colors.surface} />}
+                 className={className}>
       <ScaleBody colors={colors} toX={toX} cut={cut} points={points}
                  breakeven={breakeven} />
     </ChartCanvas>
+  );
+}
+
+function Landing({ point, to, from, y, delay, colors, px }) {
+  const group = useRef();
+  const { invalidate } = useThree();
+  const clock = useRef(0);
+  const slide = useSpring(0, 170, 25);
+
+  useFrame((_, delta) => {
+    clock.current += delta;
+    slide.target = clock.current > delay ? 1 : 0;
+    const t = slide.step(delta);
+    if (group.current) {
+      group.current.position.x = from + (to - from) * t;
+      group.current.scale.setScalar(Math.max(t, 0.001));
+    }
+    if (!slide.settled) invalidate();
+  });
+
+  return (
+    <group ref={group} position={[from, y, 2.4]}>
+      <mesh>
+        <sphereGeometry args={[1.6, 20, 14]} />
+        <meshStandardMaterial color={colors[point.tone]} {...SURFACE}
+                              toneMapped={false} />
+      </mesh>
+      <Html position={[0, y > 0 ? 3 : -3, 0]} center transform={false}
+            zIndexRange={[9, 0]}
+            style={{ pointerEvents: "none", width: `${36 * px}px`,
+                     transform: `translate(-50%, ${y > 0 ? "-100%" : "0"})` }}>
+        <span className="block text-center">
+          <span className="tnum block text-[14px] leading-none text-fg">
+            {point.display}
+          </span>
+          <span className="t-meta mt-0.5 block whitespace-nowrap">
+            {point.label}
+          </span>
+        </span>
+      </Html>
+    </group>
   );
 }
 
@@ -198,31 +263,11 @@ function ScaleBody({ colors, toX, cut, points, breakeven }) {
         </span>
       </Html>
 
-      {points.map((p, i) => {
-        const x = toX(p.value);
-        const y = i % 2 === 0 ? -3.2 : 3.2;
-        return (
-          <group key={p.label} position={[x, y, 1]}>
-            <mesh>
-              <circleGeometry args={[1.5, 24]} />
-              <meshBasicMaterial color={colors[p.tone]} toneMapped={false} />
-            </mesh>
-            <Html position={[0, y > 0 ? 3 : -3, 0]} center transform={false}
-                  zIndexRange={[9, 0]}
-                  style={{ pointerEvents: "none", width: `${36 * px}px`,
-                           transform: `translate(-50%, ${y > 0 ? "-100%" : "0"})` }}>
-              <span className="block text-center">
-                <span className="tnum block text-[14px] leading-none text-fg">
-                  {p.display}
-                </span>
-                <span className="t-meta mt-0.5 block whitespace-nowrap">
-                  {p.label}
-                </span>
-              </span>
-            </Html>
-          </group>
-        );
-      })}
+      {points.map((p, i) => (
+        <Landing key={p.label} point={p} to={toX(p.value)} from={left}
+                 y={i % 2 === 0 ? -3.2 : 3.2} delay={i * 0.09}
+                 colors={colors} px={px} />
+      ))}
     </group>
   );
 }

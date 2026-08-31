@@ -4,11 +4,16 @@ import { useMemo, useRef } from "react";
 
 import { ChartCanvas } from "@/three/ChartCanvas";
 import { useThemeColors } from "@/three/JaalCanvas";
+import { SceneLights, SURFACE } from "@/three/surface";
 import { compactRupees } from "@/lib/format";
 
 const ROW = 12;
 const TRACK = 184;
-const DEPTH = 3.4;
+const DEPTH = 5;
+
+// Turned about the horizontal axis only, so every bar's length still measures
+// exactly what it did.
+const TILT = [-0.34, 0, 0];
 
 function Bar({ bar, max, y, width, color, muted, grow }) {
   const mesh = useRef();
@@ -32,20 +37,21 @@ function Bar({ bar, max, y, width, color, muted, grow }) {
 
   return (
     <group position={[0, y, 0]}>
-      <mesh position={[width / 2, 0, -DEPTH]}>
-        <boxGeometry args={[width, ROW * 0.46, 0.4]} />
+      <mesh position={[width / 2, -ROW * 0.24, -DEPTH / 2]}
+            rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[width, DEPTH]} />
         <meshBasicMaterial color={muted} toneMapped={false} />
       </mesh>
       {bar.second !== undefined && (
-        <mesh ref={behind} position={[0, 0, -DEPTH / 2]}>
-          <boxGeometry args={[1, ROW * 0.46, 0.6]} />
-          <meshBasicMaterial color={color} transparent opacity={0.34}
-                             toneMapped={false} />
+        <mesh ref={behind} position={[0, 0, 0]}>
+          <boxGeometry args={[1, ROW * 0.46, DEPTH * 0.55]} />
+          <meshStandardMaterial color={color} transparent opacity={0.4}
+                                {...SURFACE} toneMapped={false} />
         </mesh>
       )}
       <mesh ref={mesh}>
         <boxGeometry args={[1, ROW * 0.46, DEPTH]} />
-        <meshLambertMaterial color={color} toneMapped={false} />
+        <meshStandardMaterial color={color} {...SURFACE} toneMapped={false} />
       </mesh>
       <Html position={[-1.5, 0, 0]} center transform={false} zIndexRange={[10, 0]}
             style={{ pointerEvents: "none", transform: "translate(-100%, -50%)" }}>
@@ -64,6 +70,11 @@ function Bar({ bar, max, y, width, color, muted, grow }) {
   );
 }
 
+function Rig() {
+  const colors = useThemeColors();
+  return <SceneLights ground={colors.surface} />;
+}
+
 function Rows({ bars, max, width }) {
   const colors = useThemeColors();
   const { invalidate } = useThree();
@@ -71,7 +82,7 @@ function Rows({ bars, max, width }) {
 
   useFrame((_, delta) => {
     if (grow.current >= 1) return;
-    grow.current = Math.min(1, grow.current + delta * 1.6);
+    grow.current = Math.min(1, grow.current + delta * 2.6);
     invalidate();
   });
 
@@ -101,9 +112,12 @@ export function Bars({ bars, labelWidth = 52, valueWidth = 30, max, className })
   const height = bars.length * ROW + ROW * 0.6;
 
   return (
-    <ChartCanvas width={width} height={height} className={className}>
-      <group position={[-width / 2 + labelWidth, 0, 0]}>
-        <Rows bars={bars} max={ceiling} width={TRACK} />
+    <ChartCanvas width={width} height={height}
+                 lights={<Rig />} className={className}>
+      <group rotation={TILT}>
+        <group position={[-width / 2 + labelWidth, 0, 0]}>
+          <Rows bars={bars} max={ceiling} width={TRACK} />
+        </group>
       </group>
     </ChartCanvas>
   );
@@ -129,7 +143,7 @@ export function Diverging({ rows, labelWidth = 34, className }) {
       <group>
         <mesh position={[(dir * w) / 2, 0, 0]}>
           <boxGeometry args={[w, ROW * 0.42, DEPTH]} />
-          <meshLambertMaterial color={colors[tone]} toneMapped={false} />
+          <meshStandardMaterial color={colors[tone]} {...SURFACE} toneMapped={false} />
         </mesh>
         <Html position={[dir * (w + 2), 0, 0]} center transform={false}
               zIndexRange={[10, 0]}
@@ -144,7 +158,9 @@ export function Diverging({ rows, labelWidth = 34, className }) {
   };
 
   return (
-    <ChartCanvas width={width} height={height} className={className}>
+    <ChartCanvas width={width} height={height}
+                 lights={<Rig />} className={className}>
+      <group rotation={TILT}>
       <mesh position={[0, 0, -DEPTH]}>
         <boxGeometry args={[0.4, height * 0.82, 0.2]} />
         <meshBasicMaterial color={colors["line-strong"]} toneMapped={false} />
@@ -159,6 +175,7 @@ export function Diverging({ rows, labelWidth = 34, className }) {
           {side(row.right, row.right >= 0 ? "ok" : "bad")}
         </group>
       ))}
+      </group>
     </ChartCanvas>
   );
 }

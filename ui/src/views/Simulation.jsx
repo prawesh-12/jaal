@@ -193,7 +193,7 @@ function Dataset({ world, tier, kind, seed, onStart }) {
 
         <div className="mt-10">
           <button type="button" onClick={onStart}
-                  className="interactive inline-flex h-11 items-center bg-fg px-6 text-[14px] font-medium text-base hover:opacity-90">
+                  className="interactive inline-flex h-11 items-center bg-accent px-6 text-[14px] font-medium text-base hover:opacity-90">
             Run Jaal on {tier} tier, {kind === "ring" ? "a ring" : `a ${kind}`}, seed {seed}
           </button>
         </div>
@@ -329,7 +329,7 @@ export default function Simulation() {
                    onChange={(v) => setSeed(Number(v))} />
         <div className="ml-auto flex items-center gap-3">
           <button type="button" onClick={run}
-                  className="interactive inline-flex h-8 items-center bg-fg px-4 text-[12.5px] font-medium text-base hover:opacity-90">
+                  className="interactive inline-flex h-8 items-center bg-accent px-4 text-[12.5px] font-medium text-base hover:opacity-90">
             Run Jaal
           </button>
           <Transport stage={stage} playing={playing} onStage={goto}

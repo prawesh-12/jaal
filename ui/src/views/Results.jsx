@@ -33,14 +33,20 @@ function Proof({ pooled, holdout }) {
     <section className="border-b border-line-strong pb-14">
       <div className="grid gap-x-16 gap-y-8 pt-12 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
         <div>
-          <div className="label">Sealed holdout, {holdout.opened}</div>
+          <div className="label">What Jaal saved this merchant</div>
           <div className="tnum mt-4 text-[clamp(2.75rem,1.6rem+3.6vw,4.5rem)] leading-[0.92] font-medium tracking-[-0.04em] whitespace-nowrap text-ok">
             {compactRupees(pooled.net_vs_nothing_rupees)}
           </div>
-          <p className="mt-5 max-w-[34ch] text-[15px] leading-[1.55] text-fg-muted">
-            net against doing nothing. Promo abuse costs this merchant{" "}
-            {rupees(pooled.do_nothing_rupees)} with nothing deployed and{" "}
-            {rupees(pooled.cost_rupees)} with Jaal running.
+          <p className="mt-5 max-w-[36ch] text-[15px] leading-[1.55] text-fg-muted">
+            Promo abuse costs this merchant{" "}
+            <span className="tnum text-fg-2">{rupees(pooled.do_nothing_rupees)}</span>{" "}
+            if nothing is deployed. With Jaal running it costs{" "}
+            <span className="tnum text-fg-2">{rupees(pooled.cost_rupees)}</span>.
+            The gap between them is the saving above.
+          </p>
+          <p className="t-meta mt-3 max-w-[36ch]">
+            Measured across {count(holdout.n_seeds)} synthetic worlds on the
+            sealed holdout, {holdout.opened}.
           </p>
         </div>
 

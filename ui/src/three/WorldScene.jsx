@@ -88,20 +88,46 @@ function Accounts({ world, geom, stage, focus, selected, pair, onPick, onHover,
   // Stable buffers. Handing JSX a fresh array on every render makes r3f build
   // a new GPU attribute each time, which is how you lose the WebGL context.
   const colorBuf = useMemo(() => new Float32Array(n * 3), [n]);
+  const shownScale = useMemo(() => new Float32Array(n), [n]);
   const colorAttr = useRef();
-  useLayoutEffect(() => {
-    if (!colorAttr.current) return;
-    colorBuf.set(rgb);
-    colorAttr.current.needsUpdate = true;
-    invalidate();
-  }, [rgb, colorBuf, invalidate]);
+  const settled = useRef(false);
 
-  useFrame(() => {
-    if (!mesh.current) return;
+  useLayoutEffect(() => {
+    settled.current = false;
+    invalidate();
+  }, [rgb, scale, invalidate]);
+
+  // A stage change eases every account toward the new stage rather than
+  // cutting to it.
+  useFrame((_, delta) => {
+    if (!mesh.current || !colorAttr.current) return;
+
+    let moving = false;
+    if (!settled.current) {
+      const k = 1 - Math.exp(-Math.min(delta, 0.05) * 16);
+      for (let i = 0; i < n; i += 1) {
+        const ds = scale[i] - shownScale[i];
+        if (Math.abs(ds) > 0.0015) moving = true;
+        shownScale[i] += ds * k;
+
+        for (let c = i * 3; c < i * 3 + 3; c += 1) {
+          const dc = rgb[c] - colorBuf[c];
+          if (Math.abs(dc) > 0.002) moving = true;
+          colorBuf[c] += dc * k;
+        }
+      }
+      if (!moving) {
+        shownScale.set(scale);
+        colorBuf.set(rgb);
+        settled.current = true;
+      }
+      colorAttr.current.needsUpdate = true;
+    }
+
     for (let i = 0; i < n; i += 1) {
       dummy.position.set(positions[i * 3], positions[i * 3 + 1],
                          positions[i * 3 + 2]);
-      dummy.scale.setScalar(scale[i]);
+      dummy.scale.setScalar(shownScale[i]);
       dummy.updateMatrix();
       mesh.current.setMatrixAt(i, dummy.matrix);
     }
@@ -109,6 +135,7 @@ function Accounts({ world, geom, stage, focus, selected, pair, onPick, onHover,
     // Picking tests this before it tests any instance, and it is stale the
     // moment the accounts move.
     mesh.current.computeBoundingSphere();
+    if (moving) invalidate();
   });
 
   return (
@@ -126,11 +153,12 @@ function Accounts({ world, geom, stage, focus, selected, pair, onPick, onHover,
       }}
       onPointerOut={() => onHover(null)}
     >
-      <sphereGeometry args={[1, 8, 6]}>
+      <sphereGeometry args={[1, 12, 8]}>
         <instancedBufferAttribute ref={colorAttr} attach="attributes-color"
                                   args={[colorBuf, 3]} />
       </sphereGeometry>
-      <meshLambertMaterial vertexColors toneMapped={false} />
+      <meshStandardMaterial vertexColors roughness={0.6} metalness={0.05}
+                            toneMapped={false} />
     </instancedMesh>
   );
 }
@@ -298,7 +326,8 @@ function PairSpace({ blocking, visible }) {
           <instancedBufferAttribute ref={colorAttr} attach="attributes-color"
                                     args={[colorBuf, 3]} />
         </boxGeometry>
-        <meshLambertMaterial vertexColors toneMapped={false} />
+        <meshStandardMaterial vertexColors roughness={0.6} metalness={0.05}
+                            toneMapped={false} />
       </instancedMesh>
       <mesh position={[lx, 0.82, lz]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.66, 0.73, 40]} />

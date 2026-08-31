@@ -1,11 +1,15 @@
 import { Html } from "@react-three/drei";
+import { useMemo } from "react";
 
 import { ChartCanvas, usePxPerUnit } from "@/three/ChartCanvas";
 import { useThemeColors } from "@/three/JaalCanvas";
+import { Rail, SceneLights, Shadow, SURFACE, slab } from "@/three/surface";
 
 const H = 24;
-const D = 3;
+const D = 8;
 const LANE = 20;
+
+const TILT = [-0.15, 0.18, 0];
 
 const NODES = [
   { x: -128, y: 0, w: 66, title: "Merchant population",
@@ -21,15 +25,15 @@ const NODES = [
 
 const ARROWS = [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4]];
 
-function Box({ node, colors }) {
+function Box({ node, colors, geometry }) {
   const px = usePxPerUnit();
   const solid = Boolean(node.tone);
   return (
     <group position={[node.x, node.y, 0]}>
-      <mesh>
-        <boxGeometry args={[node.w, H, D]} />
-        <meshLambertMaterial color={solid ? colors[node.tone] : colors.active}
-                             toneMapped={false} />
+      <Shadow w={node.w * 1.4} h={H * 1.7} z={-D / 2 - 1.4} />
+      <mesh geometry={geometry}>
+        <meshStandardMaterial color={solid ? colors[node.tone] : colors.raised}
+                              {...SURFACE} toneMapped={false} />
       </mesh>
       <Html center transform={false} zIndexRange={[10, 0]}
             style={{ pointerEvents: "none", width: `${node.w * px}px` }}>
@@ -50,23 +54,10 @@ function Box({ node, colors }) {
 
 /* Edge of one box to edge of the next, so an arrow never runs under a box. */
 function Arrow({ from, to, colors }) {
-  const x1 = from.x + from.w / 2;
-  const x2 = to.x - to.w / 2;
-  const dx = x2 - x1;
-  const dy = to.y - from.y;
-  const len = Math.hypot(dx, dy) - 3;
   return (
-    <group position={[(x1 + x2) / 2, (from.y + to.y) / 2, 0]}
-           rotation={[0, 0, Math.atan2(dy, dx) - Math.PI / 2]}>
-      <mesh position={[0, -1.6, 0]}>
-        <planeGeometry args={[0.9, len]} />
-        <meshBasicMaterial color={colors["fg-dim"]} toneMapped={false} />
-      </mesh>
-      <mesh position={[0, len / 2 - 1.6, 0]}>
-        <coneGeometry args={[2.1, 3.6, 3]} />
-        <meshBasicMaterial color={colors["fg-dim"]} toneMapped={false} />
-      </mesh>
-    </group>
+    <Rail ax={from.x + from.w / 2} ay={from.y}
+          bx={to.x - to.w / 2} by={to.y}
+          weight={0.9} rest={colors["fg-dim"]} arrow />
   );
 }
 
@@ -78,13 +69,29 @@ function Arrow({ from, to, colors }) {
 */
 export function SystemMap({ className }) {
   const colors = useThemeColors();
+  const shapes = useMemo(() => {
+    const cache = new Map();
+    for (const node of NODES) {
+      if (!cache.has(node.w)) {
+        cache.set(node.w, slab({ w: node.w, h: H, d: D, r: 1.3 }));
+      }
+    }
+    return cache;
+  }, []);
 
   return (
-    <ChartCanvas width={340} height={80} className={className}>
-      {ARROWS.map(([a, b]) => (
-        <Arrow key={`${a}-${b}`} from={NODES[a]} to={NODES[b]} colors={colors} />
-      ))}
-      {NODES.map((node) => <Box key={node.title} node={node} colors={colors} />)}
+    <ChartCanvas width={340} height={86}
+                 lights={<SceneLights ground={colors.surface} />}
+                 className={className}>
+      <group rotation={TILT}>
+        {ARROWS.map(([a, b]) => (
+          <Arrow key={`${a}-${b}`} from={NODES[a]} to={NODES[b]} colors={colors} />
+        ))}
+        {NODES.map((node) => (
+          <Box key={node.title} node={node} colors={colors}
+               geometry={shapes.get(node.w)} />
+        ))}
+      </group>
     </ChartCanvas>
   );
 }

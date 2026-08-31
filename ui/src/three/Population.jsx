@@ -5,6 +5,7 @@ import * as THREE from "three";
 
 import { ChartCanvas, usePxPerUnit } from "@/three/ChartCanvas";
 import { useThemeColors } from "@/three/JaalCanvas";
+import { useBeadMaterial } from "@/three/surface";
 
 const TILE = 10;
 const WINDOW = [33, 11];
@@ -13,7 +14,7 @@ const ZOOM_CLOSE = 6.6;
 const PANEL_X = 8;
 
 const AT = {
-  arrive: [0, 0.06],
+  arrive: [0, 0.10],
   frameIn: [0.02, 0.06],
   frameOut: [0.10, 0.18],
   zoom: [0.08, 0.20],
@@ -108,12 +109,26 @@ function place(d, w, h) {
   ];
 }
 
-function Marks({ n, sync, focusRun, phase, colors, linked }) {
+function Marks({ n, sync, focusRun, phase, colors, linked, degree }) {
   const mesh = useRef();
   const attr = useRef();
   const px = usePxPerUnit();
+  const material = useBeadMaterial(colors.base);
   const rgb = useMemo(() => new Float32Array(n * 3), [n]);
-  const last = useRef({ size: 0, gather: -1 });
+  const last = useRef({ size: 0, gather: -1, arrive: -1, wired: -1 });
+
+  // Distance out from the middle, 0 at the centre and 1 at the corner.
+  const delay = useMemo(() => {
+    const rest = sync(0);
+    const out = new Float32Array(n);
+    let far = 1e-6;
+    for (let i = 0; i < n; i += 1) {
+      out[i] = Math.hypot(rest[i * 2], rest[i * 2 + 1]);
+      if (out[i] > far) far = out[i];
+    }
+    for (let i = 0; i < n; i += 1) out[i] /= far;
+    return out;
+  }, [n, sync]);
 
   useFrame(() => {
     if (!mesh.current || !attr.current) return;
@@ -122,12 +137,21 @@ function Marks({ n, sync, focusRun, phase, colors, linked }) {
     const size = mix(2.4, 12, zin) / (px * fieldScale(phase) * 2);
     const gather = ease(span(phase, ...AT.gather));
     const at = sync(gather);
+    const arrive = ease(span(phase, ...AT.arrive));
+    const swell = ease(span(phase, ...AT.wire));
 
-    if (Math.abs(size - last.current.size) > 1e-5 || gather !== last.current.gather) {
-      last.current = { size, gather };
+    if (Math.abs(size - last.current.size) > 1e-5
+        || gather !== last.current.gather
+        || (last.current.arrive < 1 && arrive !== last.current.arrive)
+        || swell !== last.current.wired) {
+      last.current = { size, gather, arrive, wired: swell };
+      const SPREAD = 0.55;
       for (let i = 0; i < n; i += 1) {
+        const local = Math.max(0, Math.min(
+          1, (arrive * (1 + SPREAD) - delay[i] * SPREAD) / (1 - SPREAD * 0.001)));
+        const held = 1 + 0.85 * (degree.count[i] / degree.top) * swell;
         dummy.position.set(at[i * 2], at[i * 2 + 1], 0);
-        dummy.scale.setScalar(size);
+        dummy.scale.setScalar(Math.max(size * local * held, 1e-5));
         dummy.updateMatrix();
         mesh.current.setMatrixAt(i, dummy.matrix);
       }
@@ -139,7 +163,6 @@ function Marks({ n, sync, focusRun, phase, colors, linked }) {
     const page = paint(colors.base);
     const hot = paint(colors.fg);
 
-    const arrive = ease(span(phase, ...AT.arrive));
     const wired = ease(span(phase, ...AT.wire));
     const isolate = ease(span(phase, ...AT.isolate));
 
@@ -149,7 +172,6 @@ function Marks({ n, sync, focusRun, phase, colors, linked }) {
       if (linked[i]) tint.lerp(active, wired);
       if (onFocus) tint.lerp(hot, Math.max(wired * 0.5, isolate));
       else tint.lerp(page, isolate * (linked[i] ? 0.86 : 0.92));
-      tint.lerp(page, 1 - arrive);
 
       rgb[i * 3] = tint.r;
       rgb[i * 3 + 1] = tint.g;
@@ -159,25 +181,28 @@ function Marks({ n, sync, focusRun, phase, colors, linked }) {
   });
 
   return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, n]} frustumCulled={false}>
-      <circleGeometry args={[1, 10]}>
-        <instancedBufferAttribute ref={attr} attach="attributes-color"
+    <instancedMesh ref={mesh} args={[undefined, undefined, n]}
+                   material={material} frustumCulled={false}>
+      <planeGeometry args={[2, 2]}>
+        <instancedBufferAttribute ref={attr} attach="attributes-aTint"
                                   args={[rgb, 3]} />
-      </circleGeometry>
-      <meshBasicMaterial vertexColors toneMapped={false} />
+      </planeGeometry>
     </instancedMesh>
   );
 }
 
-function Edges({ scene, spots, sync, focusRun, order, phase, colors, centre }) {
+function Edges({ scene, spots, sync, focusRun, order, phase, colors, centre,
+                 gauge }) {
   const attr = useRef();
-  const point = useRef();
+  const px = usePxPerUnit();
+  const mesh = useRef();
   const material = useRef();
   const { source, target, bits, signal } = scene.edges;
   const count = source.length;
 
-  const xyz = useMemo(() => new Float32Array(count * 6), [count]);
-  const rgb = useMemo(() => new Float32Array(count * 6), [count]);
+  const rgb = useMemo(() => new Float32Array(count * 3), [count]);
+
+
 
   /* One signal holds two thirds of the edges, so a slot per signal would draw
      most of the picture in one go. Each edge gets its own moment instead. */
@@ -201,14 +226,15 @@ function Edges({ scene, spots, sync, focusRun, order, phase, colors, centre }) {
   }, [count, source, target, spots, centre]);
 
   useFrame(() => {
-    if (!attr.current || !point.current || !material.current) return;
+    if (!attr.current || !mesh.current || !material.current) return;
     const page = paint(colors.base);
     const ink = paint(colors.info);
     const hot = paint(colors.fg);
 
     const zin = ease(span(phase, ...AT.zoom));
     const isolate = ease(span(phase, ...AT.isolate));
-    material.current.opacity = mix(0.2, 0.85, zin);
+    material.current.opacity = mix(0.2, 0.9, zin);
+    const thick = 1.6 / (px * fieldScale(phase) * 2);
 
     const at = sync(ease(span(phase, ...AT.gather)));
     for (let e = 0; e < count; e += 1) {
@@ -217,7 +243,8 @@ function Edges({ scene, spots, sync, focusRun, order, phase, colors, centre }) {
       // Full length before full weight: a line lands, then firms up.
       const grew = Math.min(1, reach * 1.5);
       const shown = grew * (inWindow[e] ? 1 : 1 - zin);
-      const weight = 0.6 + 0.4 * Math.min(1, (bits[e] - 14) / 38);
+      const strength = Math.min(1, (bits[e] - gauge.floor) / gauge.span);
+      const weight = 0.55 + 0.45 * strength;
       const inFocus = source[e] >= focusRun.start
         && source[e] < focusRun.start + focusRun.size
         && target[e] >= focusRun.start
@@ -227,32 +254,81 @@ function Edges({ scene, spots, sync, focusRun, order, phase, colors, centre }) {
       if (inFocus) tint.lerp(hot, isolate * 0.6);
       else tint.lerp(page, isolate * 0.88);
 
-      for (const v of [0, 1]) {
-        rgb[e * 6 + v * 3] = tint.r;
-        rgb[e * 6 + v * 3 + 1] = tint.g;
-        rgb[e * 6 + v * 3 + 2] = tint.b;
-      }
+      rgb[e * 3] = tint.r;
+      rgb[e * 3 + 1] = tint.g;
+      rgb[e * 3 + 2] = tint.b;
 
       const a = source[e] * 2;
       const b = target[e] * 2;
-      xyz[e * 6] = at[a];
-      xyz[e * 6 + 1] = at[a + 1];
-      xyz[e * 6 + 3] = at[a] + (at[b] - at[a]) * grew;
-      xyz[e * 6 + 4] = at[a + 1] + (at[b + 1] - at[a + 1]) * grew;
+      const ax = at[a];
+      const ay = at[a + 1];
+      const bx = ax + (at[b] - ax) * grew;
+      const by = ay + (at[b + 1] - ay) * grew;
+      const len = Math.hypot(bx - ax, by - ay);
+
+      dummy.position.set((ax + bx) / 2, (ay + by) / 2, 0);
+      dummy.rotation.set(0, 0, Math.atan2(by - ay, bx - ax));
+      dummy.scale.set(Math.max(len, 1e-4), thick * (0.35 + 1.15 * strength), 1);
+      dummy.updateMatrix();
+      mesh.current.setMatrixAt(e, dummy.matrix);
     }
+    mesh.current.instanceMatrix.needsUpdate = true;
     attr.current.needsUpdate = true;
-    point.current.needsUpdate = true;
   });
 
   return (
-    <lineSegments frustumCulled={false}>
-      <bufferGeometry>
-        <bufferAttribute ref={point} attach="attributes-position" args={[xyz, 3]} />
-        <bufferAttribute ref={attr} attach="attributes-color" args={[rgb, 3]} />
-      </bufferGeometry>
-      <lineBasicMaterial ref={material} vertexColors transparent
+    <instancedMesh ref={mesh} args={[undefined, undefined, count]}
+                   frustumCulled={false}>
+      <planeGeometry args={[1, 1]}>
+        <instancedBufferAttribute ref={attr} attach="attributes-color"
+                                  args={[rgb, 3]} />
+      </planeGeometry>
+      <meshBasicMaterial ref={material} vertexColors transparent
                          depthWrite={false} toneMapped={false} />
-    </lineSegments>
+    </instancedMesh>
+  );
+}
+
+// Without this the ribbon thickness is decoration.
+function BitsKey({ gauge, phase, colors }) {
+  const group = useRef();
+  const px = usePxPerUnit();
+
+  useFrame(() => {
+    if (!group.current) return;
+    const on = ease(span(phase, AT.edges, AT.edges + 0.06))
+      * (1 - ease(span(phase, ...AT.isolate)));
+    group.current.visible = on > 0.02;
+    group.current.children.forEach((m) => {
+      if (m.material) m.material.opacity = on;
+    });
+  });
+
+  const rows = [
+    [gauge.floor, 0.35, `${gauge.floor} bits, the threshold`],
+    [gauge.floor + gauge.span, 1.5, `${Math.round(gauge.floor + gauge.span)} bits, the strongest`],
+  ];
+
+  return (
+    <group ref={group} position={[-92, -24, 4]}>
+      {rows.map(([, weight, text], i) => (
+        <mesh key={text} position={[6, -i * 5, 0]}>
+          <planeGeometry args={[12, weight]} />
+          <meshBasicMaterial color={colors.info} transparent depthWrite={false}
+                             toneMapped={false} />
+        </mesh>
+      ))}
+      {rows.map(([, , text], i) => (
+        <Html key={text} position={[14, -i * 5, 0]} transform={false}
+              zIndexRange={[9, 0]}
+              style={{ pointerEvents: "none", transform: "translate(0, -50%)",
+                       width: `${34 * px}px` }}>
+          <span className="tnum block text-[10.5px] whitespace-nowrap text-fg-muted">
+            {text}
+          </span>
+        </Html>
+      ))}
+    </group>
   );
 }
 
@@ -403,12 +479,16 @@ function Scene({ scene, phase }) {
   const [w, h] = scene.field;
   const n = scene.n_accounts;
 
+  // A fixed wobble on the lattice. Positions were already arbitrary, see
+  // gatherSpots, and a quarter cell keeps a contiguous run a compact block.
   const spots = useMemo(() => {
     const out = new Float32Array(n * 2);
     for (let i = 0; i < n; i += 1) {
       const [x, y] = place(i, w, h);
-      out[i * 2] = x;
-      out[i * 2 + 1] = y;
+      const a = Math.sin(i * 12.9898) * 43758.5453;
+      const b = Math.sin(i * 78.233) * 24634.6345;
+      out[i * 2] = x + (a - Math.floor(a) - 0.5) * 0.5;
+      out[i * 2 + 1] = y + (b - Math.floor(b) - 0.5) * 0.5;
     }
     return out;
   }, [n, w, h]);
@@ -420,6 +500,19 @@ function Scene({ scene, phase }) {
       seen[scene.edges.target[e]] = 1;
     }
     return seen;
+  }, [scene, n]);
+
+  // How many of the run's edges land on each account.
+  const degree = useMemo(() => {
+    const out = new Uint16Array(n);
+    const { source, target } = scene.edges;
+    for (let e = 0; e < source.length; e += 1) {
+      out[source[e]] += 1;
+      out[target[e]] += 1;
+    }
+    let top = 1;
+    for (let i = 0; i < n; i += 1) if (out[i] > top) top = out[i];
+    return { count: out, top };
   }, [scene, n]);
 
   const focusRun = useMemo(() => scene.runs.find((r) => r.focus), [scene]);
@@ -461,6 +554,16 @@ function Scene({ scene, phase }) {
     return [x / focusRun.size, y / focusRun.size];
   }, [focusRun, spots]);
 
+  const gauge = useMemo(() => {
+    const { bits } = scene.edges;
+    let top = scene.threshold_bits;
+    for (let e = 0; e < bits.length; e += 1) if (bits[e] > top) top = bits[e];
+    return {
+      floor: scene.threshold_bits,
+      span: Math.max(top - scene.threshold_bits, 1),
+    };
+  }, [scene]);
+
   const costs = useMemo(() => {
     const c = scene.focus.expected_cost_rupees;
     const cheapest = Object.keys(c).reduce((a, b) => (c[a] <= c[b] ? a : b));
@@ -489,12 +592,14 @@ function Scene({ scene, phase }) {
   return (
     <>
       <group ref={field}>
-        <Marks n={n} sync={sync} focusRun={focusRun} phase={phase}
+        <Marks n={n} sync={sync} focusRun={focusRun} phase={phase} degree={degree}
                colors={colors} linked={linked} />
         <Edges scene={scene} spots={spots} sync={sync} focusRun={focusRun}
-               order={order} phase={phase} colors={colors} centre={centre} />
+               order={order} phase={phase} colors={colors} centre={centre}
+               gauge={gauge} />
         <Viewfinder centre={centre} phase={phase} colors={colors} />
       </group>
+      <BitsKey gauge={gauge} phase={phase} colors={colors} />
       <Decision focus={scene.focus} phase={phase} colors={colors} costs={costs} />
     </>
   );

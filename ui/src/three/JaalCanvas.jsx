@@ -68,9 +68,11 @@ export function JaalCanvas({
         gl={{ antialias: true, alpha: true }}
         camera={{ position: look, fov: 38, near: 0.5, far: 900 }}
       >
-        <ambientLight intensity={2.1} />
-        <directionalLight position={[30, 60, 20]} intensity={0.7} />
-        <directionalLight position={[-40, 25, -30]} intensity={0.25} />
+        <ambientLight intensity={1.25} />
+        <hemisphereLight args={["#ffffff", "#20262c", 0.5]} />
+        <directionalLight position={[30, 60, 20]} intensity={1.05} />
+        <directionalLight position={[-40, 25, -30]} intensity={0.4} />
+        <directionalLight position={[0, 20, -60]} intensity={0.35} />
         <MapControls
           makeDefault
           target={target}
