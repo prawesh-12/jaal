@@ -97,7 +97,7 @@ function Footer({ onGoTo }) {
         </nav>
 
         <p className="text-[12.5px] text-fg-faint">
-          Synthetic evaluation data · Razorpay Buildathon 2026
+          Synthetic evaluation data
         </p>
       </div>
     </footer>

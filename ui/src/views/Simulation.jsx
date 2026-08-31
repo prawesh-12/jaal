@@ -262,8 +262,14 @@ export default function Simulation() {
     return {
       source: e.source,
       target: e.target,
+      threshold: world.link.threshold_bits,
       crossed: running >= world.link.threshold_bits,
       done: revealed >= parts,
+      running,
+      // A late negative comparison pulls the total back down, so the bar is
+      // scaled to the furthest it reaches, not to where it ends.
+      scale: Math.max(e.bits, ...e.parts.map((p) => p.running)),
+      steps: shown.map((p) => p.running),
     };
   }, [stage, pairIndex, world, revealed, parts]);
 

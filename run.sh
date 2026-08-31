@@ -1,24 +1,4 @@
 #!/usr/bin/env bash
-#
-# Jaal, end to end. No network access required.
-#
-#   ./run.sh          full run, reproduces every published number (~35 minutes)
-#   ./run.sh quick     smaller worlds and fewer seeds, for a look around (~2 min)
-#
-# Two experiments are not in here because they take another 40 minutes between
-# them. Run them yourself when you want to:
-#
-#   python -m detector.adapt --rounds 5 --worlds 100   an operator that adapts
-#   python -m detector.adapt --visibility-sweep        the same, at every level
-#                                                      of what it can see
-#   python -m detector.reassemble --seeds 700-749      rejoining split rings
-#   python -m detector.ablate                          what a caller with
-#                                                      fewer columns gets
-#   python -m detector.throughput                      how long a batch takes
-#
-# Everything runs at nice 10 so the machine stays usable, and every entry point
-# measures free memory before it starts and refuses to run if there is not
-# enough. See detector/resources.py.
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -97,6 +77,8 @@ run "Leakage and redundancy audit"   -m detector.features \
     --audit results/features_train.csv
 
 run "Train and calibrate"             -m detector.model
+
+run "Model card"                      -m detector.model_card
 
 run "Cost-optimal decisions"          -m detector.decide
 

@@ -1,16 +1,17 @@
+import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { useThemeColors } from "@/three/JaalCanvas";
+import { pairCells } from "@/lib/world";
 
 const dummy = new THREE.Object3D();
 const tint = new THREE.Color();
 const mix = new THREE.Color();
 
-// A colour written into an instanceColor or a vertex colour buffer is read as
-// linear. Every colour here comes out of the stylesheet, which is sRGB.
-const linear = (css) => new THREE.Color(css).convertSRGBToLinear();
+/* Straight from the stylesheet. Colour management is off, see CanvasHost. */
+const paint = (css) => new THREE.Color(css);
 
 const LAYOUT_FOR_STAGE = ["field", "field", "field", "graph", "islands",
                           "islands", "islands"];
@@ -29,14 +30,14 @@ function Accounts({ world, geom, stage, focus, selected, pair, onPick, onHover,
   const n = world.n_accounts;
 
   const palette = useMemo(() => ({
-    quiet: linear(colors["fg-dim"]),
-    faint: linear(colors["line-strong"]),
-    linked: linear(colors.info),
-    risk: linear(colors.bad),
-    block: linear(colors.bad),
-    review: linear(colors.warn),
-    allow: linear(colors.ok),
-    page: linear(colors.base),
+    quiet: paint(colors["fg-dim"]),
+    faint: paint(colors["line-strong"]),
+    linked: paint(colors.info),
+    risk: paint(colors.bad),
+    block: paint(colors.bad),
+    review: paint(colors.warn),
+    allow: paint(colors.ok),
+    page: paint(colors.base),
   }), [colors]);
 
   const { rgb, scale } = useMemo(() => {
@@ -74,11 +75,11 @@ function Accounts({ world, geom, stage, focus, selected, pair, onPick, onHover,
       rgb[i * 3 + 2] = mix.b;
 
       const big = k >= 0 && inFocus;
-      scale[i] = stage === 1 ? 0.12
+      scale[i] = stage === 1 ? 0
         : big ? 0.46
         : focus !== null ? (k >= 0 ? 0.16 : 0.1)
         : linked ? 0.32 : 0.19;
-      if (stage === 2) scale[i] = onPair ? 0.7 : 0.12;
+      if (stage === 2) scale[i] = onPair ? 0.4 : 0;
       if (selected?.kind === "account" && selected.id === i) scale[i] = 0.9;
     }
     return { rgb, scale };
@@ -145,10 +146,10 @@ function Edges({ world, geom, stage, focus, highlight, pair, positions }) {
 
   useLayoutEffect(() => {
     const out = rgb;
-    const weak = linear(colors["line-strong"]);
-    const strong = linear(colors.info);
-    const hot = linear(colors.fg);
-    const page = linear(colors.base);
+    const weak = paint(colors["line-strong"]);
+    const strong = paint(colors.info);
+    const hot = paint(colors.fg);
+    const page = paint(colors.base);
     const set = new Set(highlight ?? []);
 
     for (let e = 0; e < count; e += 1) {
@@ -187,7 +188,7 @@ function Edges({ world, geom, stage, focus, highlight, pair, positions }) {
 
   if (stage < 2) return null;
 
-  if (pair) return <PairEdge pair={pair} positions={positions} />;
+  if (pair) return <PairEvidence pair={pair} />;
 
   return (
     <lineSegments ref={line} frustumCulled={false}>
@@ -202,73 +203,96 @@ function Edges({ world, geom, stage, focus, highlight, pair, positions }) {
   );
 }
 
-/* One pair on its own, while the evidence stage walks it to the threshold. */
-function PairEdge({ pair, positions }) {
-  const line = useRef();
-  const colors = useThemeColors();
-  const xyz = useMemo(() => new Float32Array(6), []);
+/* One pair, and the evidence between it: every comparison adds its bits, and
+   past the mark the bar is an edge. */
+const PAIR_X = 6;
+const BAR_FROM = -PAIR_X + 0.8;
+const BAR_SPAN = (PAIR_X - 0.8) * 2;
 
-  useFrame(() => {
-    const a = pair.source * 3;
-    const b = pair.target * 3;
-    for (let k = 0; k < 3; k += 1) {
-      xyz[k] = positions[a + k];
-      xyz[k + 3] = positions[b + k];
-    }
-    if (line.current) line.current.geometry.attributes.position.needsUpdate = true;
-  });
+function PairEvidence({ pair }) {
+  const colors = useThemeColors();
+  const at = (bits) => BAR_FROM + (bits / pair.scale) * BAR_SPAN;
+  const head = at(pair.running);
+  const cut = at(pair.threshold);
+  const tone = pair.crossed ? colors.info : colors["line-loud"];
 
   return (
-    <line ref={line} frustumCulled={false}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[xyz, 3]} />
-      </bufferGeometry>
-      <lineBasicMaterial color={pair.crossed ? colors.info : colors["line-loud"]}
-                         toneMapped={false} />
-    </line>
+    <group>
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[BAR_SPAN, 0.1, 0.9]} />
+        <meshBasicMaterial color={colors["line-strong"]} toneMapped={false} />
+      </mesh>
+
+      <mesh position={[(BAR_FROM + head) / 2, 0.06, 0]}>
+        <boxGeometry args={[Math.max(head - BAR_FROM, 0.001), 0.4, 1.05]} />
+        <meshBasicMaterial color={tone} toneMapped={false} />
+      </mesh>
+
+      {pair.steps.slice(0, -1).map((r) => (
+        <mesh key={r} position={[at(r), 0.14, 0]}>
+          <boxGeometry args={[0.06, 0.42, 1.1]} />
+          <meshBasicMaterial color={colors.base} toneMapped={false} />
+        </mesh>
+      ))}
+
+      <mesh position={[cut, 0.06, 0]}>
+        <boxGeometry args={[0.14, 0.46, 1.3]} />
+        <meshBasicMaterial color={colors.fg} toneMapped={false} />
+      </mesh>
+      <Html position={[cut, 0, -2.3]} center transform={false} zIndexRange={[6, 0]}
+            style={{ pointerEvents: "none", whiteSpace: "nowrap" }}>
+        <span className="t-meta">{pair.threshold} bits, an edge is drawn</span>
+      </Html>
+
+      <Html position={[head, 0, 1.7]} center transform={false} zIndexRange={[6, 0]}
+            style={{ pointerEvents: "none", whiteSpace: "nowrap" }}>
+        <span className="tnum text-[15px] font-medium"
+              style={{ color: pair.crossed ? "var(--color-info)" : "var(--color-fg)" }}>
+          {pair.running.toFixed(2)} bits
+        </span>
+      </Html>
+    </group>
   );
 }
 
-/*
-  The blocking stage as a grid of cells. Each cell is the same number of
-  account pairs, and the lit ones are the pairs blocking kept. The point is
-  the ratio, so the cells carry it instead of 72 million lines.
-*/
+/* Each cell holds as many pairs as blocking kept in total, so exactly one
+   lights up and the picture is the ratio itself. */
 function PairSpace({ blocking, visible }) {
   const mesh = useRef();
   const colors = useThemeColors();
-  const cols = 60;
-  const rows = 15;
-  const total = cols * rows;
-  const kept = Math.max(1, Math.round(
-    total * blocking.n_candidate_pairs / blocking.n_possible_pairs));
+  const cells = pairCells(blocking);
+  const cols = Math.ceil(Math.sqrt(cells * 1.8));
+  const rows = Math.ceil(cells / cols);
+  const lit = Math.floor(cells / 2);
 
-  const colorBuf = useMemo(() => new Float32Array(total * 3), [total]);
+  const at = (i) => [(i % cols) - cols / 2 + 0.5, Math.floor(i / cols) - rows / 2 + 0.5];
+
+  const colorBuf = useMemo(() => new Float32Array(cells * 3), [cells]);
   const colorAttr = useRef();
   useLayoutEffect(() => {
     if (!mesh.current || !colorAttr.current) return;
-    const rgb = colorBuf;
-    const on = linear(colors.info);
-    const off = linear(colors.line);
-    for (let i = 0; i < total; i += 1) {
-      const c = i < kept ? on : off;
-      rgb[i * 3] = c.r;
-      rgb[i * 3 + 1] = c.g;
-      rgb[i * 3 + 2] = c.b;
-      dummy.position.set((i % cols) - cols / 2 + 0.5, 0,
-                         Math.floor(i / cols) - rows / 2 + 0.5);
-      dummy.scale.set(0.8, 0.28, 0.8);
+    const on = paint(colors.info);
+    const off = paint(colors["line-strong"]);
+    for (let i = 0; i < cells; i += 1) {
+      const c = i === lit ? on : off;
+      colorBuf[i * 3] = c.r;
+      colorBuf[i * 3 + 1] = c.g;
+      colorBuf[i * 3 + 2] = c.b;
+      const [x, z] = at(i);
+      dummy.position.set(x, i === lit ? 0.34 : 0, z);
+      dummy.scale.set(0.8, i === lit ? 0.9 : 0.22, 0.8);
       dummy.updateMatrix();
       mesh.current.setMatrixAt(i, dummy.matrix);
     }
     mesh.current.instanceMatrix.needsUpdate = true;
     colorAttr.current.needsUpdate = true;
-  }, [colorBuf, colors, kept, total]);
+  }, [colorBuf, colors, cells, lit, cols]);
+
+  const [lx, lz] = at(lit);
 
   return (
-    <group position={[0, 24, -6]} rotation={[-0.78, 0, 0]}
-           scale={visible ? 1.55 : 0.001} visible={visible}>
-      <instancedMesh ref={mesh} args={[undefined, undefined, total]}
+    <group scale={visible ? 2.4 : 0.001} visible={visible}>
+      <instancedMesh ref={mesh} args={[undefined, undefined, cells]}
                      frustumCulled={false}>
         <boxGeometry args={[1, 1, 1]}>
           <instancedBufferAttribute ref={colorAttr} attach="attributes-color"
@@ -276,6 +300,10 @@ function PairSpace({ blocking, visible }) {
         </boxGeometry>
         <meshLambertMaterial vertexColors toneMapped={false} />
       </instancedMesh>
+      <mesh position={[lx, 0.82, lz]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.66, 0.73, 40]} />
+        <meshBasicMaterial color={colors.fg} toneMapped={false} />
+      </mesh>
     </group>
   );
 }
@@ -330,13 +358,16 @@ function CameraRig({ stage, focus, geom, viewNonce, walking }) {
 
   useEffect(() => {
     if (walking) {
-      want.current = { target: [0, 0, 0], height: 12, back: 15 };
+      want.current = { target: [0, 0, 0], height: 11, back: 21 };
     } else if (stage >= 5 && focus !== null) {
       const rank = geom.islandOrder.indexOf(focus);
       const [x, z] = geom.centres.islands[rank];
       want.current = { target: [x, 4, z], height: 30, back: 36 };
     } else if (stage >= 4) {
       want.current = { target: [0, 2, 0], height: 72, back: 84 };
+    } else if (stage === 1) {
+      // Nearly overhead, or a grid of cells reads as a squashed band.
+      want.current = { target: [0, 0, 0], height: 58, back: 12 };
     } else {
       want.current = { target: [0, 0, 0], height: 92, back: 104 };
     }
@@ -376,10 +407,10 @@ export function WorldScene({ world, geom, stage, focus = null, selected = null,
   const pairLayout = useMemo(() => {
     if (!pair) return null;
     const out = Float32Array.from(geom.field);
-    out[pair.source * 3] = -4.5;
+    out[pair.source * 3] = -PAIR_X;
     out[pair.source * 3 + 1] = 0;
     out[pair.source * 3 + 2] = 0;
-    out[pair.target * 3] = 4.5;
+    out[pair.target * 3] = PAIR_X;
     out[pair.target * 3 + 1] = 0;
     out[pair.target * 3 + 2] = 0;
     return out;

@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 
 import { cn } from "@/lib/utils";
+
+/*
+  Canvas colour has to match DOM painted with the same token. With colour
+  management on, a colour buffer is left unconverted and comes out at its
+  linear value, which is near-black against the dark theme.
+*/
+THREE.ColorManagement.enabled = false;
 
 /*
   Two jobs. It holds the canvas back until the host is confirmed to be in the

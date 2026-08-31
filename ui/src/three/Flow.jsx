@@ -27,14 +27,14 @@ function Connector({ from, to, color }) {
 }
 
 function Node({ step, y, colors, width = NODE_W }) {
-  const fill = colors[step.tone] ?? colors.surface;
+  const fill = colors[step.tone] ?? colors.active;
   const solid = Boolean(step.tone);
   const px = usePxPerUnit();
   return (
     <group position={[0, y, 0]}>
       <mesh>
         <boxGeometry args={[width, NODE_H, DEPTH]} />
-        <meshLambertMaterial color={solid ? fill : colors.surface}
+        <meshLambertMaterial color={solid ? fill : colors.active}
                              toneMapped={false} />
       </mesh>
       <Html center transform={false} zIndexRange={[10, 0]}

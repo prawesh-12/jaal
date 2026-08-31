@@ -7,7 +7,8 @@ import { ChartCanvas, usePxPerUnit } from "@/three/ChartCanvas";
 import { useThemeColors } from "@/three/JaalCanvas";
 
 const dummy = new THREE.Object3D();
-const linear = (css) => new THREE.Color(css).convertSRGBToLinear();
+/* Straight from the stylesheet. Colour management is off, see CanvasHost. */
+const paint = (css) => new THREE.Color(css);
 
 function Cells({ total, marked, cols, cell, colors, grow }) {
   const mesh = useRef();
@@ -17,8 +18,8 @@ function Cells({ total, marked, cols, cell, colors, grow }) {
 
   useLayoutEffect(() => {
     if (!mesh.current || !attr.current) return;
-    const right = linear(colors["fg-2"]);
-    const wrong = linear(colors.bad);
+    const right = paint(colors["fg-2"]);
+    const wrong = paint(colors.bad);
     for (let i = 0; i < total; i += 1) {
       const c = marked.has(i) ? wrong : right;
       colorBuf[i * 3] = c.r;

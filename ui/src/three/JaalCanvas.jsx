@@ -1,14 +1,16 @@
 import { Canvas } from "@react-three/fiber";
 import { MapControls } from "@react-three/drei";
 import { useEffect, useState } from "react";
-
 import { CanvasHost } from "@/three/CanvasHost";
 
 const TOKENS = [
   "base",
   "surface",
+  "raised",
+  "active",
   "line",
   "line-strong",
+  "line-loud",
   "fg",
   "fg-2",
   "fg-muted",

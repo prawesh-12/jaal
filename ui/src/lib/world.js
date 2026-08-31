@@ -34,6 +34,9 @@ export const STAGES = [
 
 export const stageIndex = (id) => STAGES.findIndex((s) => s.id === id);
 
+export const pairCells = (blocking) => Math.max(
+  2, Math.round(blocking.n_possible_pairs / blocking.n_candidate_pairs));
+
 function mulberry(seed) {
   let a = seed >>> 0;
   return () => {

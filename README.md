@@ -30,12 +30,12 @@ Razorpay Buildathon 2026, Track 02 (AI Risk Manager).
 Seeds 900-999, **SEALED**, opened once. Never averaged across tiers, because
 the variation is the finding.
 
-| tier | net against doing nothing | PR-AUC | precision | recall, blocked | recall, blocked or reviewed |
-| --- | --- | --- | --- | --- | --- |
-| obvious | **+Rs.1,148,700** | 0.9974 | 1.0000 | 0.5016 | 0.9931 |
-| moderate | **+Rs.569,400** | 0.9971 | 1.0000 | 0.1425 | 0.9609 |
-| sophisticated | **+Rs.343,100** | 0.9763 | 0.9961 | 0.0266 | 0.9129 |
-| adaptive | **+Rs.191,850** | 0.8046 | n/a (no blocks) | 0.0000 | 0.5669 |
+| tier          | net against doing nothing | PR-AUC | precision       | recall, blocked | recall, blocked or reviewed |
+| ------------- | ------------------------- | ------ | --------------- | --------------- | --------------------------- |
+| obvious       | **+Rs.1,148,700**   | 0.9974 | 1.0000          | 0.5016          | 0.9931                      |
+| moderate      | **+Rs.569,400**     | 0.9971 | 1.0000          | 0.1425          | 0.9609                      |
+| sophisticated | **+Rs.343,100**     | 0.9763 | 0.9961          | 0.0266          | 0.9129                      |
+| adaptive      | **+Rs.191,850**     | 0.8046 | n/a (no blocks) | 0.0000          | 0.5669                      |
 
 Pooled: **+Rs.2,253,050** against Rs.7,680,000 for deploying nothing, at
 0.9998 precision. One false positive in 4.8 million accounts.
@@ -48,11 +48,11 @@ money. The next section is why.
 
 ## The one number that explains every design choice
 
-| | cost |
-| --- | --- |
-| missing an abuser | Rs.200, one farmed coupon |
+|                                  | cost                           |
+| -------------------------------- | ------------------------------ |
+| missing an abuser                | Rs.200, one farmed coupon      |
 | wrongly blocking a real customer | Rs.15,000, lost lifetime value |
-| sending a cluster to a human | Rs.150 |
+| sending a cluster to a human     | Rs.150                         |
 
 **One false positive is worth 75 false negatives.** Blocking only pays above
 **98.68%** precision. The rules baseline runs at about 91% precision, so every
@@ -102,16 +102,16 @@ in these docs still match the files in `results/`.
 
 ## Where to read next
 
-| | |
-| --- | --- |
-| [docs/01-problem.md](docs/01-problem.md) | the scam, and why fraud models miss it |
-| [docs/02-how-it-works.md](docs/02-how-it-works.md) | the seven stages, a diagram each |
-| [docs/03-the-model.md](docs/03-the-model.md) | the maths, the weights, the hyperparameters |
-| [docs/04-results.md](docs/04-results.md) | every measured number |
-| [docs/05-where-it-fails.md](docs/05-where-it-fails.md) | the honest half |
-| [docs/06-run-and-integrate.md](docs/06-run-and-integrate.md) | calling it from your own system |
+|                                                             |                                             |
+| ----------------------------------------------------------- | ------------------------------------------- |
+| [docs/01-problem.md](docs/01-problem.md)                     | the scam, and why fraud models miss it      |
+| [docs/02-how-it-works.md](docs/02-how-it-works.md)           | the seven stages, a diagram each            |
+| [docs/03-the-model.md](docs/03-the-model.md)                 | the maths, the weights, the hyperparameters |
+| [docs/04-results.md](docs/04-results.md)                     | every measured number                       |
+| [docs/05-where-it-fails.md](docs/05-where-it-fails.md)       | the honest half                             |
+| [docs/06-run-and-integrate.md](docs/06-run-and-integrate.md) | calling it from your own system             |
 
-## How it works, in one diagram
+## How it works
 
 Seven stages. Accounts in, priced decisions out.
 

@@ -1,11 +1,17 @@
 import { useState } from "react";
+import {
+  Area, AreaChart, CartesianGrid, ReferenceArea, ReferenceLine,
+  ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from "recharts";
 import { Note } from "@/components/ui/panel";
 import { Disclosure } from "@/components/disclosure";
 import { Empty, Section, Skeleton, Status, SubHead } from "@/components/section";
-import { Collapse, TIER_AT } from "@/three/Collapse";
+import { Legend, axisProps, crosshair, gridProps } from "@/components/chart";
 import { useJson } from "@/lib/useJson";
 import { TIERS, count, dp4, isUndefinedPrecision } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+const TIER_AT = { obvious: 0, moderate: 0.33, sophisticated: 0.66, adaptive: 1 };
 
 /* Where blocking recall falls away, taken from the curve itself, not guessed. */
 function deadZoneStart(curve) {
@@ -224,9 +230,9 @@ export default function Failure({ holdout, loading }) {
             Blocking falls first. The queue holds on.
           </h1>
           <p className="mt-5 max-w-[44ch] text-[15px] leading-[1.6] text-fg-muted">
-            The front band is what Jaal blocks by itself. The band behind it is
+            The lower band is what Jaal blocks by itself. The band above it is
             what a person still reaches from the review queue. Move across the
-            ground to read any level of operator sophistication.
+            chart to read any level of operator sophistication.
           </p>
 
           <dl className="mt-8 grid grid-cols-2 gap-x-8 gap-y-6">
@@ -251,22 +257,88 @@ export default function Failure({ holdout, loading }) {
 
           {dead !== null && (
             <p className="mt-7 max-w-[46ch] border-l-2 border-bad pl-5 text-[14px] leading-[1.6] text-fg-2">
-              Past sophistication {dead.toFixed(2)} the front band is under 0.05.
-              Blocking has stopped contributing, and the tinted floor is that
-              region. At the far end it blocks nothing at all and precision is
-              undefined rather than zero.
+              Past sophistication {dead.toFixed(2)} the blocked band is under
+              0.05. Blocking has stopped contributing, and the tinted region is
+              exactly that. At the far end it blocks nothing at all and precision
+              is undefined rather than zero.
             </p>
           )}
         </div>
 
         <div>
-          <div className="h-[min(60vh,540px)] border border-line">
-            <Collapse curve={holdout.detection_curve} dead={dead} tier={tier}
-                      activeIndex={hover} onHover={setHover}
-                      className="h-full w-full" />
+          <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+            <span className="label">share of ring accounts caught</span>
+            <Legend
+              items={[
+                { label: "blocked by Jaal alone", color: "var(--color-info)" },
+                { label: "reached with the review queue", color: "var(--color-ok)" },
+              ]}
+            />
           </div>
+          <div className="mt-4 h-[min(52vh,440px)] border border-line py-4 pr-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={curve}
+                margin={{ top: 14, right: 34, bottom: 0, left: 0 }}
+                onMouseMove={(s) =>
+                  setHover(s?.isTooltipActive ? s.activeTooltipIndex ?? null : null)}
+                onMouseLeave={() => setHover(null)}
+              >
+                <CartesianGrid {...gridProps} />
+                {dead !== null && (
+                  <ReferenceArea
+                    x1={dead} x2={1} fill="var(--color-bad)" fillOpacity={0.07}
+                    stroke="none"
+                    label={{
+                      value: "blocking contributes nothing past here",
+                      fill: "var(--color-fg-faint)", fontSize: 11,
+                      position: "insideBottom", offset: 16,
+                    }}
+                  />
+                )}
+                <XAxis
+                  dataKey="sophistication" type="number" domain={[0, 1]}
+                  ticks={[0, 0.25, 0.5, 0.75, 1]}
+                  tickFormatter={(v) => v.toFixed(2)} {...axisProps}
+                />
+                <YAxis
+                  domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} width={46}
+                  tickFormatter={(v) => v.toFixed(2)} {...axisProps}
+                />
+                {Object.entries(TIER_AT).map(([name, at]) => (
+                  <ReferenceLine
+                    key={name} x={at}
+                    stroke={name === tier ? "var(--color-fg)" : "var(--color-line-loud)"}
+                    strokeDasharray={name === tier ? undefined : "3 3"}
+                    label={{
+                      value: name, fontSize: 11, position: "top",
+                      fill: name === tier ? "var(--color-fg)" : "var(--color-fg-faint)",
+                    }}
+                  />
+                ))}
+                {/* Renders nothing. It is here for the crosshair and the active
+                    index; the numbers are read out beside the chart. */}
+                <Tooltip content={() => null} cursor={crosshair} />
+                <Area
+                  dataKey="withReview" stroke="var(--color-ok)" strokeWidth={1.5}
+                  fill="var(--color-ok)" fillOpacity={0.14} dot={false}
+                  isAnimationActive={false}
+                  activeDot={{ r: 3.5, fill: "var(--color-ok)",
+                               stroke: "var(--color-base)", strokeWidth: 2 }}
+                />
+                <Area
+                  dataKey="blocked" stroke="var(--color-info)" strokeWidth={1.5}
+                  fill="var(--color-info)" fillOpacity={0.24} dot={false}
+                  isAnimationActive={false}
+                  activeDot={{ r: 3.5, fill: "var(--color-info)",
+                               stroke: "var(--color-base)", strokeWidth: 2 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="label mt-2 text-center">operator sophistication</div>
           <div role="group" aria-label="Adversary tier"
-               className="mt-px grid grid-cols-4 border border-line">
+               className="mt-4 grid grid-cols-4 border border-line">
             {Object.entries(TIER_AT).map(([name, at]) => (
               <button key={name} type="button"
                       aria-pressed={tier === name}

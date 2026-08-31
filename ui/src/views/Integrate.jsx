@@ -145,7 +145,7 @@ function ApiExample({ example }) {
 function Architecture() {
   return (
     <figure className="m-0">
-      <div className="h-[min(52vh,460px)] border border-line">
+      <div className="h-[min(34vh,300px)] border border-line">
         <SystemMap className="h-full w-full" />
       </div>
 

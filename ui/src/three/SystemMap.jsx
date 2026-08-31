@@ -1,82 +1,72 @@
 import { Html } from "@react-three/drei";
-import { useFrame, useThree } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
-import * as THREE from "three";
 
-import { JaalCanvas, useThemeColors } from "@/three/JaalCanvas";
+import { ChartCanvas, usePxPerUnit } from "@/three/ChartCanvas";
+import { useThemeColors } from "@/three/JaalCanvas";
 
-const linear = (css) => new THREE.Color(css).convertSRGBToLinear();
+const H = 24;
+const D = 3;
+const LANE = 20;
 
-const LANE = 11;
-const SLAB = { w: 24, h: 2.6, d: 13 };
+const NODES = [
+  { x: -128, y: 0, w: 66, title: "Merchant population",
+    note: "one row per account, twelve columns" },
+  { x: -40, y: LANE, w: 78, title: "Batch discovery",
+    note: "nightly, sees the whole graph" },
+  { x: -40, y: -LANE, w: 78, title: "Online assignment",
+    note: "one account against existing clusters" },
+  { x: 52, y: 0, w: 66, title: "Jaal Engine", note: "link · cluster · score · price",
+    tone: "fg" },
+  { x: 132, y: 0, w: 62, title: "Your risk queue", note: "block · review · allow" },
+];
 
-function Slab({ x, z, title, note, tone, colors, wide = 1, onPick, active }) {
+const ARROWS = [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4]];
+
+function Box({ node, colors }) {
+  const px = usePxPerUnit();
+  const solid = Boolean(node.tone);
   return (
-    <group position={[x, 0, z]}>
-      <mesh position={[0, SLAB.h / 2, 0]}
-            onPointerDown={onPick ? (e) => { e.stopPropagation(); onPick(); } : undefined}>
-        <boxGeometry args={[SLAB.w * wide, SLAB.h, SLAB.d]} />
-        <meshLambertMaterial
-          color={linear(tone ? colors[tone] : active ? colors.active : colors.surface)}
-          toneMapped={false} />
+    <group position={[node.x, node.y, 0]}>
+      <mesh>
+        <boxGeometry args={[node.w, H, D]} />
+        <meshLambertMaterial color={solid ? colors[node.tone] : colors.active}
+                             toneMapped={false} />
       </mesh>
-      <Html position={[0, SLAB.h + 0.2, 0]} center transform={false}
-            zIndexRange={[6, 0]}
-            style={{ pointerEvents: "none", width: "150px" }}>
-        <span className="block text-center">
-          <span className="block text-[12.5px] leading-tight font-medium"
-                style={{ color: tone ? "var(--color-base)" : "var(--color-fg)" }}>
-            {title}
+      <Html center transform={false} zIndexRange={[10, 0]}
+            style={{ pointerEvents: "none", width: `${node.w * px}px` }}>
+        <span className="block px-2 text-center">
+          <span className="block text-[13px] leading-tight font-medium"
+                style={{ color: solid ? "var(--color-base)" : "var(--color-fg)" }}>
+            {node.title}
           </span>
-          {note && (
-            <span className="mt-0.5 block text-[10.5px] leading-tight"
-                  style={{ color: tone ? "var(--color-base)" : "var(--color-fg-muted)" }}>
-              {note}
-            </span>
-          )}
+          <span className="mt-1 block text-[11px] leading-tight"
+                style={{ color: solid ? "var(--color-base)" : "var(--color-fg-muted)" }}>
+            {node.note}
+          </span>
         </span>
       </Html>
     </group>
   );
 }
 
-function Beam({ from, to, colors }) {
-  const dx = to[0] - from[0];
-  const dz = to[1] - from[1];
-  const len = Math.hypot(dx, dz);
-  const angle = Math.atan2(dx, dz);
+/* Edge of one box to edge of the next, so an arrow never runs under a box. */
+function Arrow({ from, to, colors }) {
+  const x1 = from.x + from.w / 2;
+  const x2 = to.x - to.w / 2;
+  const dx = x2 - x1;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) - 3;
   return (
-    <group position={[(from[0] + to[0]) / 2, 0.3, (from[1] + to[1]) / 2]}
-           rotation={[0, angle, 0]}>
-      <mesh>
-        <boxGeometry args={[0.45, 0.45, len]} />
-        <meshBasicMaterial color={colors["line-loud"]} toneMapped={false} />
+    <group position={[(x1 + x2) / 2, (from.y + to.y) / 2, 0]}
+           rotation={[0, 0, Math.atan2(dy, dx) - Math.PI / 2]}>
+      <mesh position={[0, -1.6, 0]}>
+        <planeGeometry args={[0.9, len]} />
+        <meshBasicMaterial color={colors["fg-dim"]} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, len / 2 - 1.6, 0]}>
+        <coneGeometry args={[2.1, 3.6, 3]} />
+        <meshBasicMaterial color={colors["fg-dim"]} toneMapped={false} />
       </mesh>
     </group>
-  );
-}
-
-/* One packet travelling the lane, so the direction of the flow is not something
-   the reader has to infer from arrowheads. */
-function Packet({ from, to, colors, offset }) {
-  const mesh = useRef();
-  const { invalidate } = useThree();
-  const t = useRef(offset);
-
-  useFrame((_, delta) => {
-    t.current = (t.current + delta * 0.24) % 1;
-    if (mesh.current) {
-      mesh.current.position.x = from[0] + (to[0] - from[0]) * t.current;
-      mesh.current.position.z = from[1] + (to[1] - from[1]) * t.current;
-    }
-    invalidate();
-  });
-
-  return (
-    <mesh ref={mesh} position={[from[0], 1.1, from[1]]}>
-      <sphereGeometry args={[0.8, 12, 10]} />
-      <meshLambertMaterial color={linear(colors.info)} toneMapped={false} />
-    </mesh>
   );
 }
 
@@ -89,42 +79,12 @@ function Packet({ from, to, colors, offset }) {
 export function SystemMap({ className }) {
   const colors = useThemeColors();
 
-  const nodes = useMemo(() => ({
-    merchant: [-36, 0],
-    batch: [-13, -LANE],
-    online: [-13, LANE],
-    engine: [13, 0],
-    queue: [36, 0],
-  }), []);
-
   return (
-    <JaalCanvas look={[0, 40, 54]} target={[0, 0, 0]} minDistance={34}
-                maxDistance={150} className={className}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.4, 0]}>
-        <planeGeometry args={[120, 62]} />
-        <meshBasicMaterial color={colors.surface} toneMapped={false} />
-      </mesh>
-
-      <Beam from={nodes.merchant} to={nodes.batch} colors={colors} />
-      <Beam from={nodes.merchant} to={nodes.online} colors={colors} />
-      <Beam from={nodes.batch} to={nodes.engine} colors={colors} />
-      <Beam from={nodes.online} to={nodes.engine} colors={colors} />
-      <Beam from={nodes.engine} to={nodes.queue} colors={colors} />
-
-      <Packet from={nodes.merchant} to={nodes.batch} colors={colors} offset={0} />
-      <Packet from={nodes.batch} to={nodes.engine} colors={colors} offset={0.4} />
-      <Packet from={nodes.engine} to={nodes.queue} colors={colors} offset={0.7} />
-
-      <Slab x={nodes.merchant[0]} z={nodes.merchant[1]} colors={colors}
-            title="Merchant population" note="one row per account, twelve columns" />
-      <Slab x={nodes.batch[0]} z={nodes.batch[1]} colors={colors}
-            title="Batch discovery" note="nightly, sees the whole graph" />
-      <Slab x={nodes.online[0]} z={nodes.online[1]} colors={colors}
-            title="Online assignment" note="one account against existing clusters" />
-      <Slab x={nodes.engine[0]} z={nodes.engine[1]} colors={colors} tone="fg"
-            title="Jaal Engine" note="link · cluster · score · price" />
-      <Slab x={nodes.queue[0]} z={nodes.queue[1]} colors={colors}
-            title="Your risk queue" note="block · review · allow" />
-    </JaalCanvas>
+    <ChartCanvas width={340} height={80} className={className}>
+      {ARROWS.map(([a, b]) => (
+        <Arrow key={`${a}-${b}`} from={NODES[a]} to={NODES[b]} colors={colors} />
+      ))}
+      {NODES.map((node) => <Box key={node.title} node={node} colors={colors} />)}
+    </ChartCanvas>
   );
 }

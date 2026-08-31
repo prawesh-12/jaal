@@ -1,4 +1,4 @@
-import { accountAt, edgeAt } from "@/lib/world";
+import { accountAt, edgeAt, pairCells } from "@/lib/world";
 import { count, dp2, dp4, pct, rupees } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -273,13 +273,10 @@ function SchemaPanel({ world }) {
   );
 }
 
-const PAIR_CELLS = 60 * 15;
-
 function BlockingPanel({ world }) {
   const b = world.blocking;
-  const perCell = Math.round(b.n_possible_pairs / PAIR_CELLS);
-  const lit = Math.max(1, Math.round(
-    PAIR_CELLS * b.n_candidate_pairs / b.n_possible_pairs));
+  const cells = pairCells(b);
+  const perCell = Math.round(b.n_possible_pairs / cells);
   return (
     <div>
       <Head title="Cutting the pair space"
@@ -289,8 +286,8 @@ function BlockingPanel({ world }) {
       <Row label="Search space cut" value={pct(b.pair_reduction_ratio, 3)} />
       <Row label="Blocks skipped as too large" value={count(b.blocks_skipped)} />
       <p className="mt-3 text-[12px] leading-[1.55] text-fg-faint">
-        Each cell above the population is {count(perCell)} pairs. {lit} of{" "}
-        {count(PAIR_CELLS)} survive blocking.
+        Each cell on the left is {count(perCell)} pairs. One cell in{" "}
+        {count(cells)} survives blocking, and it is the lit one.
       </p>
 
       <div className="mt-5">

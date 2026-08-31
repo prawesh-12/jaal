@@ -1,49 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function useActiveSection(ids, offset = 140) {
   const [active, setActive] = useState(ids[0]);
-  const seen = useRef(new Map());
 
   useEffect(() => {
-    const nodes = ids.map((id) => document.getElementById(id)).filter(Boolean);
-    if (!nodes.length) return undefined;
-
+    /* Looked up on every pass, not once: the page renders a skeleton while its
+       results load, and this effect never runs a second time. */
     const pick = () => {
       let current = ids[0];
       for (const id of ids) {
-        const e = seen.current.get(id);
-        if (e && e.top <= offset) current = id;
+        const node = document.getElementById(id);
+        if (node && node.getBoundingClientRect().top <= offset) current = id;
       }
       setActive(current);
     };
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          seen.current.set(e.target.id, { top: e.boundingClientRect.top });
-        }
-        pick();
-      },
-      { rootMargin: `-${offset}px 0px -55% 0px`, threshold: [0, 1] }
-    );
-    nodes.forEach((n) => observer.observe(n));
-
-    // The observer only fires on a crossing, so a plain scroll inside one long
-    // section would leave the list stale. This keeps it honest.
-    const onScroll = () => {
-      for (const n of nodes) {
-        seen.current.set(n.id, { top: n.getBoundingClientRect().top });
-      }
-      pick();
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    };
+    window.addEventListener("scroll", pick, { passive: true });
+    pick();
+    return () => window.removeEventListener("scroll", pick);
   }, [ids, offset]);
 
   return active;
