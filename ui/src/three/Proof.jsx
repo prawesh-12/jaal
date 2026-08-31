@@ -161,22 +161,22 @@ const H = 40;
   blocking pays for itself, below it every batch of blocks loses money, and
   where each detector lands is the whole economic argument.
 */
-export function PrecisionScale({ breakeven, points, className }) {
+export function PrecisionScale({ breakeven, points, compact = false, className }) {
   const colors = useThemeColors();
   const toX = (p) => ((Math.max(p, LO) - LO) / (HI - LO)) * W - W / 2;
   const cut = toX(breakeven);
 
   return (
-    <ChartCanvas width={W + 12} height={H}
+    <ChartCanvas width={W + 12} height={compact ? H * 0.62 : H}
                  lights={<SceneLights ground={colors.surface} />}
                  className={className}>
       <ScaleBody colors={colors} toX={toX} cut={cut} points={points}
-                 breakeven={breakeven} />
+                 breakeven={breakeven} compact={compact} />
     </ChartCanvas>
   );
 }
 
-function Landing({ point, to, from, y, delay, colors, px }) {
+function Landing({ point, to, from, y, delay, colors, px, compact }) {
   const group = useRef();
   const { invalidate } = useThree();
   const clock = useRef(0);
@@ -200,24 +200,26 @@ function Landing({ point, to, from, y, delay, colors, px }) {
         <meshStandardMaterial color={colors[point.tone]} {...SURFACE}
                               toneMapped={false} />
       </mesh>
-      <Html position={[0, y > 0 ? 3 : -3, 0]} center transform={false}
-            zIndexRange={[9, 0]}
-            style={{ pointerEvents: "none", width: `${36 * px}px`,
-                     transform: `translate(-50%, ${y > 0 ? "-100%" : "0"})` }}>
-        <span className="block text-center">
-          <span className="tnum block text-[14px] leading-none text-fg">
-            {point.display}
+      {!compact && (
+        <Html position={[0, y > 0 ? 3 : -3, 0]} center transform={false}
+              zIndexRange={[9, 0]}
+              style={{ pointerEvents: "none", width: `${36 * px}px`,
+                       transform: `translate(-50%, ${y > 0 ? "-100%" : "0"})` }}>
+          <span className="block text-center">
+            <span className="tnum block text-[14px] leading-none text-fg">
+              {point.display}
+            </span>
+            <span className="t-meta mt-0.5 block whitespace-nowrap">
+              {point.label}
+            </span>
           </span>
-          <span className="t-meta mt-0.5 block whitespace-nowrap">
-            {point.label}
-          </span>
-        </span>
-      </Html>
+        </Html>
+      )}
     </group>
   );
 }
 
-function ScaleBody({ colors, toX, cut, points, breakeven }) {
+function ScaleBody({ colors, toX, cut, points, breakeven, compact }) {
   const px = usePxPerUnit();
   const left = -W / 2;
   const right = W / 2;
@@ -239,7 +241,8 @@ function ScaleBody({ colors, toX, cut, points, breakeven }) {
         <planeGeometry args={[0.35, 17]} />
         <meshBasicMaterial color={colors.fg} toneMapped={false} />
       </mesh>
-      <Html position={[cut, 11, 0]} center transform={false} zIndexRange={[8, 0]}
+      <Html position={[cut, compact ? 8 : 11, 0]} center transform={false}
+            zIndexRange={[8, 0]}
             style={{ pointerEvents: "none", width: `${34 * px}px` }}>
         <span className="block text-center">
           <span className="tnum block text-[13px] text-fg">
@@ -249,24 +252,28 @@ function ScaleBody({ colors, toX, cut, points, breakeven }) {
         </span>
       </Html>
 
-      <Html position={[left + 1, 5.6, 0]} transform={false} zIndexRange={[8, 0]}
-            style={{ pointerEvents: "none", width: `${30 * px}px` }}>
-        <span className="label block" style={{ color: "var(--color-bad)" }}>
-          blocking loses money
-        </span>
-      </Html>
-      <Html position={[right - 1, 5.6, 0]} transform={false} zIndexRange={[8, 0]}
-            style={{ pointerEvents: "none", transform: "translateX(-100%)",
-                     width: `${30 * px}px` }}>
-        <span className="label block text-right" style={{ color: "var(--color-ok)" }}>
-          blocking pays
-        </span>
-      </Html>
+      {!compact && (
+        <>
+          <Html position={[left + 1, 5.6, 0]} transform={false} zIndexRange={[8, 0]}
+                style={{ pointerEvents: "none", width: `${30 * px}px` }}>
+            <span className="label block" style={{ color: "var(--color-bad)" }}>
+              blocking loses money
+            </span>
+          </Html>
+          <Html position={[right - 1, 5.6, 0]} transform={false} zIndexRange={[8, 0]}
+                style={{ pointerEvents: "none", transform: "translateX(-100%)",
+                         width: `${30 * px}px` }}>
+            <span className="label block text-right" style={{ color: "var(--color-ok)" }}>
+              blocking pays
+            </span>
+          </Html>
+        </>
+      )}
 
       {points.map((p, i) => (
         <Landing key={p.label} point={p} to={toX(p.value)} from={left}
-                 y={i % 2 === 0 ? -3.2 : 3.2} delay={i * 0.09}
-                 colors={colors} px={px} />
+                 y={compact ? 0 : (i % 2 === 0 ? -3.2 : 3.2)} delay={i * 0.09}
+                 colors={colors} px={px} compact={compact} />
       ))}
     </group>
   );

@@ -57,7 +57,7 @@ export default function Cost({ decisions, loading, bare = false }) {
       )}
 
       <Section title="The decision that pays">
-        <div className="grid gap-x-16 gap-y-10 border-y border-line-strong py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+        <div className="grid grid-cols-1 gap-x-16 gap-y-10 border-y border-line-strong py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
           <div>
             <div className="label">Three actions, net against doing nothing</div>
             <div className="tnum t-result mt-4">
@@ -72,7 +72,7 @@ export default function Cost({ decisions, loading, bare = false }) {
             </p>
           </div>
 
-          <dl className="grid gap-x-8 gap-y-6 self-center sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-6 self-center sm:grid-cols-2">
             {[
               ["F1-optimal threshold", decisions.f1_optimal.net_vs_nothing_rupees,
                "the point a machine learning course would pick"],

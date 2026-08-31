@@ -12,6 +12,7 @@ import { Metric, MetricRow } from "@/components/metric";
 import { FlowPair } from "@/three/Flow";
 import { SystemMap } from "@/three/SystemMap";
 import { useJson } from "@/lib/useJson";
+import { useNarrow } from "@/lib/useMedia";
 import { agreementWeights } from "@/lib/pipelineStages";
 import { count, dp4, pct, rupees, signedRupees } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -119,7 +120,7 @@ function ApiExample({ example }) {
   }
   return (
     <div className="mt-10">
-      <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-10 gap-y-8 lg:grid-cols-2">
         <div>
           <h3 className="label">You send</h3>
           <Code language="json" className="mt-4">
@@ -143,10 +144,13 @@ function ApiExample({ example }) {
 }
 
 function Architecture() {
+  const narrow = useNarrow();
   return (
     <figure className="m-0">
-      <div className="h-[min(34vh,300px)] border border-line">
-        <SystemMap className="h-full w-full" />
+      <div className="border border-line">
+        <div className={narrow ? "aspect-[200/174]" : "h-[min(34vh,300px)]"}>
+          <SystemMap vertical={narrow} className="h-full w-full" />
+        </div>
       </div>
 
       <figcaption className="mt-6 max-w-[74ch] border-l-2 border-line-loud pl-6 text-[17px] leading-[1.45] text-fg">
@@ -160,6 +164,7 @@ function Architecture() {
 function HashDiagram() {
   return (
     <figure className="m-0 border-y border-line py-8">
+      <div className="w-full overflow-x-auto">
       <svg viewBox="0 0 900 150" className="w-full min-w-[620px]" role="img"
            aria-label="Two accounts sharing a device still share it after hashing">
         {[0, 1].map((row) => {
@@ -203,6 +208,7 @@ function HashDiagram() {
         <text x="734" y="84" fontSize="10.5" fill="var(--color-fg-faint)"
               fontFamily="var(--font-sans)">which is all the scorer asks</text>
       </svg>
+      </div>
     </figure>
   );
 }
@@ -232,7 +238,7 @@ function TimingBars({ sizes }) {
       <div className="border-t border-line">
         {sizes.map((s) => (
           <div key={s.n_accounts}
-               className="grid items-center gap-x-6 gap-y-2 border-b border-line py-4 sm:grid-cols-[130px_minmax(0,1fr)_170px]">
+               className="grid grid-cols-1 items-center gap-x-6 gap-y-2 border-b border-line py-4 sm:grid-cols-[130px_minmax(0,1fr)_170px]">
             <span className="tnum text-[13px] text-fg">{count(s.n_accounts)}</span>
             <span className="flex h-4 w-full" style={{ width: `${(s.total_ms / widest) * 100}%` }}>
               {Object.keys(STAGE_SHADE).map((k) => (
@@ -265,6 +271,7 @@ function TimingBars({ sizes }) {
 
 
 export default function Integrate({ bare = false }) {
+  const narrow = useNarrow();
   const holdout = useJson("holdout");
   const decisions = useJson("decisions");
   const link = useJson("link_params");
@@ -307,12 +314,12 @@ export default function Integrate({ bare = false }) {
         </PageHeader>
       )}
 
-      <div className="grid gap-x-16 gap-y-8 pt-10 md:grid-cols-[200px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-x-16 gap-y-8 pt-10 md:grid-cols-[200px_minmax(0,1fr)]">
         <TableOfContents
           sections={SECTIONS}
           active={active}
           className={cn(
-            "sticky top-[52px] z-30 -mx-1 border-b border-line bg-base/95 px-1 py-3 backdrop-blur-sm",
+            "sticky top-[52px] z-30 -mx-1 border-b border-line bg-base px-1 py-3 md:bg-base/95 md:backdrop-blur-sm",
             "md:top-[104px] md:mx-0 md:self-start md:border-b-0 md:bg-transparent md:px-0 md:py-0 md:backdrop-blur-none"
           )}
         />
@@ -324,7 +331,7 @@ export default function Integrate({ bare = false }) {
 
             <ApiExample example={api.data} />
 
-            <dl className="mt-10 grid gap-x-10 gap-y-4 border-t border-line pt-6 sm:grid-cols-2">
+            <dl className="mt-10 grid grid-cols-1 gap-x-10 gap-y-4 border-t border-line pt-6 sm:grid-cols-2">
               {[
                 ["Interface", "REST over HTTP. Flask, loopback by default."],
                 ["Shape", `Batch. Up to ${count(20000)} accounts a call.`],
@@ -342,7 +349,7 @@ export default function Integrate({ bare = false }) {
 
             <div className="mt-12">
               <h3 className="label">Every endpoint</h3>
-              <ul className="mt-4 grid gap-x-10 gap-y-2.5 sm:grid-cols-2">
+              <ul className="mt-4 grid grid-cols-1 gap-x-10 gap-y-2.5 sm:grid-cols-2">
                 {[
                   ["GET /health", "is the model loaded"],
                   ["GET /v1/schema", "columns, features and the three prices"],
@@ -397,7 +404,7 @@ curl -s localhost:5001/v1/coverage -X POST \\
 
           <Anchored id="where" icon={ICON.where} title="Where it sits"
                     lede="Two jobs, two shapes. Mixing them up is the usual way an integration goes wrong.">
-            <div className="grid gap-x-12 gap-y-6 border-y border-line py-8 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-12 gap-y-6 border-y border-line py-8 lg:grid-cols-2">
               <p className="t-meta max-w-[46ch]">
                 Batch discovery runs nightly or hourly over the whole population.
                 Clustering has to see the entire graph, so this half cannot be
@@ -408,8 +415,11 @@ curl -s localhost:5001/v1/coverage -X POST \\
                 already exist. Blocking and linking only, which is the half that
                 can run inside a request.
               </p>
-              <div className="h-[360px] lg:col-span-2">
-                <FlowPair left={BATCH} right={ONLINE} className="h-full w-full" />
+              <div className="lg:col-span-2">
+                <div className={narrow ? "h-[620px]" : "h-[360px]"}>
+                  <FlowPair left={BATCH} right={ONLINE} stacked={narrow}
+                            className="h-full w-full" />
+                </div>
               </div>
             </div>
             {big && (
@@ -426,7 +436,7 @@ curl -s localhost:5001/v1/coverage -X POST \\
 
           <Anchored id="send" icon={ICON.send} title="What you send"
                     lede="One row per account, twelve columns, in three groups.">
-            <div className="grid gap-px border border-line bg-line lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-px border border-line bg-line lg:grid-cols-3">
               {GROUPS.map((g) => (
                 <div key={g.name} className="bg-surface px-5 py-6">
                   <div className="flex items-center justify-between">
@@ -462,7 +472,7 @@ curl -s localhost:5001/v1/coverage -X POST \\
             <Code language="python" className="mt-8">{`from detector.profiles import hash_identifiers
 
 payload = hash_identifiers(accounts, salt="tenant-7c1f")`}</Code>
-            <div className="mt-8 grid gap-x-10 gap-y-3 sm:grid-cols-2">
+            <div className="mt-8 grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
               {["same candidate pairs", "identical pair scores",
                 "same clusters", "every feature equal"].map((line) => (
                 <span key={line} className="flex items-center gap-3 text-[13px] text-fg-muted">
@@ -508,7 +518,7 @@ payload = hash_identifiers(accounts, salt="tenant-7c1f")`}</Code>
                   format={(v) => dp4(v)}
                   describe
                 />
-                <div className="mt-8 grid gap-x-10 gap-y-6 border-y border-line-strong py-8 sm:grid-cols-3">
+                <div className="mt-8 grid grid-cols-1 gap-x-10 gap-y-6 border-y border-line-strong py-8 sm:grid-cols-3">
                   {[
                     ["Aggregator alone", "aggregator"],
                     ["Plus a hashed address", "aggregator_plus_address"],
@@ -553,7 +563,7 @@ for cluster in result["clusters"]:
     # block, review or allow, with the expected cost of each
     print(cluster["action"], cluster["expected_cost_rupees"])`}</Code>
 
-            <ul className="mt-8 grid gap-x-10 gap-y-2.5 border-t border-line pt-5 sm:grid-cols-2">
+            <ul className="mt-8 grid grid-cols-1 gap-x-10 gap-y-2.5 border-t border-line pt-5 sm:grid-cols-2">
               {[
                 ["POST /v1/coverage", "what you would get"],
                 ["POST /v1/scan", "accounts in, decisions out"],
@@ -638,8 +648,11 @@ for cluster in result["clusters"]:
           <Anchored id="engine" icon={ICON.engine}
                     title="Deploy the engine"
                     lede="The detection system without the visualisation. A merchant installs the engine and never builds the visualisation.">
-            <div className="h-[360px] border-y border-line">
-              <FlowPair left={ENGINE} right={LAB} className="h-full w-full" />
+            <div className="border-y border-line">
+              <div className={narrow ? "h-[620px]" : "h-[360px]"}>
+                <FlowPair left={ENGINE} right={LAB} stacked={narrow}
+                          className="h-full w-full" />
+              </div>
             </div>
 
             <div className="mt-8">

@@ -106,46 +106,59 @@ function LaneTitle({ y, title }) {
   );
 }
 
-/* Two lanes side by side, for showing one architecture against another. */
-export function FlowPair({ left, right, className }) {
+/* Two lanes side by side, or one above the other once there is no room to
+   set them against each other. */
+export function FlowPair({ left, right, stacked = false, className }) {
   const colors = useThemeColors();
-  const rows = Math.max(left.steps.length, right.steps.length);
   const title = NODE_H + GAP;
-  const height = rows * (NODE_H + GAP) + GAP + title;
-  const width = (NODE_W + 10) * 2 + 14;
-
   const geometry = useMemo(
     () => slab({ w: NODE_W, h: NODE_H, d: NODE_D, r: 1.2 }), []);
 
-  const lane = (side, x) => {
-    const top = (side.steps.length * (NODE_H + GAP)) / 2 - NODE_H / 2 - title / 2;
-    return (
-      <group position={[x, 0, 0]}>
-        <LaneTitle y={top + NODE_H / 2 + GAP + 3} title={side.title} />
-        {side.steps.map((step, i) => (
-          <group key={step.label}>
-            {i < side.steps.length - 1 && (
-              <Rail ax={0} ay={top - i * (NODE_H + GAP) - NODE_H / 2} bx={0}
-                    by={top - (i + 1) * (NODE_H + GAP) + NODE_H / 2}
-                    weight={0.8} rest={colors["line-strong"]} arrow />
-            )}
-            <Node step={step} y={top - i * (NODE_H + GAP)} colors={colors}
-                  geometry={geometry} />
-          </group>
-        ))}
-      </group>
-    );
-  };
+  const laneHeight = (side) => side.steps.length * (NODE_H + GAP) + title;
+  const rows = Math.max(left.steps.length, right.steps.length);
 
-  const offset = (NODE_W + 14) / 2;
+  const width = stacked ? NODE_W + 12 : (NODE_W + 10) * 2 + 14;
+  const height = stacked
+    ? laneHeight(left) + laneHeight(right) + GAP * 3
+    : rows * (NODE_H + GAP) + GAP + title;
+
+  const lane = (side, x, top) => (
+    <group position={[x, 0, 0]}>
+      <LaneTitle y={top + NODE_H / 2 + GAP + 3} title={side.title} />
+      {side.steps.map((step, i) => (
+        <group key={step.label}>
+          {i < side.steps.length - 1 && (
+            <Rail ax={0} ay={top - i * (NODE_H + GAP) - NODE_H / 2} bx={0}
+                  by={top - (i + 1) * (NODE_H + GAP) + NODE_H / 2}
+                  weight={0.8} rest={colors["line-strong"]} arrow />
+          )}
+          <Node step={step} y={top - i * (NODE_H + GAP)} colors={colors}
+                geometry={geometry} />
+        </group>
+      ))}
+    </group>
+  );
+
+  const centred = (side) =>
+    (side.steps.length * (NODE_H + GAP)) / 2 - NODE_H / 2 - title / 2;
 
   return (
     <ChartCanvas width={width} height={height}
                  lights={<SceneLights ground={colors.surface} />}
                  className={className}>
       <group rotation={TILT}>
-        {lane(left, -offset)}
-        {lane(right, offset)}
+        {stacked ? (
+          <>
+            {lane(left, 0, height / 2 - title - NODE_H / 2)}
+            {lane(right, 0,
+                  height / 2 - laneHeight(left) - GAP * 3 - title - NODE_H / 2)}
+          </>
+        ) : (
+          <>
+            {lane(left, -(NODE_W + 14) / 2, centred(left))}
+            {lane(right, (NODE_W + 14) / 2, centred(right))}
+          </>
+        )}
       </group>
     </ChartCanvas>
   );

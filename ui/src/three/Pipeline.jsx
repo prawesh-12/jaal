@@ -8,8 +8,11 @@ import { useThemeColors } from "@/three/JaalCanvas";
 import { Rail, SceneLights, Shadow, SURFACE, Spring, useSlab }
   from "@/three/surface";
 
-const STAGE = { w: 25, h: 15, d: 9, r: 1.1 };
-const OUT = { w: 24, h: 10, d: 7, r: 1.1 };
+const ROW_STAGE = { w: 25, h: 15, d: 9, r: 1.1 };
+const ROW_OUT = { w: 24, h: 10, d: 7, r: 1.1 };
+// Stacked, a plate has the page's width to use and only needs one line of text.
+const COL_STAGE = { w: 54, h: 13, d: 9, r: 1.1 };
+const COL_OUT = { w: 26, h: 11, d: 7, r: 1.1 };
 const GAP = 3.6;
 const FAN = 19;
 const OUT_GAP = 2.6;
@@ -102,27 +105,67 @@ function Plate({ x, y, size, geometry, holding, active, end, label, sub,
 
 // `active` is the stage the caller shows detail for, `holding` is where the
 // run has reached.
-export function Pipeline({ stages, outcomes, active, holding, running = true,
-                           onHover, onReach, className }) {
-  const colors = useThemeColors();
+/*
+  Two arrangements of the same chain. Wide, the stages run left to right and
+  the exits fan off the end; narrow, the whole thing turns a quarter so it
+  stacks down the page instead of asking a phone to scroll sideways.
+*/
+function layout(stages, outcomes, vertical) {
+  const n = stages.length;
+  const m = outcomes.length;
 
-  const geom = useMemo(() => {
-    const lane = stages.length * STAGE.w + (stages.length - 1) * GAP;
-    const total = lane + FAN + OUT.w;
+  if (!vertical) {
+    const S = ROW_STAGE;
+    const O = ROW_OUT;
+    const lane = n * S.w + (n - 1) * GAP;
+    const total = lane + FAN + O.w;
     const left = -total / 2;
-    const span = outcomes.length * (OUT.h + OUT_GAP) - OUT_GAP;
+    const span = m * (O.h + OUT_GAP) - OUT_GAP;
     return {
-      total,
-      span,
-      xs: stages.map((_, i) => left + STAGE.w / 2 + i * (STAGE.w + GAP)),
-      outX: left + lane + FAN + OUT.w / 2,
-      ys: outcomes.map((_, j) => span / 2 - OUT.h / 2 - j * (OUT.h + OUT_GAP)),
+      S,
+      O,
+      width: total + 16,
+      height: Math.max(S.h, span) + 20,
+      stage: stages.map((_, i) => [left + S.w / 2 + i * (S.w + GAP), 0]),
+      out: outcomes.map((_, j) => [left + lane + FAN + O.w / 2,
+                                   span / 2 - O.h / 2 - j * (O.h + OUT_GAP)]),
+      exit: [S.w / 2, 0, -O.w / 2, 0],
+      hop: [S.w / 2, 0, -S.w / 2, 0],
+      index: [0, S.h / 2 + 6.5],
     };
-  }, [stages, outcomes]);
+  }
+
+  const S = COL_STAGE;
+  const O = COL_OUT;
+  const gap = OUT_GAP * 3;
+  const step = S.h + GAP * 1.9;
+  const lane = n * step - GAP * 1.9;
+  const drop = 15;
+  const outRow = m * O.w + gap * (m - 1);
+  const total = lane + drop + O.h;
+  const top = total / 2 - S.h / 2;
+  return {
+    S,
+    O,
+    width: Math.max(S.w, outRow) + 32,
+    height: total + 14,
+    stage: stages.map((_, i) => [0, top - i * step]),
+    out: outcomes.map((_, j) => [-outRow / 2 + O.w / 2 + j * (O.w + gap),
+                                 top - lane + S.h / 2 - drop - O.h / 2]),
+    exit: [0, -S.h / 2, 0, O.h / 2],
+    hop: [0, -S.h / 2, 0, S.h / 2],
+    index: [-S.w / 2 - 7, 0],
+  };
+}
+
+export function Pipeline({ stages, outcomes, active, holding, running = true,
+                           vertical = false, onHover, onReach, className }) {
+  const colors = useThemeColors();
+  const geom = useMemo(
+    () => layout(stages, outcomes, vertical), [stages, outcomes, vertical]);
 
   return (
-    <ChartCanvas width={geom.total + 16}
-                 height={Math.max(STAGE.h, geom.span) + 20}
+    <ChartCanvas width={geom.width} height={geom.height}
                  lights={<SceneLights ground={colors.surface} />}
                  className={className}>
       <Chain colors={colors} geom={geom} stages={stages} outcomes={outcomes}
@@ -140,8 +183,8 @@ function Chain({ colors, geom, stages, outcomes, active, holding, running,
           Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches),
     []);
 
-  const stageGeo = useSlab(STAGE);
-  const outGeo = useSlab(OUT);
+  const stageGeo = useSlab(geom.S);
+  const outGeo = useSlab(geom.O);
 
   const entry = useRef(still ? 1 : 0);
   const run = useRef({ t: 0, exit: 0, at: -1 });
@@ -186,35 +229,39 @@ function Chain({ colors, geom, stages, outcomes, active, holding, running,
       ? -1
       : (run.current.t - hops * SWEEP - HOLD) / EXIT);
 
-  const last = geom.xs.length - 1;
+  const last = stages.length - 1;
+  const [hx, hy, hx2, hy2] = geom.hop;
+  const [ex, ey, ex2, ey2] = geom.exit;
 
   return (
     <group rotation={TILT}>
-      {geom.xs.slice(0, -1).map((x, i) => (
-        <Rail key={stages[i].id} ax={x + STAGE.w / 2} ay={0}
-              bx={geom.xs[i + 1] - STAGE.w / 2} by={0}
+      {geom.stage.slice(0, -1).map(([x, y], i) => (
+        <Rail key={stages[i].id} ax={x + hx} ay={y + hy}
+              bx={geom.stage[i + 1][0] + hx2} by={geom.stage[i + 1][1] + hy2}
               z={0} rest={colors.line} live={colors.accent}
               head={hopHead(i)} />
       ))}
 
       {outcomes.map((o, j) => (
-        <Rail key={o.label} ax={geom.xs[last] + STAGE.w / 2} ay={0}
-              bx={geom.outX - OUT.w / 2} by={geom.ys[j]}
+        <Rail key={o.label}
+              ax={geom.stage[last][0] + ex} ay={geom.stage[last][1] + ey}
+              bx={geom.out[j][0] + ex2} by={geom.out[j][1] + ey2}
               z={0} rest={colors.line} live={colors.accent}
               head={exitHead(j)} />
       ))}
 
       {stages.map((s, i) => (
         <group key={s.id}>
-          <Html position={[geom.xs[i], STAGE.h / 2 + 6.5, 0]} center
+          <Html position={[geom.stage[i][0] + geom.index[0],
+                           geom.stage[i][1] + geom.index[1], 0]} center
                 transform={false} zIndexRange={[10, 0]}
                 style={{ pointerEvents: "none" }}>
             <span className="tnum text-[10.5px] text-fg-dim">
               {String(i + 1).padStart(2, "0")}
             </span>
           </Html>
-          <Plate x={geom.xs[i]} y={0} size={STAGE} geometry={stageGeo}
-                 label={s.label} sub={s.sub}
+          <Plate x={geom.stage[i][0]} y={geom.stage[i][1]} size={geom.S}
+                 geometry={stageGeo} label={s.label} sub={s.sub}
                  active={active === s.id} holding={!still && holding === i}
                  colors={colors} entry={entryAt(i)}
                  onSelect={() => onHover(s.id)} onClear={() => onHover(null)} />
@@ -222,7 +269,7 @@ function Chain({ colors, geom, stages, outcomes, active, holding, running,
       ))}
 
       {outcomes.map((o, j) => (
-        <Plate key={o.label} x={geom.outX} y={geom.ys[j]} size={OUT}
+        <Plate key={o.label} x={geom.out[j][0]} y={geom.out[j][1]} size={geom.O}
                geometry={outGeo} end label={o.label} sub={o.sub}
                colors={colors} entry={entryAt(stages.length + j)} />
       ))}

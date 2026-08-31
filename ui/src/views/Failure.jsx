@@ -36,7 +36,7 @@ function FailureEntry({ f, index }) {
     >
       <div className="border-l-2 border-bad/70 pl-5">
         <p className="tnum text-[13px] text-fg-2">{f.detail}</p>
-        <dl className="mt-5 grid gap-x-10 gap-y-5 sm:grid-cols-2">
+        <dl className="mt-5 grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
           <div>
             <dt className="label">Why it happens</dt>
             <dd className="mt-2.5 text-[13px] leading-[1.65] text-fg-muted">{f.why}</dd>
@@ -85,7 +85,7 @@ function SignalDecay({ blocking }) {
         return (
           <div
             key={r.rule}
-            className="grid items-center gap-x-6 gap-y-3 border-b border-line px-2 py-3.5 sm:grid-cols-[150px_minmax(0,1fr)_140px]"
+            className="grid grid-cols-1 items-center gap-x-6 gap-y-3 border-b border-line px-2 py-3.5 sm:grid-cols-[150px_minmax(0,1fr)_140px]"
           >
             <span className="ident text-[12.5px] text-fg-muted">{r.rule}</span>
             <span className="flex items-end gap-1.5">
@@ -129,7 +129,7 @@ function OneChangeAtATime({ mechanism }) {
           <div
             key={name}
             className={cn(
-              "grid items-center gap-x-6 gap-y-2 border-b border-line px-2 py-3.5 sm:grid-cols-[minmax(0,210px)_120px_minmax(0,1fr)_110px]",
+              "grid grid-cols-1 items-center gap-x-6 gap-y-2 border-b border-line px-2 py-3.5 sm:grid-cols-[minmax(0,210px)_120px_minmax(0,1fr)_110px]",
               isBase && "bg-surface"
             )}
           >
@@ -174,7 +174,7 @@ function Lookalikes({ stress }) {
       title="Groups that look like rings but are not"
       lede={`${count(stress.worlds)} worlds containing no rings at all, ${count(stress.n_accounts)} accounts. Families share an address. Flatmates share a device. Hostels share both.`}
     >
-      <div className="grid border-y border-line-strong sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-1 border-y border-line-strong sm:grid-cols-3 lg:grid-cols-5">
         {kinds.map(([kind, k], i) => (
           <div
             key={kind}
@@ -223,7 +223,7 @@ export default function Failure({ holdout, loading }) {
 
   return (
     <div>
-      <div className="grid gap-x-12 gap-y-6 pt-10 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-x-12 gap-y-6 pt-10 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
         <div>
           <div className="label">Measured, not caveated</div>
           <h1 className="mt-4 max-w-[20ch] text-[34px] leading-[1.08] font-medium tracking-[-0.03em] text-fg text-balance sm:text-[40px]">
@@ -338,7 +338,7 @@ export default function Failure({ holdout, loading }) {
           </div>
           <div className="label mt-2 text-center">operator sophistication</div>
           <div role="group" aria-label="Adversary tier"
-               className="mt-4 grid grid-cols-4 border border-line">
+               className="mt-4 grid grid-cols-2 border border-line sm:grid-cols-4">
             {Object.entries(TIER_AT).map(([name, at]) => (
               <button key={name} type="button"
                       aria-pressed={tier === name}
@@ -347,7 +347,7 @@ export default function Failure({ holdout, loading }) {
                         setHover(Math.round(at * (curve.length - 1)));
                       }}
                       className={cn(
-                        "interactive border-l border-line py-2.5 text-[12.5px] first:border-l-0",
+                        "interactive border-b border-l border-line py-2.5 text-[12.5px] sm:border-b-0 [&:nth-child(odd)]:border-l-0 sm:[&:nth-child(odd)]:border-l sm:first:border-l-0",
                         tier === name ? "bg-active font-medium text-fg"
                                       : "text-fg-muted hover:bg-surface hover:text-fg")}>
                 {name}

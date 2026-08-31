@@ -210,11 +210,11 @@ const BEAD_FRAG = `
     if (r2 > 1.0) discard;
 
     vec3 n = vec3(p.x, p.y, sqrt(max(0.0, 1.0 - r2)));
-    float lam = clamp(dot(n, normalize(vec3(-0.42, 0.55, 0.72))), 0.0, 1.0);
+    float lam = clamp(dot(n, normalize(vec3(-0.42, 0.55, 0.9))), 0.0, 1.0);
     float rim = pow(1.0 - n.z, 2.5);
 
     float present = clamp(distance(vTint, uPage) * 4.0, 0.0, 1.0);
-    vec3 lit = vTint * (0.88 + 0.26 * lam) - rim * 0.09;
+    vec3 lit = vTint * (0.95 + 0.1 * lam) - rim * 0.035;
     gl_FragColor = vec4(mix(vTint, lit, present), 1.0);
   }
 `;

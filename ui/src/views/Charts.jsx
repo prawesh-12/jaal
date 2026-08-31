@@ -81,7 +81,7 @@ export default function Charts({ bare = false }) {
 
       {GROUPS.map(([heading, charts]) => (
         <Section key={heading} title={heading}>
-          <div className="grid items-start gap-x-8 gap-y-12 lg:grid-cols-2">
+          <div className="grid grid-cols-1 items-start gap-x-8 gap-y-12 lg:grid-cols-2">
             {charts.map(([file, title, note]) => (
               <figure key={file} className="m-0">
                 <h3 className="text-[14px] font-medium tracking-[-0.01em] text-fg">{title}</h3>

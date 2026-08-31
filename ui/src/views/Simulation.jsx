@@ -73,9 +73,10 @@ function stageReadout(world, geom, cluster) {
 
 function Segmented({ label, options, value, onChange }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5">
       <span className="label shrink-0">{label}</span>
-      <div role="group" aria-label={label} className="flex border border-line">
+      <div role="group" aria-label={label}
+           className="flex flex-wrap border-t border-l border-line">
         {options.map((o) => {
           const key = typeof o === "string" ? o : o.value;
           const text = typeof o === "string" ? o : o.label;
@@ -83,7 +84,7 @@ function Segmented({ label, options, value, onChange }) {
             <button key={key} type="button" onClick={() => onChange(key)}
                     aria-pressed={value === key}
                     className={cn(
-                      "interactive h-8 border-l border-line px-3 text-[12.5px] first:border-l-0",
+                      "interactive h-8 grow border-r border-b border-line px-3 text-[12.5px] sm:grow-0",
                       value === key ? "bg-fg font-medium text-base"
                                     : "text-fg-muted hover:bg-surface hover:text-fg")}>
               {text}
@@ -126,18 +127,18 @@ function Transport({ stage, playing, onStage, onPlay, onFocus, onReset }) {
    world, so the run reads as a sequence of states rather than a slideshow. */
 function StageRail({ stage, onStage, readout }) {
   return (
-    <ol className="flex h-full flex-col">
+    <ol className="flex flex-col xl:h-full">
       {STAGES.map((s, i) => {
         const done = i < stage;
         const here = i === stage;
         // A stage shows what it produced only once the run has reached it.
         const [value, unit] = done || here ? readout[s.id] : ["", "not run yet"];
         return (
-          <li key={s.id} className="min-h-0 flex-1 border-b border-line last:border-b-0">
+          <li key={s.id} className="min-h-0 border-b border-line last:border-b-0 xl:flex-1">
             <button type="button" onClick={() => onStage(i)}
                     aria-current={here ? "step" : undefined}
                     className={cn(
-                      "interactive relative block h-full w-full px-4 py-3 text-left",
+                      "interactive relative block w-full px-4 py-3 text-left xl:h-full",
                       here ? "bg-active" : "hover:bg-surface")}>
               <span aria-hidden="true"
                     className="absolute inset-y-0 left-0 w-[2px]"
@@ -164,15 +165,15 @@ function StageRail({ stage, onStage, readout }) {
 function Dataset({ world, tier, kind, seed, onStart }) {
   const p = world.population;
   return (
-    <div className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-base/97 backdrop-blur-[3px]">
-      <div className="max-h-full w-full max-w-[820px] overflow-y-auto px-8 py-10">
+    <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-base">
+      <div className="max-h-full w-full max-w-[820px] overflow-y-auto px-5 py-10 sm:px-8">
         <div className="label">Before anything runs</div>
         <h2 className="mt-3 text-[28px] leading-tight font-medium tracking-[-0.02em] text-fg">
           This is the population Jaal is about to read.
         </h2>
         <p className="mt-3 max-w-[62ch] text-[14px] leading-[1.6] text-fg-muted">
-          A synthetic merchant population, one row per account. The twelve
-          columns it arrives in are listed on the right.
+          A synthetic merchant population, one row per account, arriving in
+          twelve columns.
         </p>
 
         <dl className="mt-8 grid grid-cols-2 gap-x-10 gap-y-7 sm:grid-cols-4">
@@ -321,13 +322,13 @@ export default function Simulation() {
   const readout = world && geom ? stageReadout(world, geom, cluster) : null;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-line px-5 py-3">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto xl:overflow-visible">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-line px-4 py-3 sm:px-5">
         <Segmented label="Tier" options={TIERS} value={tier} onChange={setTier} />
         <Segmented label="Case" options={CASES} value={kind} onChange={setKind} />
         <Segmented label="Seed" options={seeds.map(String)} value={String(seed)}
                    onChange={(v) => setSeed(Number(v))} />
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex w-full items-center gap-3 sm:ml-auto sm:w-auto">
           <button type="button" onClick={run}
                   className="interactive inline-flex h-8 items-center bg-accent px-4 text-[12.5px] font-medium text-base hover:opacity-90">
             Run Jaal
@@ -352,12 +353,12 @@ export default function Simulation() {
       )}
 
       {world && geom && readout && (
-        <div className="grid min-h-0 flex-1 grid-cols-[210px_minmax(0,1fr)_340px] divide-x divide-line">
-          <div className="min-h-0 overflow-y-auto">
+        <div className="grid min-h-0 flex-1 grid-cols-1 divide-y divide-line xl:grid-cols-[210px_minmax(0,1fr)_340px] xl:divide-x xl:divide-y-0">
+          <div className="min-h-0 xl:overflow-y-auto">
             <StageRail stage={stage} onStage={goto} readout={readout} />
           </div>
 
-          <div className="relative min-h-0">
+          <div className="relative min-h-0 h-[62vh] xl:h-auto">
             <JaalCanvas>
               <WorldScene world={world} geom={geom} stage={stage}
                           focus={focused} selected={selected}
@@ -367,7 +368,7 @@ export default function Simulation() {
                           onHover={setHovered} />
             </JaalCanvas>
 
-            <div className="pointer-events-none absolute inset-x-0 top-0 px-5 py-4">
+            <div className="pointer-events-none absolute inset-x-0 top-0 px-4 py-4 sm:px-5">
               <div className="text-[15px] font-medium text-fg">
                 {STAGES[stage].name}
               </div>
@@ -378,11 +379,11 @@ export default function Simulation() {
 
             {stage >= 6 && cluster && <Verdict cluster={cluster} />}
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-baseline justify-between gap-6 px-5 py-3">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-4 py-3 sm:px-5">
               <span className="tnum text-[12.5px] text-fg-2">
                 {hoverLine ?? "synthetic population · replay of a real run"}
               </span>
-              <span className="text-[12px] text-fg-faint">
+              <span className="hidden text-[12px] text-fg-faint md:block">
                 drag to pan · scroll to zoom · hover to read · click to pin
               </span>
             </div>
@@ -393,7 +394,7 @@ export default function Simulation() {
             )}
           </div>
 
-          <aside aria-busy={loading} className="min-h-0 overflow-y-auto p-5">
+          <aside aria-busy={loading} className="min-h-0 p-5 xl:overflow-y-auto">
             {selected && (
               <button type="button" onClick={() => setSelected(null)}
                       className="interactive mb-4 text-[12.5px] text-fg-muted hover:text-fg">

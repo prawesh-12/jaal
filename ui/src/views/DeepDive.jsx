@@ -172,13 +172,13 @@ export default function DeepDive() {
 
   return (
     <div>
-      <div className="grid gap-x-12 gap-y-8 pt-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+      <div className="grid grid-cols-1 gap-x-12 gap-y-8 pt-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
         <div>
           <div className="label">The engine, plate by plate</div>
           <h1 className="mt-4 max-w-[22ch] text-[32px] leading-[1.1] font-medium tracking-[-0.03em] text-fg text-balance sm:text-[38px]">
             Pick a stage. It opens its own record.
           </h1>
-          <div className="mt-7 h-[min(62vh,580px)] border border-line">
+          <div className="mt-7 aspect-[196/184] border border-line lg:aspect-auto lg:h-[min(62vh,580px)]">
             <EngineStack stages={stages} selected={selected} onPick={setSelected}
                          className="h-full w-full" />
           </div>

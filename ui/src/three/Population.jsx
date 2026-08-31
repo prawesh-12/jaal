@@ -43,6 +43,13 @@ const fieldScale = (phase) => mix(
   ease(span(phase, ...AT.zoom)),
 );
 
+export function bitsRange(scene) {
+  let top = scene.threshold_bits;
+  for (const b of scene.edges.bits) if (b > top) top = b;
+  return { floor: scene.threshold_bits, top: Math.round(top),
+           span: Math.max(top - scene.threshold_bits, 1) };
+}
+
 /* The groups the run's own edges make, which is the count the scene file
    already reports. Nothing here is invented. */
 function components(n, source, target) {
@@ -134,7 +141,8 @@ function Marks({ n, sync, focusRun, phase, colors, linked, degree }) {
     if (!mesh.current || !attr.current) return;
 
     const zin = ease(span(phase, ...AT.zoom));
-    const size = mix(2.4, 12, zin) / (px * fieldScale(phase) * 2);
+    const size = Math.min(mix(2.4, 12, zin) / (px * fieldScale(phase) * 2),
+                          mix(0.4, 2.4, zin));
     const gather = ease(span(phase, ...AT.gather));
     const at = sync(gather);
     const arrive = ease(span(phase, ...AT.arrive));
@@ -149,7 +157,7 @@ function Marks({ n, sync, focusRun, phase, colors, linked, degree }) {
       for (let i = 0; i < n; i += 1) {
         const local = Math.max(0, Math.min(
           1, (arrive * (1 + SPREAD) - delay[i] * SPREAD) / (1 - SPREAD * 0.001)));
-        const held = 1 + 0.85 * (degree.count[i] / degree.top) * swell;
+        const held = 1 + 0.45 * (degree.count[i] / degree.top) * swell;
         dummy.position.set(at[i * 2], at[i * 2 + 1], 0);
         dummy.scale.setScalar(Math.max(size * local * held, 1e-5));
         dummy.updateMatrix();
@@ -286,49 +294,6 @@ function Edges({ scene, spots, sync, focusRun, order, phase, colors, centre,
       <meshBasicMaterial ref={material} vertexColors transparent
                          depthWrite={false} toneMapped={false} />
     </instancedMesh>
-  );
-}
-
-// Without this the ribbon thickness is decoration.
-function BitsKey({ gauge, phase, colors }) {
-  const group = useRef();
-  const px = usePxPerUnit();
-
-  useFrame(() => {
-    if (!group.current) return;
-    const on = ease(span(phase, AT.edges, AT.edges + 0.06))
-      * (1 - ease(span(phase, ...AT.isolate)));
-    group.current.visible = on > 0.02;
-    group.current.children.forEach((m) => {
-      if (m.material) m.material.opacity = on;
-    });
-  });
-
-  const rows = [
-    [gauge.floor, 0.35, `${gauge.floor} bits, the threshold`],
-    [gauge.floor + gauge.span, 1.5, `${Math.round(gauge.floor + gauge.span)} bits, the strongest`],
-  ];
-
-  return (
-    <group ref={group} position={[-92, -24, 4]}>
-      {rows.map(([, weight, text], i) => (
-        <mesh key={text} position={[6, -i * 5, 0]}>
-          <planeGeometry args={[12, weight]} />
-          <meshBasicMaterial color={colors.info} transparent depthWrite={false}
-                             toneMapped={false} />
-        </mesh>
-      ))}
-      {rows.map(([, , text], i) => (
-        <Html key={text} position={[14, -i * 5, 0]} transform={false}
-              zIndexRange={[9, 0]}
-              style={{ pointerEvents: "none", transform: "translate(0, -50%)",
-                       width: `${34 * px}px` }}>
-          <span className="tnum block text-[10.5px] whitespace-nowrap text-fg-muted">
-            {text}
-          </span>
-        </Html>
-      ))}
-    </group>
   );
 }
 
@@ -554,15 +519,7 @@ function Scene({ scene, phase }) {
     return [x / focusRun.size, y / focusRun.size];
   }, [focusRun, spots]);
 
-  const gauge = useMemo(() => {
-    const { bits } = scene.edges;
-    let top = scene.threshold_bits;
-    for (let e = 0; e < bits.length; e += 1) if (bits[e] > top) top = bits[e];
-    return {
-      floor: scene.threshold_bits,
-      span: Math.max(top - scene.threshold_bits, 1),
-    };
-  }, [scene]);
+  const gauge = useMemo(() => bitsRange(scene), [scene]);
 
   const costs = useMemo(() => {
     const c = scene.focus.expected_cost_rupees;
@@ -599,7 +556,6 @@ function Scene({ scene, phase }) {
                gauge={gauge} />
         <Viewfinder centre={centre} phase={phase} colors={colors} />
       </group>
-      <BitsKey gauge={gauge} phase={phase} colors={colors} />
       <Decision focus={scene.focus} phase={phase} colors={colors} costs={costs} />
     </>
   );

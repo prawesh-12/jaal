@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Binary, Boxes, Filter, Gauge, IndianRupee, Share2,
+import { ArrowRight, Boxes, Filter, Gauge, IndianRupee, Scale, Share2,
          Sigma, Spline, Table2, TreePine, Users, Check, FileJson } from "lucide-react";
 
 import { Empty, Skeleton } from "@/components/section";
 import { GithubMark } from "@/components/mark";
-import { Population } from "@/three/Population";
+import { Population, bitsRange } from "@/three/Population";
 import { Calibration, Forest, Weights } from "@/three/Model";
 import { Pipeline } from "@/three/Pipeline";
 import { useJson } from "@/lib/useJson";
 import { useOnScreen } from "@/lib/useOnScreen";
+import { useNarrow } from "@/lib/useMedia";
 import { cn } from "@/lib/utils";
 import { compactRupees, count, dp4, pct, rupees } from "@/lib/format";
 
@@ -58,7 +59,7 @@ const OUTCOMES = [
 const STAGE_ICON = {
   accounts: Users,
   blocking: Filter,
-  pairs: Binary,
+  pairs: Scale,
   graph: Share2,
   clusters: Boxes,
   features: Table2,
@@ -103,6 +104,25 @@ function buildStages({ blocking, link, clustering, model, decisions }) {
   ];
 }
 
+/* The hero draws an edge as thick as the evidence it carries, which needs
+   saying somewhere the reader can actually read it. */
+function BitsKey({ scene }) {
+  const { floor, top } = bitsRange(scene);
+  return (
+    <div className="flex shrink-0 items-center gap-x-6 gap-y-2">
+      {[[floor, 1.5, "threshold"], [top, 6, "strongest"]].map(([bits, h, what]) => (
+        <span key={what} className="flex items-center gap-2.5">
+          <span className="block w-8 shrink-0 rounded-[1px] bg-info"
+                style={{ height: `${h}px` }} />
+          <span className="tnum text-[12.5px] whitespace-nowrap text-fg-muted">
+            {bits} bits, {what}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function Architecture({ blocking, link, clustering, model, decisions }) {
   const stages = useMemo(
     () => buildStages({ blocking, link, clustering, model, decisions }),
@@ -110,13 +130,14 @@ function Architecture({ blocking, link, clustering, model, decisions }) {
   const [lit, setLit] = useState(0);
   const [held, setHeld] = useState(null);
   const [ref, onScreen] = useOnScreen();
+  const narrow = useNarrow();
 
   const active = held ?? stages[lit].id;
   const shown = stages.find((s) => s.id === active) ?? stages[0];
 
   return (
     <section className="mt-16 border-t border-line-strong pt-10">
-      <div className="grid items-start gap-x-16 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,470px)]">
+      <div className="grid grid-cols-1 items-start gap-x-16 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,470px)]">
         <h2 className="max-w-[22ch] text-[26px] leading-[1.15] font-medium tracking-[-0.02em] text-fg">
           How the system works
         </h2>
@@ -128,11 +149,11 @@ function Architecture({ blocking, link, clustering, model, decisions }) {
         </p>
       </div>
 
-      <div ref={ref} className="mt-10 -mx-5 overflow-x-auto px-5 md:mx-0 md:px-0">
-        <div className="h-[230px] min-w-[1060px]">
+      <div ref={ref} className="mt-10">
+        <div className={narrow ? "h-[540px]" : "h-[230px]"}>
           <Pipeline stages={stages} outcomes={OUTCOMES} active={active}
-                    holding={lit} running={onScreen} onHover={setHeld}
-                    onReach={setLit} className="h-full w-full" />
+                    holding={lit} running={onScreen} vertical={narrow}
+                    onHover={setHeld} onReach={setLit} className="h-full w-full" />
         </div>
       </div>
 
@@ -175,7 +196,7 @@ function ModelCard({ card, report }) {
 
   return (
     <section className="mt-16 border-t border-line-strong pt-10">
-      <div className="grid items-start gap-x-16 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,470px)]">
+      <div className="grid grid-cols-1 items-start gap-x-16 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,470px)]">
         <h2 className="max-w-[22ch] text-[26px] leading-[1.15] font-medium tracking-[-0.02em] text-fg">
           What scores a cluster
         </h2>
@@ -190,7 +211,7 @@ function ModelCard({ card, report }) {
         </p>
       </div>
 
-      <div className="mt-10 grid gap-x-14 gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
+      <div className="mt-10 grid grid-cols-1 gap-x-14 gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
         <div>
           <div className="label">How deep the {count(forest.n_trees)} trees grew</div>
           <div className="mt-4 h-[300px] w-full">
@@ -222,7 +243,7 @@ function ModelCard({ card, report }) {
         </div>
       </div>
 
-      <dl className="mt-12 grid gap-px border-t border-line-strong bg-line sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="mt-12 grid grid-cols-1 gap-px border-t border-line-strong bg-line sm:grid-cols-2 lg:grid-cols-4">
         {[
           ["Trained on", count(report.n_train_clusters),
            `clusters, validated on ${count(report.n_val_clusters)}`],
@@ -233,7 +254,7 @@ function ModelCard({ card, report }) {
           ["Purity error", report.purity_model.mae.toFixed(5),
            `${report.purity_model.mae_on_ring_clusters.toFixed(5)} on ring clusters`],
         ].map(([label, value, note]) => (
-          <div key={label} className="bg-base py-8 pr-10 first:pl-0 lg:pl-10 lg:first:pl-0">
+          <div key={label} className="bg-base py-8 lg:pr-10 lg:pl-10 lg:first:pl-0">
             <dt className="label">{label}</dt>
             <dd className="tnum mt-3 text-[26px] leading-none font-medium tracking-tight text-fg">
               {value}
@@ -252,7 +273,7 @@ const REPO = "https://github.com/prawesh-12/jaal";
 
 function SpecColumn({ icon: Icon, title, subtitle, rows }) {
   return (
-    <div className="bg-base py-7 pr-10 lg:pl-10 lg:first:pl-0">
+    <div className="bg-base py-7 lg:pr-10 lg:pl-10 lg:first:pl-0">
       <div className="flex items-center gap-2.5">
         <Icon size={15} className="text-fg-faint" aria-hidden="true" />
         <span className="text-[14px] font-medium text-fg">{title}</span>
@@ -284,7 +305,7 @@ function Spec({ card, report }) {
 
   return (
     <div className="mt-14">
-      <div className="grid items-start gap-x-16 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,470px)]">
+      <div className="grid grid-cols-1 items-start gap-x-16 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,470px)]">
         <h3 className="t-sub">The trained model, exactly</h3>
         <p className="max-w-[54ch] text-[14.5px] leading-[1.6] text-fg-muted">
           Three fitted objects ship together: the classifier, the step function
@@ -294,7 +315,7 @@ function Spec({ card, report }) {
         </p>
       </div>
 
-      <div className="mt-8 grid gap-px border-t border-line-strong bg-line lg:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-px border-t border-line-strong bg-line lg:grid-cols-3">
         <SpecColumn
           icon={TreePine}
           title="Ring classifier"
@@ -340,7 +361,7 @@ function Spec({ card, report }) {
         />
       </div>
 
-      <div className="mt-12 grid items-center gap-x-14 gap-y-8 border-t border-line pt-10 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+      <div className="mt-12 grid grid-cols-1 items-center gap-x-14 gap-y-8 border-t border-line pt-10 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
         <div className="h-[320px] w-full">
           <Calibration score={calibrator.score} probability={calibrator.probability}
                        className="h-full w-full" />
@@ -355,13 +376,13 @@ function Spec({ card, report }) {
             the cost model can multiply it by rupees and get an answer worth
             acting on.
           </p>
-          <dl className="mt-8 grid gap-px border-t border-line-strong bg-line sm:grid-cols-3">
+          <dl className="mt-8 grid grid-cols-1 gap-px border-t border-line-strong bg-line sm:grid-cols-3">
             {[
               ["Brier, raw", report.brier_raw.toFixed(5), "straight from the vote"],
               ["Brier, isotonic", report.brier_isotonic.toFixed(5), "what ships"],
               ["Brier, Platt", report.brier_sigmoid.toFixed(5), "the alternative"],
             ].map(([label, value, note]) => (
-              <div key={label} className="bg-base py-5 pr-8 sm:pl-8 sm:first:pl-0">
+              <div key={label} className="bg-base py-5 sm:pr-8 sm:pl-8 sm:first:pl-0">
                 <dt className="label">{label}</dt>
                 <dd className="tnum mt-2.5 text-[21px] leading-none font-medium tracking-tight text-fg">
                   {value}
@@ -373,10 +394,11 @@ function Spec({ card, report }) {
         </div>
       </div>
 
-      <div className="mt-12 grid gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,430px)]">
+      <div className="mt-12 grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,430px)]">
         <div>
           <div className="label">What else was tried, on validation</div>
-          <table className="mt-4 w-full border-collapse text-[13.5px]">
+          <div className="mt-4 w-full overflow-x-auto">
+          <table className="w-full min-w-[520px] border-collapse text-[13.5px]">
             <thead>
               <tr className="border-b border-line-strong text-left">
                 <th className="py-2 pr-4 font-medium text-fg-muted">Candidate</th>
@@ -407,6 +429,7 @@ function Spec({ card, report }) {
               })}
             </tbody>
           </table>
+          </div>
           <p className="t-meta mt-4 max-w-[62ch]">
             All four on the same {count(report.n_val_clusters)} validation
             clusters at a {pct(report.variants.forest_raw.all_tiers_pooled.prevalence, 2)}{" "}
@@ -468,7 +491,7 @@ export default function Overview({ holdout, loading, onSimulate }) {
 
   return (
     <div>
-      <header className="grid items-end gap-x-16 gap-y-6 pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+      <header className="grid grid-cols-1 items-end gap-x-16 gap-y-6 pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
         <h1 className="t-hero max-w-[16ch] text-balance">
           Finding the fraud between transactions, not inside them.
         </h1>
@@ -479,13 +502,15 @@ export default function Overview({ holdout, loading, onSimulate }) {
         </p>
       </header>
 
-      <div className="mt-9 h-[min(46vh,410px)] w-full">
-        {scene.data
-          ? <Population scene={scene.data} phase={phase} className="h-full w-full" />
-          : <div className="h-full w-full animate-pulse bg-surface" />}
+      <div className="mt-9 -mx-5 overflow-x-auto px-5 md:mx-0 md:px-0">
+        <div className="h-[min(46vh,410px)] min-w-[900px]">
+          {scene.data
+            ? <Population scene={scene.data} phase={phase} className="h-full w-full" />
+            : <div className="h-full w-full animate-pulse bg-surface" />}
+        </div>
       </div>
 
-      <ol className="mt-5 grid gap-px border-y border-line bg-line sm:grid-cols-5">
+      <ol className="mt-5 grid grid-cols-1 gap-px border-y border-line bg-line sm:grid-cols-5">
         {STEPS.map(([at, title], i) => {
           const next = STEPS[i + 1]?.[0] ?? 1;
           const done = Math.min(1, Math.max(0, (phase - at) / (next - at)));
@@ -516,12 +541,15 @@ export default function Overview({ holdout, loading, onSimulate }) {
         })}
       </ol>
 
-      <p className="mt-4 max-w-[82ch] text-[14.5px] leading-[1.6] text-fg-2">
-        {STEPS[step][2]}
-      </p>
+      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-10 gap-y-3">
+        <p className="max-w-[82ch] text-[14.5px] leading-[1.6] text-fg-2">
+          {STEPS[step][2]}
+        </p>
+        {step === 2 && scene.data && <BitsKey scene={scene.data} />}
+      </div>
 
-      <div className="mt-11 grid gap-px border-t border-line-strong bg-line sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-base py-9 pr-10">
+      <div className="mt-11 grid grid-cols-1 gap-px border-t border-line-strong bg-line sm:grid-cols-2 lg:grid-cols-4">
+        <div className="bg-base py-9 lg:pr-10">
           <div className="label">Saved against doing nothing</div>
           <div className="tnum mt-3 text-[clamp(2.5rem,1.6rem+2.4vw,3.5rem)] leading-none font-medium tracking-[-0.035em] whitespace-nowrap text-ok">
             {compactRupees(pooled.net_vs_nothing_rupees)}
@@ -538,7 +566,7 @@ export default function Overview({ holdout, loading, onSimulate }) {
           ["Review load", pct(pooled.review_rate, 2),
            `${count(pooled.clusters_reviewed)} clusters need a person`],
         ].map(([label, value, note]) => (
-          <div key={label} className="bg-base py-9 pr-10 pl-10">
+          <div key={label} className="bg-base py-9 lg:pr-10 lg:pl-10">
             <div className="label">{label}</div>
             <div className="tnum mt-3 text-[30px] leading-none font-medium tracking-tight text-fg">
               {value}

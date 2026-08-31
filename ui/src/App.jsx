@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { Mark, GithubMark } from "@/components/mark";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme";
@@ -27,16 +28,39 @@ const ALIASES = {
 };
 
 function TopNav({ tab, onGoTo }) {
+  const [open, setOpen] = useState(false);
+  const panel = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const key = (e) => e.key === "Escape" && setOpen(false);
+    const away = (e) => {
+      if (!panel.current?.contains(e.target)) setOpen(false);
+    };
+    window.addEventListener("keydown", key);
+    window.addEventListener("pointerdown", away);
+    return () => {
+      window.removeEventListener("keydown", key);
+      window.removeEventListener("pointerdown", away);
+    };
+  }, [open]);
+
+  const go = (k) => {
+    setOpen(false);
+    onGoTo(k);
+  };
+
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-base/90 backdrop-blur-sm">
-      <div className="shell flex h-[52px] items-center gap-8">
+    <header ref={panel}
+            className="sticky top-0 z-40 border-b border-line bg-base/90 backdrop-blur-sm">
+      <div className="shell flex h-[52px] items-center gap-4 md:gap-8">
         <a href="#overview" className="flex shrink-0 items-center gap-2.5 text-fg">
           <Mark />
           <span className="text-[14px] font-medium tracking-[-0.01em]">Jaal</span>
         </a>
 
         <div role="tablist" aria-label="Sections"
-             className="-mb-px flex items-stretch overflow-x-auto">
+             className="-mb-px hidden min-w-0 items-stretch overflow-x-auto md:flex">
           {TABS.map(([k, label]) => (
             <button
               key={k}
@@ -64,13 +88,50 @@ function TopNav({ tab, onGoTo }) {
             href="https://github.com/prawesh-12/jaal"
             target="_blank"
             rel="noreferrer"
-            className="interactive inline-flex h-8 items-center gap-2 border border-line px-3 text-[13px] text-fg-muted hover:border-line-strong hover:text-fg"
+            aria-label="Jaal on GitHub"
+            className="interactive inline-flex h-8 items-center gap-2 border border-line px-2.5 text-[13px] text-fg-muted hover:border-line-strong hover:text-fg sm:px-3"
           >
             <GithubMark size={14} />
-            Repo
+            <span className="hidden sm:inline">Repo</span>
           </a>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="nav-menu"
+            aria-label={open ? "Close the menu" : "Open the menu"}
+            className="interactive inline-flex size-8 items-center justify-center border border-line text-fg-muted hover:border-line-strong hover:text-fg md:hidden"
+          >
+            {open ? <X size={15} /> : <Menu size={15} />}
+          </button>
         </div>
       </div>
+
+      {open && (
+        <nav id="nav-menu" aria-label="Sections"
+             className="border-t border-line bg-base md:hidden">
+          <ul className="shell py-2">
+            {TABS.map(([k, label]) => (
+              <li key={k}>
+                <button
+                  type="button"
+                  onClick={() => go(k)}
+                  aria-current={tab === k ? "page" : undefined}
+                  className={cn(
+                    "interactive flex w-full items-center justify-between border-b border-line py-3 text-left text-[15px] last:border-b-0",
+                    tab === k ? "font-medium text-fg" : "text-fg-muted")}
+                >
+                  {label}
+                  {tab === k && (
+                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
     </header>
   );
 }

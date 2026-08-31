@@ -196,7 +196,7 @@ export default function Queue({ explanations, loading, bare = false }) {
         lede="Ordered worst first by rupees extracted, so the top of this list is the work to do first."
         meta={<TierLegend />}
       >
-        <div className="sticky top-[52px] z-30 -mx-1 border-y border-line bg-base/95 px-1 py-3 backdrop-blur-sm">
+        <div className="sticky top-[52px] z-30 -mx-1 border-y border-line bg-base px-1 py-3 md:bg-base/95 md:backdrop-blur-sm">
           <div className="flex flex-wrap items-center gap-3">
             <Segmented label="Tier" options={tierOptions} value={tier} onChange={set(setTier)} />
             <Segmented

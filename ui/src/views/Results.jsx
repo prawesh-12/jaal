@@ -5,6 +5,7 @@ import {
 } from "@/components/section";
 import { Bars, Diverging } from "@/three/Bars";
 import { BlockedGrid, PrecisionScale } from "@/three/Proof";
+import { useNarrow } from "@/lib/useMedia";
 import {
   TIERS, compactRupees, count, dp4, isUndefinedPrecision, pct, rupees,
   signedRupees,
@@ -31,7 +32,7 @@ function Precision({ value }) {
 function Proof({ pooled, holdout }) {
   return (
     <section className="border-b border-line-strong pb-14">
-      <div className="grid gap-x-16 gap-y-8 pt-12 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-x-16 gap-y-8 pt-12 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
         <div>
           <div className="label">What Jaal saved this merchant</div>
           <div className="tnum mt-4 text-[clamp(2.75rem,1.6rem+3.6vw,4.5rem)] leading-[0.92] font-medium tracking-[-0.04em] whitespace-nowrap text-ok">
@@ -70,11 +71,21 @@ function Proof({ pooled, holdout }) {
 }
 
 function Economics({ decisions, baseline, pooled }) {
+  const narrow = useNarrow();
   const ratio = Math.round(
     decisions.cost_blocked_innocent / decisions.cost_missed_abuser);
   const rulesPrecision = baseline
     ? Object.values(baseline.tiers).reduce((a, t) => Math.max(a, t.precision), 0)
     : null;
+
+  const points = [
+    { label: "Jaal, blocking", value: pooled.precision,
+      display: pct(pooled.precision, 2), tone: "ok" },
+    ...(rulesPrecision ? [{
+      label: "rules on device and address", value: rulesPrecision,
+      display: pct(rulesPrecision, 2), tone: "bad",
+    }] : []),
+  ];
 
   return (
     <section className="border-b border-line-strong py-14">
@@ -82,22 +93,36 @@ function Economics({ decisions, baseline, pooled }) {
         A wrong block costs {ratio} times a miss, so precision is the whole game.
       </h2>
 
-      <div className="mt-8 h-[300px]">
+      <div className={narrow ? "mt-8 h-[130px]" : "mt-8 h-[300px]"}>
         <PrecisionScale
           breakeven={decisions.breakeven_precision}
+          compact={narrow}
           className="h-full w-full"
-          points={[
-            { label: "Jaal, blocking", value: pooled.precision,
-              display: pct(pooled.precision, 2), tone: "ok" },
-            ...(rulesPrecision ? [{
-              label: "rules on device and address", value: rulesPrecision,
-              display: pct(rulesPrecision, 2), tone: "bad",
-            }] : []),
-          ]}
+          points={points}
         />
       </div>
 
-      <div className="mt-8 grid gap-x-16 gap-y-8 border-t border-line pt-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+      {/* The readings run beside the scale when there is width for them, and
+          stack under it when there is not. */}
+      {narrow && (
+        <dl className="mt-2 grid grid-cols-1 gap-px border-t border-line bg-line">
+          {[["Break-even precision", pct(decisions.breakeven_precision, 2), "fg"],
+            ...points.map((p) => [p.label, p.display, p.tone])
+          ].map(([label, value, tone]) => (
+            <div key={label}
+                 className="flex items-baseline justify-between gap-4 bg-base py-3">
+              <dt className="flex items-baseline gap-2.5 text-[13.5px] text-fg-muted">
+                <span aria-hidden="true" className="size-2 shrink-0 rounded-full"
+                      style={{ background: `var(--color-${tone})` }} />
+                {label}
+              </dt>
+              <dd className="tnum text-[14px] text-fg">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      <div className="mt-8 grid grid-cols-1 gap-x-16 gap-y-8 border-t border-line pt-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         <div className="h-[200px]">
           <Bars
             className="h-full w-full"

@@ -5,6 +5,7 @@ import { useMemo, useRef } from "react";
 import { ChartCanvas } from "@/three/ChartCanvas";
 import { useThemeColors } from "@/three/JaalCanvas";
 import { SceneLights, SURFACE } from "@/three/surface";
+import { cn } from "@/lib/utils";
 import { compactRupees } from "@/lib/format";
 
 const ROW = 12;
@@ -15,7 +16,7 @@ const DEPTH = 5;
 // exactly what it did.
 const TILT = [-0.34, 0, 0];
 
-function Bar({ bar, max, y, width, color, muted, grow }) {
+function Bar({ bar, max, y, width, color, muted, grow, compact }) {
   const mesh = useRef();
   const behind = useRef();
   const full = Math.max((bar.value / max) * width, 0.4);
@@ -53,9 +54,15 @@ function Bar({ bar, max, y, width, color, muted, grow }) {
         <boxGeometry args={[1, ROW * 0.46, DEPTH]} />
         <meshStandardMaterial color={color} {...SURFACE} toneMapped={false} />
       </mesh>
-      <Html position={[-1.5, 0, 0]} center transform={false} zIndexRange={[10, 0]}
-            style={{ pointerEvents: "none", transform: "translate(-100%, -50%)" }}>
-        <span className="block text-right text-[13px] whitespace-nowrap text-fg-muted">
+      {/* Beside the track when there is width for it, above the track when
+          there is not. */}
+      <Html position={compact ? [0, ROW * 0.62, 0] : [-1.5, 0, 0]} center={!compact}
+            transform={false} zIndexRange={[10, 0]}
+            style={{ pointerEvents: "none",
+                     transform: compact ? "translate(0, -100%)"
+                                        : "translate(-100%, -50%)" }}>
+        <span className={cn("block text-[13px] whitespace-nowrap text-fg-muted",
+                            compact ? "text-left" : "text-right")}>
           {bar.label}
         </span>
       </Html>
@@ -75,7 +82,7 @@ function Rig() {
   return <SceneLights ground={colors.surface} />;
 }
 
-function Rows({ bars, max, width }) {
+function Rows({ bars, max, width, row, compact }) {
   const colors = useThemeColors();
   const { invalidate } = useThree();
   const grow = useRef(0);
@@ -86,13 +93,13 @@ function Rows({ bars, max, width }) {
     invalidate();
   });
 
-  const top = ((bars.length - 1) * ROW) / 2;
+  const top = ((bars.length - 1) * row) / 2;
 
   return (
     <group>
       {bars.map((bar, i) => (
         <Bar key={bar.label} bar={bar} max={max} width={width} grow={grow}
-             y={top - i * ROW}
+             y={top - i * row} compact={compact}
              color={colors[bar.tone] ?? colors["fg-2"]}
              muted={colors.surface} />
       ))}
@@ -105,18 +112,22 @@ function Rows({ bars, max, width }) {
   `valueWidth` reserve room for the DOM labels either side of the track, in the
   same units as the track itself.
 */
-export function Bars({ bars, labelWidth = 52, valueWidth = 30, max, className }) {
+export function Bars({ bars, labelWidth = 52, valueWidth = 30, max,
+                       compact = false, className }) {
   const ceiling = useMemo(
     () => max ?? Math.max(...bars.map((b) => b.value), 1), [bars, max]);
-  const width = labelWidth + TRACK + valueWidth;
-  const height = bars.length * ROW + ROW * 0.6;
+  const label = compact ? 0 : labelWidth;
+  const row = compact ? ROW * 2.05 : ROW;
+  const width = label + TRACK + valueWidth;
+  const height = bars.length * row + row * 0.6;
 
   return (
     <ChartCanvas width={width} height={height}
                  lights={<Rig />} className={className}>
       <group rotation={TILT}>
-        <group position={[-width / 2 + labelWidth, 0, 0]}>
-          <Rows bars={bars} max={ceiling} width={TRACK} />
+        <group position={[-width / 2 + label, 0, 0]}>
+          <Rows bars={bars} max={ceiling} width={TRACK} row={row}
+                compact={compact} />
         </group>
       </group>
     </ChartCanvas>

@@ -5,7 +5,6 @@ import { ChartCanvas, usePxPerUnit } from "@/three/ChartCanvas";
 import { useThemeColors } from "@/three/JaalCanvas";
 import { Rail, SceneLights, Shadow, SURFACE, slab } from "@/three/surface";
 
-const H = 24;
 const D = 8;
 const LANE = 20;
 
@@ -30,7 +29,7 @@ function Box({ node, colors, geometry }) {
   const solid = Boolean(node.tone);
   return (
     <group position={[node.x, node.y, 0]}>
-      <Shadow w={node.w * 1.4} h={H * 1.7} z={-D / 2 - 1.4} />
+      <Shadow w={node.w * 1.4} h={node.h * 1.7} z={-D / 2 - 1.4} />
       <mesh geometry={geometry}>
         <meshStandardMaterial color={solid ? colors[node.tone] : colors.raised}
                               {...SURFACE} toneMapped={false} />
@@ -52,8 +51,37 @@ function Box({ node, colors, geometry }) {
   );
 }
 
-/* Edge of one box to edge of the next, so an arrow never runs under a box. */
-function Arrow({ from, to, colors }) {
+/*
+  Where Jaal sits. The merchant's population goes in on one side, one priced
+  decision per cluster comes out the other, and the two lanes are the two
+  shapes of the job: a batch that has to see the whole graph, and an online
+  assignment that only has to place one new account.
+*/
+/* Wide, the two lanes sit above and below the trunk; narrow, the whole map
+   turns so it stacks down the page. */
+function place(vertical) {
+  if (!vertical) return { nodes: NODES.map((n) => ({ ...n, h: 24 })),
+                          width: 340, height: 86 };
+  const W = 92;
+  const H = 32;
+  const STEP = 46;
+  const top = STEP * 1.5;
+  const at = [[0, top], [-50, top - STEP], [50, top - STEP],
+              [0, top - STEP * 2], [0, top - STEP * 3]];
+  return {
+    nodes: NODES.map((n, i) => ({ ...n, w: W, h: H, x: at[i][0], y: at[i][1] })),
+    width: W * 2 + 16,
+    height: STEP * 3 + H + 14,
+  };
+}
+
+function Link({ from, to, colors, vertical }) {
+  if (vertical) {
+    return (
+      <Rail ax={from.x} ay={from.y - from.h / 2} bx={to.x} by={to.y + to.h / 2}
+            weight={0.9} rest={colors["fg-dim"]} arrow />
+    );
+  }
   return (
     <Rail ax={from.x + from.w / 2} ay={from.y}
           bx={to.x - to.w / 2} by={to.y}
@@ -61,35 +89,32 @@ function Arrow({ from, to, colors }) {
   );
 }
 
-/*
-  Where Jaal sits. The merchant's population goes in on one side, one priced
-  decision per cluster comes out the other, and the two lanes are the two
-  shapes of the job: a batch that has to see the whole graph, and an online
-  assignment that only has to place one new account.
-*/
-export function SystemMap({ className }) {
+export function SystemMap({ vertical = false, className }) {
   const colors = useThemeColors();
+  const { nodes, width, height } = useMemo(() => place(vertical), [vertical]);
   const shapes = useMemo(() => {
     const cache = new Map();
-    for (const node of NODES) {
-      if (!cache.has(node.w)) {
-        cache.set(node.w, slab({ w: node.w, h: H, d: D, r: 1.3 }));
+    for (const node of nodes) {
+      const key = `${node.w}|${node.h}`;
+      if (!cache.has(key)) {
+        cache.set(key, slab({ w: node.w, h: node.h, d: D, r: 1.3 }));
       }
     }
     return cache;
-  }, []);
+  }, [nodes]);
 
   return (
-    <ChartCanvas width={340} height={86}
+    <ChartCanvas width={width} height={height}
                  lights={<SceneLights ground={colors.surface} />}
                  className={className}>
       <group rotation={TILT}>
         {ARROWS.map(([a, b]) => (
-          <Arrow key={`${a}-${b}`} from={NODES[a]} to={NODES[b]} colors={colors} />
+          <Link key={`${a}-${b}`} from={nodes[a]} to={nodes[b]} colors={colors}
+                vertical={vertical} />
         ))}
-        {NODES.map((node) => (
+        {nodes.map((node) => (
           <Box key={node.title} node={node} colors={colors}
-               geometry={shapes.get(node.w)} />
+               geometry={shapes.get(`${node.w}|${node.h}`)} />
         ))}
       </group>
     </ChartCanvas>
