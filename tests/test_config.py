@@ -34,16 +34,3 @@ def test_four_tiers_ordered_from_careless_to_evasive():
 
 def test_adaptive_tier_shares_no_devices():
     assert config.TIERS["adaptive"]["device_reuse"] == 0.0
-
-
-def test_decision_numbers_are_unique_and_sequential():
-    """D-039 got used twice, which makes the log impossible to cite."""
-    import re
-
-    with open("docs/DECISIONS.md") as f:
-        numbers = [int(n) for n in re.findall(r"^## D-(\d+):", f.read(), re.M)]
-    assert numbers, "no decisions found"
-    duplicates = {n for n in numbers if numbers.count(n) > 1}
-    assert not duplicates, f"duplicate decision numbers: {sorted(duplicates)}"
-    assert numbers == list(range(1, len(numbers) + 1)), \
-        "decision numbers should run 1..N with no gaps"

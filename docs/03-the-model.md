@@ -4,7 +4,7 @@ Jaal scores groups of accounts, not transactions. This page is what happens
 after the graph is built: what the models eat, what maths they do, what their
 parameters are, and how a probability turns into an action.
 
-There are two models, not one. Most readers miss that, so start there.
+There are two models, not one.
 
 ---
 
@@ -32,8 +32,8 @@ Rs.15,000 each. A cluster that is 90% ring accounts gets labelled a ring, and
 blocking it still destroys the other 10%. The class probability cannot see
 those people. It only says the majority is guilty.
 
-Measured, on the validation seeds, that difference is the whole result
-(`docs/DECISIONS.md` D-022, and the docstring on `make_purity_model`):
+Measured on the validation seeds, that difference is the whole result. The
+same table is in the docstring on `make_purity_model`:
 
 | decision rule uses | accounts blocked | precision | money |
 | --- | --- | --- | --- |
@@ -273,10 +273,9 @@ RandomForestRegressor(
 - `n_jobs` comes from `resources.budget()` at runtime, capped at 4. Never
   `n_jobs=-1`.
 
-**These were not tuned.** There is no hyperparameter sweep in `results/` and no
-entry in `docs/DECISIONS.md` justifying 300 or 5. They were chosen once and
-fixed. Section 8 explains why more model tuning was not the thing to spend time
-on.
+**These were not tuned.** There is no hyperparameter sweep in `results/`. They
+were chosen once and fixed. Section 8 is why more model tuning was not worth the
+time.
 
 ---
 

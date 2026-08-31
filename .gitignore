@@ -3,11 +3,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# raw Olist data is not committed, only the derived priors in data/
 data/raw/
 *.zip
 
-# full feature tables are rebuilt by run.sh, a sample is committed instead
 results/features_train.csv
 results/features_val.csv
 results/features_holdout.csv
@@ -18,7 +16,6 @@ ui/dist/
 
 .env
 
-# explanation cache, rebuilt on demand
 cache/
 
 extras/

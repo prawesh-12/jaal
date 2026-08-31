@@ -47,6 +47,39 @@ not enough. See `detector/resources.py`.
 
 ---
 
+## The site
+
+`ui/` is the product surface: a Vite, React and Three.js app with no server and
+no detection logic of its own. It computes nothing.
+`ui/scripts/copy-results.mjs` copies every `results/*.json` and `results/*.png`
+into `ui/public/data`, and the views fetch `/data/<name>.json` from there, so
+the site can only show what the pipeline actually wrote.
+
+```bash
+cd ui
+npm install
+npm run dev      # 127.0.0.1:5173, loopback only
+npm run build    # static bundle in ui/dist
+npm run check    # renders every view against the real result files
+```
+
+Six sections, addressed by URL hash: Overview, Simulation, Results, Failures,
+Using Jaal, Deep Dive.
+
+The Simulation is a replay, not a live pipeline. Its worlds are written by
+`python -m detector.sim_world --seeds 975 932 977` and its cases by
+`python -m detector.sim_cases`, both part of `run.sh`. Accounts, edges,
+clusters, probabilities, purity, costs and actions are read back from those
+files exactly as the detector produced them.
+
+`ui/dist` is a folder of static files and needs no Python at runtime. The
+committed `vercel.json` builds it from the repository root (`cd ui && npm run
+build`, output `ui/dist`). Choose the `Other` framework preset there, because
+`requirements.txt` otherwise makes the host guess this is a Flask service. The
+service in `api/app.py` is a separate thing you host yourself.
+
+---
+
 ## What you send
 
 One row per account, twelve columns.

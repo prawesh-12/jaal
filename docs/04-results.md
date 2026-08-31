@@ -22,7 +22,7 @@ sophisticated, 0.0305 adaptive. PR-AUC is scored against the cluster figure,
 recall against the account figure.
 
 **Precision on the adaptive tier is undefined, not zero.** See the section
-below. It matters.
+below.
 
 ---
 
@@ -43,9 +43,8 @@ Across 400 worlds and 4,800,000 accounts, Jaal blocked 6,439 accounts and got
 one of them wrong. One false positive costs Rs.15,000, which is 0.7% of the
 Rs.2,253,050 net.
 
-The rupee column is first on purpose. A reader who sees 0.0266 recall before
-they see Rs.343,100 forms the wrong opinion. Blocking is deliberately rare. The
-money comes from blocking only what is certain and routing the rest to a person.
+Blocking is deliberately rare. The money comes from blocking only what is
+certain and routing the rest to a person.
 
 ---
 
@@ -96,7 +95,7 @@ NO_BLOCKS = "n/a (no blocks)"
 and `format_precision` exists so that this prints as `n/a (no blocks)` rather
 than `0.0000`. Those are different claims. `0.0000` says everything Jaal blocked
 was innocent. Nothing was blocked. The same false zero was sitting on 14 points
-of the detection curve and was corrected there too (D-029).
+of the detection curve and was corrected there too.
 
 The pooled precision of 0.9998 is unaffected: a tier that blocks nothing adds no
 numerator and no denominator.
@@ -224,8 +223,8 @@ flowchart LR
     E --> F
 ```
 
-Look at the middle branch. It is the only thing separating Rs.1,317,750 from the
-best two-action result of -Rs.16,382,200.
+The review branch is the only thing separating Rs.1,317,750 from the best
+two-action result of -Rs.16,382,200.
 
 `results/decisions.json`, `sensitivity`, sweeps the false-positive cost from
 Rs.2,000 to Rs.40,000. At 25x and above, no threshold beats doing nothing, and

@@ -19,8 +19,43 @@ The unit of detection is the cluster, never the transaction.
 > detector against a known answer. No payment rails are touched, real or test.
 > No real personal data exists in this repository.
 
-Razorpay Buildathon 2026, Track 02 (AI Risk Manager).
 *Jaal* (जाल) means both net and web in Hindi.
+
+---
+
+### Table of Contents
+
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Results](#results)
+- [The one number that explains every design choice](#the-one-number-that-explains-every-design-choice)
+- [Where it stops working](#where-it-stops-working)
+- [Run it](#run-it)
+- [Where to read next](#where-to-read-next)
+- [License](#license)
+
+---
+
+## Architecture
+
+![Jaal architecture](ui/public/Jaal%20a%20cluster-level%20promo-abuse%20engine,%20from%20training%20to%20API.png)
+
+---
+
+## Tech stack
+
+| Layer | |
+| --- | --- |
+| **Language** | ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white) |
+| **Data** | ![NumPy](https://img.shields.io/badge/NumPy-2.5-013243?logo=numpy&logoColor=white) ![pandas](https://img.shields.io/badge/pandas-3.0-150458?logo=pandas&logoColor=white) |
+| **Graph** | ![leidenalg](https://img.shields.io/badge/leidenalg-0.12-1f6feb) ![NetworkX](https://img.shields.io/badge/NetworkX-3.6-2c3e50) ![python--louvain](https://img.shields.io/badge/python--louvain-0.16-555555) |
+| **Models** | ![scikit--learn](https://img.shields.io/badge/scikit--learn-1.9-F7931E?logo=scikitlearn&logoColor=white) |
+| **Service** | ![Flask](https://img.shields.io/badge/Flask-3.1-000000?logo=flask&logoColor=white) |
+| **Review notes** | ![Ollama](https://img.shields.io/badge/Ollama-optional-000000?logo=ollama&logoColor=white) |
+| **Plots** | ![Matplotlib](https://img.shields.io/badge/Matplotlib-3.11-11557C) |
+| **Tests** | ![pytest](https://img.shields.io/badge/pytest-9.1-0A9EDC?logo=pytest&logoColor=white) |
+| **Demo site** | ![React](https://img.shields.io/badge/React-19-20232A?logo=react&logoColor=61DAFB) ![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white) ![Three.js](https://img.shields.io/badge/Three.js-0.185-000000?logo=threedotjs&logoColor=white) ![React Three Fiber](https://img.shields.io/badge/React%20Three%20Fiber-9-9d4edd) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white) ![Recharts](https://img.shields.io/badge/Recharts-3-22b5bf) |
+| **Deploy** | ![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white) |
 
 ---
 
@@ -72,8 +107,8 @@ address for every account, **Jaal blocks nothing at all**. Precision there is
 undefined, not zero, because there is no denominator.
 
 It still routes 57% of those ring accounts to a human, which is worth
-Rs.191,850 and is not detection. We know where this stops working and it is in
-the table above, not in a footnote.
+Rs.191,850 and is not detection. That tier is in the table above, not in a
+footnote.
 
 Three more things we would rather not have found:
 
@@ -95,8 +130,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 Offline. Ten pip packages. About 35 minutes, or `./run.sh quick` for two.
-Every number above is rebuilt from scratch, and `pytest -q` asserts the tables
-in these docs still match the files in `results/`.
+Every number above is rebuilt from scratch. `pytest -q` runs the suite.
 
 ---
 
@@ -108,25 +142,11 @@ in these docs still match the files in `results/`.
 | [docs/02-how-it-works.md](docs/02-how-it-works.md)           | the seven stages, a diagram each            |
 | [docs/03-the-model.md](docs/03-the-model.md)                 | the maths, the weights, the hyperparameters |
 | [docs/04-results.md](docs/04-results.md)                     | every measured number                       |
-| [docs/05-where-it-fails.md](docs/05-where-it-fails.md)       | the honest half                             |
+| [docs/05-where-it-fails.md](docs/05-where-it-fails.md)       | where it stops working, and how we know     |
 | [docs/06-run-and-integrate.md](docs/06-run-and-integrate.md) | calling it from your own system             |
 
-## How it works
+---
 
-Seven stages. Accounts in, priced decisions out.
+## License
 
-```mermaid
-flowchart LR
-    A[accounts] --> B[block<br/>72M pairs to 550K]
-    B --> C[score pairs<br/>bits of evidence]
-    C --> D[cluster<br/>Leiden]
-    D --> E[24 features<br/>per cluster]
-    E --> F[forest<br/>+ purity model]
-    F --> G{cheapest<br/>in rupees}
-    G --> H[block]
-    G --> I[review]
-    G --> J[allow]
-```
-
-There is no threshold anywhere in that last step. It prices all three actions
-and takes the cheapest.
+MIT. See [LICENSE](LICENSE).

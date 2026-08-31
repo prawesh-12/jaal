@@ -58,7 +58,7 @@ At the obvious tier, 919 pairs of ring accounts share a device. At the adaptive
 tier, none do, and none share an address either. Every identity shortcut has
 been removed by hand. What is left is behaviour.
 
-**Design choice that mattered:** the answer key is written before the world, not
+**Design choice:** the answer key is written before the world, not
 derived from it. That is the only way to score precision honestly.
 
 ---
@@ -183,12 +183,12 @@ reassembled, so recall is the number to watch.
 The threshold was originally 6 bits, chosen on an edge budget. At 6 bits Leiden
 returned clusters of up to 1,812 accounts and a pairwise F1 of 0.0014. A blob
 holding every ring in the world is not a detection. Sweeping against cluster
-quality moved it to 14 bits (D-018).
+quality moved it to 14 bits.
 
 Louvain was compared honestly. On the 14 bit graph that ships it gives zero
 disconnected communities and the same pairwise F1 to four decimal places across
 40 worlds. Leiden stays the default because its guarantee is free, not because
-Louvain broke (D-019).
+Louvain broke.
 
 ---
 
@@ -216,7 +216,7 @@ Nothing here may read the answer key, and that is enforced rather than assumed.
 greps the source for `is_ring`, `group_id`, `group_type` and `operator_id` and
 fails the build if any appears.
 
-**Design choice that mattered:** features are per cluster, never per account. An
+**Design choice:** features are per cluster, never per account. An
 account-level feature averaged up to a cluster loses the thing that matters,
 which is how the members relate to each other.
 

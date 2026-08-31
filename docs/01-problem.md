@@ -114,9 +114,10 @@ It works, in the sense that it finds the rings. From
 
 Pooled, the rules baseline is **Rs.48,028,800 worse than deploying nothing**.
 
-Read the first row again. Recall 1.0. It caught every single ring account in a
-million-account population, and still lost Rs.12M, because 931 of the accounts
-it blocked were innocent and each of those costs 75 times a missed coupon.
+The first row is the whole problem. Recall 1.0: it caught every single ring
+account in a million-account population, and still lost Rs.12M, because 931 of
+the accounts it blocked were innocent and each of those costs 75 times a missed
+coupon.
 
 Precision 0.91 is respectable almost anywhere. Against a break-even of 0.9868 it
 is a disaster. Closing that gap is what the rest of this project is for.

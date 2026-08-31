@@ -215,10 +215,9 @@ merges 18,902 were accepted, which halved the cluster count, and recall fell
 alongside it.
 
 The code stays in the tree, off by default, reachable with
-`python -m detector.reassemble --seeds 700-799`. Deleting it would delete the
-evidence. Rejoining split rings is the obvious next move for anyone reading F4
-below, and rerunnable code that says it does not work is a better answer than a
-paragraph claiming so.
+`python -m detector.reassemble --seeds 700-799`. Rejoining split rings is the
+obvious next move after reading F4 below, so the code that measured it stays
+re-runnable rather than being replaced by a paragraph.
 
 ---
 
