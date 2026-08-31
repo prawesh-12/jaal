@@ -149,3 +149,77 @@ function Rows({ rows, zero, row, arm, height }) {
     </group>
   );
 }
+
+/* The shipped step function, drawn from the breakpoints it was fitted with.
+   The diagonal is where a raw score would already be a probability. */
+export function Calibration({ score, probability, className }) {
+  const plot = 96;
+  const pad = 13;
+
+  return (
+    <ChartCanvas width={plot + pad * 2} height={plot + pad * 2} className={className}>
+      <Steps score={score} probability={probability} plot={plot} />
+    </ChartCanvas>
+  );
+}
+
+function Steps({ score, probability, plot }) {
+  const colors = useThemeColors();
+  const half = plot / 2;
+  const at = (s, p) => [s * plot - half, p * plot - half];
+
+  const segments = useMemo(() => {
+    const out = [];
+    for (let i = 0; i < score.length - 1; i += 1) {
+      const [ax, ay] = at(score[i], probability[i]);
+      const [bx, by] = at(score[i + 1], probability[i + 1]);
+      const len = Math.hypot(bx - ax, by - ay);
+      if (len < 0.01) continue;
+      out.push({
+        key: i,
+        x: (ax + bx) / 2,
+        y: (ay + by) / 2,
+        len,
+        angle: Math.atan2(by - ay, bx - ax),
+      });
+    }
+    return out;
+  }, [score, probability]);
+
+  return (
+    <group>
+      <mesh position={[0, -half - 0.5, -2]}>
+        <boxGeometry args={[plot, 0.4, 0.3]} />
+        <meshBasicMaterial color={colors["line-strong"]} toneMapped={false} />
+      </mesh>
+      <mesh position={[-half - 0.5, 0, -2]}>
+        <boxGeometry args={[0.4, plot, 0.3]} />
+        <meshBasicMaterial color={colors["line-strong"]} toneMapped={false} />
+      </mesh>
+
+      <mesh position={[0, 0, -1.5]} rotation={[0, 0, Math.PI / 4]}>
+        <boxGeometry args={[Math.SQRT2 * plot, 0.4, 0.3]} />
+        <meshBasicMaterial color={colors.line} toneMapped={false} />
+      </mesh>
+
+      {segments.map((s) => (
+        <mesh key={s.key} position={[s.x, s.y, 0]} rotation={[0, 0, s.angle]}>
+          <boxGeometry args={[s.len + 1, 1.5, 1.5]} />
+          <meshBasicMaterial color={colors.info} toneMapped={false} />
+        </mesh>
+      ))}
+
+      {[["0", -half, -half, "translate(-100%, 0)"],
+        ["1.0", half, -half, "translate(-50%, 0)"],
+        ["1.0", -half, half, "translate(-100%, -50%)"]].map(([text, x, y, t], i) => (
+        <Html key={i} position={[x - 1.5, y - 1.5, 0]} transform={false}
+              zIndexRange={[10, 0]}
+              style={{ pointerEvents: "none", transform: t }}>
+          <span className="tnum block pr-1.5 text-[10.5px] whitespace-nowrap text-fg-dim">
+            {text}
+          </span>
+        </Html>
+      ))}
+    </group>
+  );
+}

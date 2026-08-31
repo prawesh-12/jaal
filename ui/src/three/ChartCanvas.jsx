@@ -25,7 +25,7 @@ function Fit({ width, height, children }) {
 
 /* Orthographic, so a bar twice as long is twice the value on screen. A
    perspective camera would quietly lie about every length in the scene. */
-export function ChartCanvas({ children, width, height, className }) {
+export function ChartCanvas({ children, width, height, lights, className }) {
   return (
     <CanvasHost className={className}>
       <Canvas
@@ -36,8 +36,12 @@ export function ChartCanvas({ children, width, height, className }) {
         camera={{ position: [0, 0, 100], near: 0.1, far: 400 }}
       >
         <Fit width={width} height={height}>
-          <ambientLight intensity={2.3} />
-          <directionalLight position={[-30, 40, 60]} intensity={0.55} />
+          {lights ?? (
+            <>
+              <ambientLight intensity={2.3} />
+              <directionalLight position={[-30, 40, 60]} intensity={0.55} />
+            </>
+          )}
           {children}
         </Fit>
       </Canvas>

@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Binary, Boxes, Filter, Gauge, IndianRupee, Share2,
+         Sigma, Spline, Table2, TreePine, Users, Check, FileJson } from "lucide-react";
 
 import { Empty, Skeleton } from "@/components/section";
+import { GithubMark } from "@/components/mark";
 import { Population } from "@/three/Population";
-import { Forest, Weights } from "@/three/Model";
+import { Calibration, Forest, Weights } from "@/three/Model";
+import { Pipeline } from "@/three/Pipeline";
 import { useJson } from "@/lib/useJson";
+import { useOnScreen } from "@/lib/useOnScreen";
 import { cn } from "@/lib/utils";
-import { compactRupees, count, dp4, pct } from "@/lib/format";
+import { compactRupees, count, dp4, pct, rupees } from "@/lib/format";
 
 const RUN_MS = 7000;
 
@@ -46,6 +50,112 @@ function useRun(ms, from) {
   return phase;
 }
 
+
+const OUTCOMES = [
+  { label: "Block" }, { label: "Review" }, { label: "Allow" },
+];
+
+const STAGE_ICON = {
+  accounts: Users,
+  blocking: Filter,
+  pairs: Binary,
+  graph: Share2,
+  clusters: Boxes,
+  features: Table2,
+  score: Gauge,
+  decide: IndianRupee,
+};
+
+/* Each row is a field of the file that stage wrote, so the diagram and the
+   detail below it are the same eight records read twice. */
+function buildStages({ blocking, link, clustering, model, decisions }) {
+  return [
+    { id: "accounts", name: "Accounts", label: "Accounts",
+      sub: count(blocking.n_accounts_per_world),
+      head: `${count(blocking.n_accounts_per_world)} per world`,
+      note: "Twelve ordinary fields per account. Nothing in the row is a risk score, and no account is judged on its own." },
+    { id: "blocking", name: "Blocking", label: "Blocking",
+      sub: `${blocking.rules.length} rules`,
+      head: `${pct(blocking.tiers.obvious.pair_reduction_ratio, 1)} of pairs never compared`,
+      note: `Only pairs agreeing on some coarse key are ever scored, and no block grows past ${count(blocking.max_block_size)} accounts.` },
+    { id: "pairs", name: "Pair evidence", label: "Pair evidence",
+      sub: `${Object.keys(link.levels).length} fields`,
+      head: "Fellegi-Sunter, measured in bits",
+      note: `Every field agreement is worth log2(m/u) bits. Both are estimated without labels, u from ${count(link.u_samples)} sampled pairs.` },
+    { id: "graph", name: "Graph", label: "Graph",
+      sub: `${clustering.edge_threshold_bits} bits`,
+      head: `${clustering.edge_threshold_bits} bits to keep an edge`,
+      note: "Swept upward from zero. Lower and the graph collapses into one giant component; higher and true pairs drop out." },
+    { id: "clusters", name: "Clustering", label: "Clustering",
+      sub: "Leiden",
+      head: `Leiden, resolution ${clustering.resolution}`,
+      note: `Minimum cluster size ${clustering.min_cluster_size}, seed ${clustering.seed} pinned, so one world always splits the same way.` },
+    { id: "features", name: "Cluster features", label: "Features",
+      sub: `${model.n_features} per cluster`,
+      head: `${model.n_features} features per cluster`,
+      note: `Shape, timing, behaviour and what was taken, as one fixed-length row. ${model.dropped_features.length} dropped as leaky or redundant.` },
+    { id: "score", name: "Ring probability", label: "Probability",
+      sub: "2 forests",
+      head: `Fitted on ${count(model.n_train_clusters)} clusters`,
+      note: `One forest says whether the cluster is a ring, a second says what fraction of it is. Validated on ${count(model.n_val_clusters)} clusters from unseen worlds.` },
+    { id: "decide", name: "Priced decision", label: "Decision",
+      sub: pct(decisions.breakeven_precision, 2),
+      head: `${pct(decisions.breakeven_precision, 2)} break-even precision`,
+      note: `A wrong block costs ${rupees(decisions.cost_blocked_innocent)}, a missed abuser ${rupees(decisions.cost_missed_abuser)}, an analyst review ${rupees(decisions.cost_analyst_review)}. The cheapest action wins.` },
+  ];
+}
+
+function Architecture({ blocking, link, clustering, model, decisions }) {
+  const stages = useMemo(
+    () => buildStages({ blocking, link, clustering, model, decisions }),
+    [blocking, link, clustering, model, decisions]);
+  const [lit, setLit] = useState(0);
+  const [held, setHeld] = useState(null);
+  const [ref, onScreen] = useOnScreen();
+
+  const active = held ?? stages[lit].id;
+  const shown = stages.find((s) => s.id === active) ?? stages[0];
+  const Icon = STAGE_ICON[shown.id];
+
+  return (
+    <section className="mt-16 border-t border-line-strong pt-10">
+      <div className="grid items-start gap-x-16 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,470px)]">
+        <h2 className="max-w-[22ch] text-[26px] leading-[1.15] font-medium tracking-[-0.02em] text-fg">
+          How the system works
+        </h2>
+        <p className="max-w-[54ch] text-[14.5px] leading-[1.6] text-fg-muted">
+          Eight stages, each one a file on disk that the next stage reads. No
+          stage scores an account on its own. The first six build the group,
+          the seventh puts a number on it, and only the last one decides
+          anything.
+        </p>
+      </div>
+
+      <div ref={ref} className="mt-10 -mx-5 overflow-x-auto px-5 md:mx-0 md:px-0">
+        <div className="h-[230px] min-w-[1060px]">
+          <Pipeline stages={stages} outcomes={OUTCOMES} active={active}
+                    holding={lit} running={onScreen} onHover={setHeld}
+                    onReach={setLit} className="h-full w-full" />
+        </div>
+      </div>
+
+      <div className="mt-8 flex min-h-[92px] items-start gap-5 border-t border-line pt-6">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center border border-line text-fg-muted">
+          <Icon size={16} aria-hidden="true" />
+        </span>
+        <div>
+          <div className="flex flex-wrap items-baseline gap-x-3">
+            <span className="text-[15px] font-medium text-fg">{shown.name}</span>
+            <span className="tnum text-[14px] text-fg-2">{shown.head}</span>
+          </div>
+          <p className="mt-1.5 max-w-[86ch] text-[14px] leading-[1.6] text-fg-muted">
+            {shown.note}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function ModelCard({ card, report }) {
   const forest = card.classifier;
@@ -119,7 +229,186 @@ function ModelCard({ card, report }) {
           </div>
         ))}
       </dl>
+
+      <Spec card={card} report={report} />
     </section>
+  );
+}
+
+const REPO = "https://github.com/prawesh-12/jaal";
+
+function SpecColumn({ icon: Icon, title, subtitle, rows, children }) {
+  return (
+    <div className="bg-base py-7 pr-10 lg:pl-10 lg:first:pl-0">
+      <div className="flex items-center gap-2.5">
+        <Icon size={15} className="text-fg-faint" aria-hidden="true" />
+        <span className="text-[14px] font-medium text-fg">{title}</span>
+      </div>
+      <div className="ident mt-1 text-[12px] text-fg-faint">{subtitle}</div>
+      {children}
+      <dl className="mt-5 grid gap-y-2">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex items-baseline justify-between gap-4">
+            <dt className="text-[13px] text-fg-muted">{k}</dt>
+            <dd className="tnum text-[13px] text-fg-2">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+/* Every hyperparameter here is the value the shipped run actually used, read
+   back out of the fitted estimators rather than copied from the call site. */
+function Spec({ card, report }) {
+  const { classifier, calibrator, purity } = card;
+  const tried = [
+    ["Random forest, uncalibrated", "forest_raw"],
+    ["Random forest, Platt scaling", "forest_sigmoid"],
+    ["Random forest, isotonic", "forest_isotonic"],
+    ["Neural net, 32-16, uncalibrated", "mlp_raw"],
+  ].filter(([, key]) => report.variants[key]);
+
+  const shippedKey = `forest_${report.calibration_method}`;
+
+  return (
+    <div className="mt-14">
+      <div className="grid items-start gap-x-16 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,470px)]">
+        <h3 className="t-sub">The trained model, exactly</h3>
+        <p className="max-w-[54ch] text-[14.5px] leading-[1.6] text-fg-muted">
+          Three fitted objects ship together: the classifier, the step function
+          that corrects its probabilities, and the regressor that predicts how
+          much of a flagged cluster is really a ring. Every number below is read
+          back out of the fitted estimators.
+        </p>
+      </div>
+
+      <div className="mt-8 grid gap-px border-t border-line-strong bg-line lg:grid-cols-3">
+        <SpecColumn
+          icon={TreePine}
+          title="Ring classifier"
+          subtitle={classifier.kind}
+          rows={[
+            ["Trees", count(classifier.n_trees)],
+            ["Min samples per leaf", classifier.min_samples_leaf],
+            ["Class weight", classifier.class_weight],
+            ["Depth, min to max", `${classifier.depth_min} - ${classifier.depth_max}`],
+            ["Depth, mean", classifier.depth_mean],
+            ["Decision nodes", count(classifier.decision_nodes)],
+            ["Leaves", count(classifier.leaves)],
+            ["Input features", card.features.length],
+          ]}
+        />
+        <SpecColumn
+          icon={Spline}
+          title="Probability calibrator"
+          subtitle={calibrator.kind}
+          rows={[
+            ["Breakpoints", calibrator.n_points],
+            ["Brier before", report.brier_raw.toFixed(5)],
+            ["Brier after", report.brier_isotonic.toFixed(5)],
+            ["Platt, for comparison", report.brier_sigmoid.toFixed(5)],
+          ]}
+        >
+          <div className="mt-5 h-[196px] w-full">
+            <Calibration score={calibrator.score} probability={calibrator.probability}
+                         className="h-full w-full" />
+          </div>
+          <p className="t-meta mt-3 max-w-[40ch]">
+            The shipped step function. Where it runs below the diagonal, the
+            forest was more confident than it had earned.
+          </p>
+        </SpecColumn>
+        <SpecColumn
+          icon={Sigma}
+          title="Purity regressor"
+          subtitle={purity.kind}
+          rows={[
+            ["Trees", count(purity.n_trees)],
+            ["Min samples per leaf", purity.min_samples_leaf],
+            ["Depth, min to max", `${purity.depth_min} - ${purity.depth_max}`],
+            ["Depth, mean", purity.depth_mean],
+            ["Decision nodes", count(purity.decision_nodes)],
+            ["Leaves", count(purity.leaves)],
+            ["Mean predicted", report.purity_model.mean_predicted.toFixed(5)],
+            ["Mean actual", report.purity_model.mean_actual.toFixed(5)],
+          ]}
+        />
+      </div>
+
+      <div className="mt-12 grid gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,430px)]">
+        <div>
+          <div className="label">What else was tried, on validation</div>
+          <table className="mt-4 w-full border-collapse text-[13.5px]">
+            <thead>
+              <tr className="border-b border-line-strong text-left">
+                <th className="py-2 pr-4 font-medium text-fg-muted">Candidate</th>
+                <th className="tnum py-2 pr-4 text-right font-medium text-fg-muted">PR-AUC</th>
+                <th className="tnum py-2 pr-4 text-right font-medium text-fg-muted">ROC-AUC</th>
+                <th className="tnum py-2 text-right font-medium text-fg-muted">Brier</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tried.map(([name, key]) => {
+                const m = report.variants[key].all_tiers_pooled;
+                const on = key === shippedKey;
+                return (
+                  <tr key={key} className={cn("border-b border-line",
+                                              on && "bg-surface")}>
+                    <td className={cn("py-2.5 pr-4 pl-3 -indent-3",
+                                      on ? "text-fg" : "text-fg-muted")}>
+                      {on && <Check size={13} className="mr-1.5 inline text-ok"
+                                    aria-hidden="true" />}
+                      {name}
+                      {on && <span className="t-meta ml-2">shipped</span>}
+                    </td>
+                    <td className="tnum py-2.5 pr-4 text-right text-fg-2">{dp4(m.pr_auc)}</td>
+                    <td className="tnum py-2.5 pr-4 text-right text-fg-2">{dp4(m.roc_auc)}</td>
+                    <td className="tnum py-2.5 pr-3 text-right text-fg-2">{m.brier.toFixed(5)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p className="t-meta mt-4 max-w-[62ch]">
+            All four on the same {count(report.n_val_clusters)} validation
+            clusters at a {pct(report.variants.forest_raw.all_tiers_pooled.prevalence, 2)}{" "}
+            base rate. Fit, calibration and validation seeds are disjoint whole
+            worlds, so no cluster from a training world is scored here. The
+            neural net scores highest and did not ship: the decision layer
+            needs a probability it can price and a feature it can name.
+          </p>
+        </div>
+
+        <div>
+          <div className="label">Check it yourself</div>
+          <ul className="mt-4 grid gap-px border-t border-line bg-line">
+            {[
+              ["/data/model_card.json", FileJson,
+               "Every tree's depth and leaf count, the calibrator's breakpoints, per-feature importance"],
+              ["/data/model.json", FileJson,
+               "Validation metrics per tier and per candidate, seed ranges, calibration Brier scores"],
+              [`${REPO}/blob/main/detector/model.py`, GithubMark,
+               "The training code that wrote both files", "detector/model.py"],
+            ].map(([href, Icon, note, text]) => (
+              <li key={href} className="bg-base py-3">
+                <a href={href} target="_blank" rel="noreferrer"
+                   className="interactive flex items-start gap-2.5 text-fg hover:text-accent">
+                  <Icon size={14} className="mt-0.5 shrink-0 text-fg-faint" aria-hidden="true" />
+                  <span className="ident block text-[12.5px]">{text ?? href}</span>
+                </a>
+                <span className="t-meta mt-1 block max-w-[46ch] pl-[26px]">{note}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="t-meta mt-4 max-w-[46ch]">
+            The fitted estimators themselves are written to{" "}
+            <span className="ident text-fg-2">results/model.pkl</span> by a
+            local run. Nothing on this page is computed in the browser.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -127,6 +416,10 @@ export default function Overview({ holdout, loading, onSimulate }) {
   const scene = useJson("overview_scene");
   const card = useJson("model_card");
   const model = useJson("model");
+  const blocking = useJson("blocking");
+  const link = useJson("link_params");
+  const clustering = useJson("clustering");
+  const decisions = useJson("decisions");
   const [from, setFrom] = useState({ at: 0 });
   const phase = useRun(RUN_MS, from);
   const step = stepAt(phase);
@@ -217,6 +510,12 @@ export default function Overview({ holdout, loading, onSimulate }) {
           </div>
         ))}
       </div>
+
+      {blocking.data && link.data && clustering.data && model.data && decisions.data && (
+        <Architecture blocking={blocking.data} link={link.data}
+                      clustering={clustering.data} model={model.data}
+                      decisions={decisions.data} />
+      )}
 
       {card.data && model.data && <ModelCard card={card.data} report={model.data} />}
 

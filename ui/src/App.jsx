@@ -58,8 +58,17 @@ function TopNav({ tab, onGoTo }) {
           ))}
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <ThemeToggle />
+          <a
+            href="https://github.com/prawesh-12/jaal"
+            target="_blank"
+            rel="noreferrer"
+            className="interactive inline-flex h-8 items-center gap-2 border border-line px-3 text-[13px] text-fg-muted hover:border-line-strong hover:text-fg"
+          >
+            <GithubMark size={14} />
+            Repo
+          </a>
         </div>
       </div>
     </header>
