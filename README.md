@@ -149,4 +149,4 @@ Every number above is rebuilt from scratch. `pytest -q` runs the suite.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). See [LICENSE](LICENSE).

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Mark } from "@/components/mark";
+import { Mark, GithubMark } from "@/components/mark";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme";
 import { useJson } from "@/lib/useJson";
@@ -21,8 +21,6 @@ const TABS = [
 
 const KEYS = TABS.map(([k]) => k);
 
-// The old five-page layout is linked from the docs, so its hashes still land
-// somewhere sensible rather than silently falling back to the overview.
 const ALIASES = {
   failure: "failures",
   cost: "deep", pipeline: "deep", queue: "deep", charts: "deep",
@@ -68,11 +66,10 @@ function TopNav({ tab, onGoTo }) {
   );
 }
 
-function Footer({ onGoTo }) {
-  const links = TABS;
+function Footer() {
   return (
     <footer className="mt-24 border-t border-line">
-      <div className="shell flex flex-wrap items-start justify-between gap-x-16 gap-y-8 py-10">
+      <div className="shell flex flex-wrap items-center justify-between gap-x-16 gap-y-6 py-10">
         <div>
           <div className="flex items-center gap-2.5 text-fg">
             <Mark size={16} />
@@ -81,24 +78,23 @@ function Footer({ onGoTo }) {
           <p className="mt-3 text-[13.5px] text-fg-muted">
             Fraud and promo-abuse risk intelligence
           </p>
+          <p className="mt-1 text-[12.5px] text-fg-faint">
+            Synthetic evaluation data &middot; CC BY-NC 4.0
+          </p>
         </div>
 
-        <nav aria-label="Footer" className="flex flex-wrap gap-x-8 gap-y-2">
-          {links.map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onGoTo(key)}
-              className="interactive text-[13.5px] text-fg-muted hover:text-fg"
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        <p className="text-[12.5px] text-fg-faint">
-          Synthetic evaluation data
-        </p>
+        <div className="flex items-center gap-2.5 text-[13.5px] text-fg-muted">
+          <span>Trained and developed by</span>
+          <a
+            href="https://github.com/prawesh-12"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Prawesh Mandal on GitHub"
+            className="interactive inline-flex size-8 items-center justify-center border border-line text-fg-faint hover:border-line-strong hover:text-fg"
+          >
+            <GithubMark size={15} />
+          </a>
+        </div>
       </div>
     </footer>
   );
@@ -161,7 +157,7 @@ export default function App() {
         {tab === "deep" && <DeepDive />}
       </main>
 
-      {tab !== "simulation" && <Footer onGoTo={setTab} />}
+      {tab !== "simulation" && <Footer />}
     </div>
   );
 }
